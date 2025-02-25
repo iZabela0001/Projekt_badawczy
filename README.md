@@ -1,2 +1,4 @@
-# Projekt_badawczy
-Różnice w przeżyciu pacjentek z rakiem piersi w zależności od podtypu nowotworu 
+# Różnice w przeżyciu pacjentek z rakiem piersi w zależności od podtypu nowotworu 
+Celem projektu jest analiza przeżycia pacjentek z rakiem piersi w zależności od podtypu nowotworu. Projekt będzie opierał się na danych klinicznych, które obejmują różne cechy choroby, takie jak histopatologiczne charakterystyki nowotworu, markerów molekularnych, oraz odpowiedzi na leczenie. W ramach analizy przeżycia, uwzględnione zostaną różne metody statystyczne, takie jak analiza przeżycia Kaplan-Meiera oraz modelowanie Coxa, aby określić, jak różne podtypy raka piersi (np. ER+, HER2+, triple-negative) wpływają na rokowanie i czas przeżycia pacjentek. Projekt ma na celu dostarczenie istotnych informacji, które mogą pomóc w dostosowaniu strategii leczenia oraz w lepszym zrozumieniu zmienności odpowiedzi na terapię w zależności od typu nowotworu.
+
+Autorzy: Izabela Reszka, Piotr Wiśniewski, Klaudia Woźniak
