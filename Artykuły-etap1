@@ -4,4 +4,45 @@ Iza: https://docs.google.com/document/d/18ANhDAXFKDf5vuuMnyNAY4v5SuJHkyFu3tGUagv
 
 Klaudia:
 
+1. https://www.nature.com/articles/nature11412 - 
+
+Typy danych: RNA-Seq, DNA-seq, CNV, DNA methylation, proteomika RPPA
+ Cel: Charakterystyka molekularna raka piersi w dużej kohorcie z TCGA
+
+Główne wnioski: Breast cancer można podzielić na cztery główne molekularne podtypy: Luminal A, Luminal B, HER2-enriched, Basal-like.
+
+Basal-like subtype wykazuje największe podobieństwo molekularne do potrójnie ujemnego raka jajnika (serous ovarian cancer).
+
+TP53 mutuje w ~80% Basal-like i HER2-enriched nowotworów.
+
+PIK3CA mutuje głównie w Luminal A/B – może stanowić cel terapeutyczny.
+
+Profil DNA, RNA i białek istotnie różni się między podtypami – wpływa to na przeżycie i odpowiedź na leczenie.
+
+Możliwe jest przypisanie leczenia celowanego do konkretnego podtypu molekularnego.
+
+
+
+2. https://breast-cancer-research.biomedcentral.com/articles/10.1186/s13058-025-02026-5  
+Typy danych: RNA-Seq, Whole-genome sequencing
+Cel: Ocenia czy integracja danych RNA i DNA zwiększa trafność prognozy przeżycia i ryzyka nawrotu
+
+Główne wnioski: Integracja RNA i DNA prowadzi do lepszej stratyfikacji ryzyka nawrotu raka piersi niż dane osobno.
+
+Połączenie danych ujawniło nową podgrupę pacjentek z wysokim ryzykiem nawrotu, niewykrytą klasycznymi metodami (np. sam RNA).
+
+Mutacje TP53, w połączeniu z ekspresją genów stresu metabolicznego, wskazują na gorsze rokowanie.
+
+Ekspresja genów odpowiedzi immunologicznej (np. interferonów) może prognozować przeżycie niezależnie od klasyfikacji PAM50.
+
+Przyszłe modele predykcyjne powinny łączyć RNA, DNA i kliniczne cechy pacjenta.
+
+3. https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-018-0602-x 
+
+Typ danych: Proteomika i transkryptomika
+
+
+Główne wnioski: Analiza wykazała, że profile obfitości białek mogą podzielić guzy piersi na dwie grupy z wyraźnie różnymi wynikami przeżycia. Grupa 1, wzbogacona w podtypy podobne do podstawowych (basal-like), charakteryzowała się krótszym przeżyciem i była związana z aktywacją sygnalizacji Myc. Grupa 2, wzbogacona w podtypy luminalne A, wykazywała lepsze rokowanie.
+
+4. https://bmccancer.biomedcentral.com/articles/10.1186/1471-2407-11-230? 
 Piotr:
