@@ -43,3 +43,5 @@ Celem końcowym projektu jest stworzenie modelu predykcji ML do przewidywania pr
 - *** Opracowanie narzędzia wspomagającego analizę i interpretację wyników badań klinicznych.
 
 Autorzy: Izabela Reszka, Piotr Wiśniewski, Klaudia Woźniak
+
+Dane kliniczne: https://portal.gdc.cancer.gov/projects/TCGA-BRCA
