@@ -1,6 +1,6 @@
 ---
-title: "Untitled"
-author: "Izabela Reszka"
+title: "Badanie przeżycia"
+author: ""
 date: "2025-04-30"
 output: html_document
 ---
@@ -9,83 +9,59 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r install}
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# BiocManager::install("TCGAbiolinks", version = "3.16", force = TRUE)
 
-```{r cars}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-library(BiocManager)
-BiocManager::install("TCGAbiolinks", version = "3.16", force = TRUE)
-library(TCGAbiolinks)
-install.packages("stringi", dependencies = TRUE)
+# install.packages("stringi", dependencies = TRUE)
 
-
+# BiocManager::install("TCGAutils")
 ```
 
-```{r pressure, echo=FALSE}
+```{r library}
+library(TCGAutils) 
+library(TCGAbiolinks)
+library(BiocManager)
+library(dplyr)
+library(data.table)
+```
+
+
+
+```{r dane_subtypes, echo=FALSE}
 subtypes <- TCGAquery_subtype("BRCA")
 head(subtypes)
-
 colnames(subtypes)
 
 
 # clinical2 <- GDCquery_clinic(project = "TCGA-BRCA", type = "clinical")
 # head(clinical)
 
-BiocManager::install("TCGAutils")  # Instalacja TCGAutils
-library(TCGAutils) 
 
 metadata <- GDCquery_clinic(project = "TCGA-BRCA", type = "biospecimen")
-
-
-# query <- GDCquery(project = "TCGA-BRCA", data.category = "Clinical")
-# GDCdownload(query)
-# clinical_data <- GDCprepare(query)
+colnames(metadata)
 
 ```
 
-```{r}
 
+```{r clinical_data}
 
-# 
-# query <- GDCquery(
-#   project = "TCGA-BRCA",
-#   data.category = "Clinical",
-#   file.type = "xml"
-# )
-
-# GDCdownload(query)
-# 
-# # 3. dane pacjentów (clinical.info = "patient" lub inne: "drug", "radiation", "follow_up")
-# clinical <- GDCprepare_clinic(query, clinical.info = "patient")
-
-
-colnames(metadata)
-
-library(data.table)
-
-clinical <- fread("/Users/apple/Desktop/dane/clinical.tsv")
+clinical <- fread("clinical.tsv")
 
 colnames(clinical)
 
 
 clinical[clinical == "'--"] <- NA
 
-
-
-
-library(dplyr)
-
 clinical_clean <- clinical %>% 
   select_if(~ mean(is.na(.)) < 0.9)
 
 colnames(clinical_clean)
 
-
+######################################################################################################################################################
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
