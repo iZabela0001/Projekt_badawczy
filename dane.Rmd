@@ -1,6 +1,6 @@
 ---
-title: "Untitled"
-author: "Izabela Reszka"
+title: "Badanie przeżycia"
+author: ""
 date: "2025-04-30"
 output: html_document
 ---
@@ -9,83 +9,145 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r install}
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# BiocManager::install("TCGAbiolinks", version = "3.16", force = TRUE)
 
-```{r cars}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-library(BiocManager)
-BiocManager::install("TCGAbiolinks", version = "3.16", force = TRUE)
+# install.packages("stringi", dependencies = TRUE)
+
+# BiocManager::install("TCGAutils")
+```
+
+```{r library}
+library(TCGAutils) 
 library(TCGAbiolinks)
-install.packages("stringi", dependencies = TRUE)
-
+library(BiocManager)
+library(dplyr)
+library(data.table)
+library(survival)
+library(survminer)
 
 ```
 
-```{r pressure, echo=FALSE}
+
+
+```{r dane_subtypes, echo=FALSE}
 subtypes <- TCGAquery_subtype("BRCA")
 head(subtypes)
-
 colnames(subtypes)
 
+unique(subtypes$BRCA_Subtype_PAM50)
+unique(subtypes$vital_status)
+unique(subtypes$days_to_death)
+unique(subtypes$days_to_last_followup)
 
 # clinical2 <- GDCquery_clinic(project = "TCGA-BRCA", type = "clinical")
 # head(clinical)
 
-BiocManager::install("TCGAutils")  # Instalacja TCGAutils
-library(TCGAutils) 
 
 metadata <- GDCquery_clinic(project = "TCGA-BRCA", type = "biospecimen")
-
-
-# query <- GDCquery(project = "TCGA-BRCA", data.category = "Clinical")
-# GDCdownload(query)
-# clinical_data <- GDCprepare(query)
+colnames(metadata)
 
 ```
 
-```{r}
 
+```{r clinical_data}
 
-# 
-# query <- GDCquery(
-#   project = "TCGA-BRCA",
-#   data.category = "Clinical",
-#   file.type = "xml"
-# )
-
-# GDCdownload(query)
-# 
-# # 3. dane pacjentów (clinical.info = "patient" lub inne: "drug", "radiation", "follow_up")
-# clinical <- GDCprepare_clinic(query, clinical.info = "patient")
-
-
-colnames(metadata)
-
-library(data.table)
-
-clinical <- fread("/Users/apple/Desktop/dane/clinical.tsv")
+clinical <- fread("clinical.tsv")
 
 colnames(clinical)
 
 
 clinical[clinical == "'--"] <- NA
 
-
-
-
-library(dplyr)
-
 clinical_clean <- clinical %>% 
   select_if(~ mean(is.na(.)) < 0.9)
 
 colnames(clinical_clean)
 
+######################################################################################################################################################
+```
+
+
+
+
+
+### Podział na podtypy danych subtypes
+
+```{r}
+# może się póxniej przyda 
+lumA <- subtypes[subtypes$BRCA_Subtype_PAM50 == "LumA", ]
+
+lumB <- subtypes[subtypes$BRCA_Subtype_PAM50 == "LumB", ]
+
+Her2 <-subtypes[subtypes$BRCA_Subtype_PAM50 == "Her2", ]
+  
+Normal <- subtypes[subtypes$BRCA_Subtype_PAM50 == "Normal", ]
+  
+basal <- subtypes[subtypes$BRCA_Subtype_PAM50 == "Basal", ]
+```
+
+
+# Krzywe przeżycia
+
+## cenzurowanie
+
+```{r}
+
+subtypes$time <- ifelse(is.na(subtypes$days_to_death),
+                        subtypes$days_to_last_followup,
+                        subtypes$days_to_death)
+
+subtypes$event <- ifelse(subtypes$vital_status == "Dead", 1, 0)
+
+
+# typy bez NA
+subtypes <- subtypes[subtypes$BRCA_Subtype_PAM50 %in% c("LumA", "LumB", "Basal", "Her2", "Normal"), ]
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+1 = zdarzenie zaszło (zgon)
+
+0 = cenzurowany przypadek (pacjent żyje, ale nie wiemy co będzie dalej)
+
+## model
+
+```{r}
+subtypes$time <- as.numeric(subtypes$time)
+subtypes$event <- as.numeric(subtypes$event)
+#sum(is.na(subtypes$time))   
+
+fit <- survfit(Surv(time, event) ~ BRCA_Subtype_PAM50, data = subtypes)
+
+```
+
+
+time – ile czasu obserwowano pacjenta (do zgonu lub ostatniego kontaktu),
+
+event – czy pacjent zmarł (1), czy żyje (0).
+
+BRCA_Subtype_PAM50 - porownanie przezywalnosci w różnych grupach pod względem wartości BRCA_Subtype_PAM50
+
+
+```{r, fig.height= 15, fig.width= 18}
+ggsurvplot(fit,
+           data = subtypes,
+           pval = TRUE,              
+           risk.table = TRUE,            
+           title = "Krzywe przeżycia dla podtypów BRCA (PAM50)",
+           xlab = "Czas (dni)",
+           ylab = "Prawdopodobieństwo przeżycia",
+           legend.title = "Podtyp PAM50")
+
+# https://www.sthda.com/english/wiki/survival-analysis-basics
+
+```
+
+
+
+
+
+
