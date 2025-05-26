@@ -29,6 +29,9 @@ library(dplyr)
 library(data.table)
 library(survival)
 library(survminer)
+library(ggplot2)
+library(gridExtra)
+library(grid)
 
 ```
 
@@ -133,12 +136,6 @@ BRCA_Subtype_PAM50 - porownanie przezywalnosci w różnych grupach pod względem
 
 
 ```{r, fig.height= 10, fig.width= 15}
-library(survminer)
-library(ggplot2)
-library(gridExtra)
-library(grid)
-
-# Tworzymy wykres
 surv_plot <- ggsurvplot(
   fit,
   data = subtypes,
@@ -147,23 +144,31 @@ surv_plot <- ggsurvplot(
   title = "Krzywe przeżycia dla podtypów BRCA (PAM50)",
   xlab = "Czas (dni)",
   ylab = "Prawdopodobieństwo przeżycia",
-  legend.title = "Podtyp PAM50", 
-    # Czcionki
-  font.main = c(20, "bold"),      # Tytuł wykresu
-  font.x = c(20),                 # Oś X
-  font.y = c(20),                 # Oś Y
-  font.tickslab = c(20),         # Etykiety osi
-  font.legend = c(15),           # Legenda
-  font.caption = c(20) 
+  legend.title = "Podtyp PAM50",
+  font.main = c(20, "bold"),
+  font.x = c(20),
+  font.y = c(20),
+  font.tickslab = c(20),
+  font.legend = c(15),
+  font.caption = c(20),
+  palette = c("#edeba0", "lightblue", "thistle", "#dba09f", "lightgreen"), 
+
+  ggtheme = theme_survminer() + 
+    theme(
+      plot.background = element_rect(fill = "#fffcf7"),
+      panel.background = element_rect(fill = "#fffcf7")
+    ),
+  tables.theme = theme_survminer() + 
+    theme(
+      plot.background = element_rect(fill = "#fffcf7"),
+      panel.background = element_rect(fill = "#fffcf7")
+    )
 )
 
-# Otwórz urządzenie graficzne PNG
 png("krzywe_przezycia_z_tabela.png", width = 3000, height = 2000, res = 150)
-
-# Rysujemy cały obiekt graficzny (wykres + tabela ryzyka)
+# 
 print(surv_plot)
-
-# Zamykamy urządzenie
+# 
 dev.off()
 
 # https://www.sthda.com/english/wiki/survival-analysis-basics
