@@ -132,17 +132,43 @@ event – czy pacjent zmarł (1), czy żyje (0).
 BRCA_Subtype_PAM50 - porownanie przezywalnosci w różnych grupach pod względem wartości BRCA_Subtype_PAM50
 
 
-```{r, fig.height= 15, fig.width= 18}
-ggsurvplot(fit,
-           data = subtypes,
-           pval = TRUE,              
-           risk.table = TRUE,            
-           title = "Krzywe przeżycia dla podtypów BRCA (PAM50)",
-           xlab = "Czas (dni)",
-           ylab = "Prawdopodobieństwo przeżycia",
-           legend.title = "Podtyp PAM50")
+```{r, fig.height= 10, fig.width= 15}
+library(survminer)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+# Tworzymy wykres
+surv_plot <- ggsurvplot(
+  fit,
+  data = subtypes,
+  pval = TRUE,
+  risk.table = TRUE,
+  title = "Krzywe przeżycia dla podtypów BRCA (PAM50)",
+  xlab = "Czas (dni)",
+  ylab = "Prawdopodobieństwo przeżycia",
+  legend.title = "Podtyp PAM50", 
+    # Czcionki
+  font.main = c(20, "bold"),      # Tytuł wykresu
+  font.x = c(20),                 # Oś X
+  font.y = c(20),                 # Oś Y
+  font.tickslab = c(20),         # Etykiety osi
+  font.legend = c(15),           # Legenda
+  font.caption = c(20) 
+)
+
+# Otwórz urządzenie graficzne PNG
+png("krzywe_przezycia_z_tabela.png", width = 3000, height = 2000, res = 150)
+
+# Rysujemy cały obiekt graficzny (wykres + tabela ryzyka)
+print(surv_plot)
+
+# Zamykamy urządzenie
+dev.off()
 
 # https://www.sthda.com/english/wiki/survival-analysis-basics
+
+#testy
 
 ```
 
