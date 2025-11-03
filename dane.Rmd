@@ -177,6 +177,41 @@ dev.off()
 
 ```
 
+```{r}
+merged_data_cleaned <- read.csv("merged_data_cleaned.csv", 
+                        header = TRUE, 
+                        sep = ",", 
+                        stringsAsFactors = FALSE)
+
+ 
+# Sprawdzenie rozkładu danych czasowych
+hist(merged_data_cleaned$days_to_death, main = "Dni do zgonu", col = "red")
+hist(merged_data_cleaned$days_to_last_followup, main = "Dni do ostatniego kontaktu", col = "blue")
+ 
+# Sprawdzenie braków danych
+#sum(is.na(merged_data_cleaned$days_to_death))
+#sum(is.na(merged_data_cleaned$days_to_last_followup))
+
+# Ujednolicenie zapisu statusu życia
+merged_data_cleaned$vital_status <- toupper(merged_data_cleaned$vital_status)
+ 
+# Utworzenie zmiennej event: 1 = DEAD, 0 = ALIVE
+merged_data_cleaned$event <- ifelse(merged_data_cleaned$vital_status == "DEAD", 1, 0)
+
+# Utworzenie zmiennej time_to_event
+merged_data_cleaned$time_to_event <- ifelse(merged_data_cleaned$event == 1, 
+                                            merged_data_cleaned$days_to_death, 
+                                            merged_data_cleaned$days_to_last_followup)
+
+# Dodatkowe zabezpieczenie przed brakami danych
+merged_data_cleaned$time_to_event <- ifelse(!is.na(merged_data_cleaned$days_to_death),
+                                            merged_data_cleaned$days_to_death,
+                                            merged_data_cleaned$days_to_last_followup)
+
+# Sprawdzenie wyników
+# table(merged_data_cleaned$vital_status, merged_data_cleaned$event)  # DEAD → 1, ALIVE → 0
+# head(merged_data_cleaned)
+```
 
 
 
