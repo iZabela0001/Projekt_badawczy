@@ -249,16 +249,18 @@ merged_data_cleaned$time_to_event <- ifelse(merged_data_cleaned$event == 1,
 
 
  Zmienna `pathologic_stage` opisująca stadium zaawansowania nowotworu została 
- przekształcona na wartości liczbowe:
- - Stage I → 1
- - Stage II → 2
- - Stage III → 3
+ przekształcona na wartości:
+ - Stage I → I
+ - Stage II → II
+ - Stage III → III
 Wartości nieznane (np. "Unknown") zostały usunięte ze zbioru, ponieważ stanowiły 
 niewielki odsetek (11 przypadków) i nie wpływają istotnie na dalszą analizę.
 
 
 Kolumna `gender` została usunięta ze względu na brak zmienności — wszystkie przypadki 
-w zbiorze dotyczą kobiet, więc zmienna nie wnosi informacji analitycznej.
+w zbiorze dotyczą kobiet, więc zmienna nie wnosi informacji analitycznej. 
+Analogicznie postąpiono z `tumor_type` - tylko jeden typ nowotworu jest przedmiotem 
+analizy w projekcie.
 
 Ujednolicono nazewnictwo ras poprzez przypisanie spójnych etykiet typu `factor`.
 Dzięki temu możliwe jest łatwe grupowanie i porównywanie danych w dalszej analizie.
@@ -284,6 +286,7 @@ merged_data_cleaned <- merged_data_cleaned[!is.na(merged_data_cleaned$pathologic
 #przypadki w zbiorze dotyczą kobiet
 table(merged_data_cleaned$demographic_gender, useNA = "always")
 merged_data_cleaned$demographic_gender <- NULL
+merged_data_cleaned$tumor_type <- NULL
 
 #demographic_race
 #Ujednolicenie nazewnictwa 
@@ -351,6 +354,15 @@ merged_data_cleaned$demographic_ethnicity <- factor(
 
 merged_data_cleaned <- merged_data_cleaned %>%
   select(-demographic_days_to_death, -cases_days_to_lost_to_followup)
+
+
+#treatments_treatment_outcome 
+# Znak braku wystarczających danych został zastąpiony wyrażeniem "Unknown"
+#w celu ujednolicenia i ułatwienia analizy. 
+
+merged_data_cleaned$treatments_treatment_outcome[
+  merged_data_cleaned$treatments_treatment_outcome %in% c("'--", "Not Reported")
+] <- "Unknown"
 
 ```
 
@@ -464,6 +476,7 @@ ggplot(merged_data_cleaned, aes(x = demographic_ethnicity)) +
   theme_minimal()
 
 ```
+
 
 
 
