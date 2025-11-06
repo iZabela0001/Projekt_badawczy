@@ -426,6 +426,52 @@ merged_data_cleaned$treatments_treatment_outcome[
 
 ```
 
+W ramach czyszczenia danych uporządkowano wartości w kilku kluczowych kolumnach:
+
+ - `diagnoses_year_of_diagnosis`, 
+ - `diagnoses_laterality`, 
+ - `diagnoses_ajcc_pathologic_stage`, 
+ - `diagnoses_ajcc_pathologic_t`,
+ - `diagnoses_ajcc_pathologic_n`, 
+ - `diagnoses_ajcc_pathologic_m`, 
+ - `treatments_treatment_type`, 
+ - `treatments_treatment_outcome`
+ - `diagnoses_primary_diagnosis`. 
+ 
+Wszelkie nieczytelne wpisy typu "--", "'--" czy "Not Reported" 
+oraz braki danych (NA) zostały zastąpione jednolitą wartością "Unknown", 
+co pozwala na spójne traktowanie braków w dalszej analizie. 
+Dodatkowo w `diagnoses_ajcc_pathologic_stage` usunięto słowo "Stage" 
+dzięki czemu wartości są bardziej czytelne.
+
+```{r}
+
+# Wszystkie pozostałe kolumny do czyszczenia
+cols_to_clean <- c(
+  "diagnoses_year_of_diagnosis",
+  "diagnoses_laterality",
+  "diagnoses_ajcc_pathologic_stage",
+  "diagnoses_ajcc_pathologic_t",
+  "diagnoses_ajcc_pathologic_n",
+  "diagnoses_ajcc_pathologic_m",
+  "treatments_treatment_type",
+  "treatments_treatment_outcome",
+  "diagnoses_primary_diagnosis"
+)
+
+# Czyszczenie i standaryzacja danych
+for (col in cols_to_clean) {
+  merged_data_cleaned[[col]] <- as.character(merged_data_cleaned[[col]])
+  merged_data_cleaned[[col]] <- trimws(merged_data_cleaned[[col]])
+  merged_data_cleaned[[col]][merged_data_cleaned[[col]] %in% c("--", "'--")] <- "Unknown"
+  merged_data_cleaned[[col]][is.na(merged_data_cleaned[[col]])] <- "Unknown"
+  merged_data_cleaned[[col]][merged_data_cleaned[[col]] %in% c("--", "'--", "Not Reported")] <- "Unknown"
+  merged_data_cleaned$diagnoses_ajcc_pathologic_stage <- gsub("^Stage ", "", merged_data_cleaned$diagnoses_ajcc_pathologic_stage)
+}
+ 
+
+```
+
 ### Standaryzacja wieku pacjentek
 
 W celu ujednolicenia zmiennej wieku pacjentek, obliczono wartość `age_mean_years` 
@@ -468,7 +514,7 @@ qqnorm(merged_data_cleaned$age_mean_years); qqline(merged_data_cleaned$age_mean_
 
 ```
 
-Rozkład stadiów zaawansowania choroby
+*Rozkład stadiów zaawansowania choroby*
 
 Wykres słupkowy przedstawia liczbę przypadków w poszczególnych stadiach choroby (1–3). 
 Stadium 4 oraz wartości nieznane zostały usunięte ze względu na ich marginalną liczbę.
@@ -484,7 +530,7 @@ ggplot(merged_data_cleaned, aes(x = factor(pathologic_stage))) +
 
 ```
 
-Rozkład demograficzny pacjentek
+*Rozkład demograficzny pacjentek* 
 
 Wykresy słupkowe przedstawiają strukturę rasową i etniczną pacjentek. 
 Dominującą grupą są osoby rasy białej oraz niebędące Latynoskiego pochodzenia.
@@ -505,8 +551,7 @@ ggplot(merged_data_cleaned, aes(x = demographic_ethnicity)) +
   labs(title = "Rozkład etniczności pacjentek", x = "Etniczność", y = "Liczba przypadków") +
   theme_minimal()
 
-#write_csv("merged_data_cleaned.csv")
-
+write_csv(merged_data_cleaned, "actual_merged_data.csv")
 ```
 
 
