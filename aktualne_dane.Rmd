@@ -1,0 +1,557 @@
+---
+title: "Różnice w przeżyciu pacjentek z rakiem piersi w zależności od podtypu nowotworu"
+authors: "Izabela Reszka, Piotr Wiśniewski, Klaudia Woźniak"
+output: html_document
+
+---
+
+```{r instalowanie_bibliotek}
+
+install.packages("tidyverse")
+install.packages("skimr")
+install.packages("caret")
+install.packages("ggplot2")
+install.packages("patchwork")
+install.packages ("e1071")
+
+library(tidyverse)
+library(skimr)
+library(caret)
+library(ggplot2)
+library(patchwork)
+library(e1071)
+```
+
+**DATA WRANGLING**
+
+```{r}
+
+df <- read_tsv("merged_data.tsv")
+
+print(df)
+
+# Wymiary zbioru
+cat("Wymiary zbioru (wiersze, kolumny):", dim(df), "\n")
+
+# Podgląd danych
+glimpse(df)
+
+# Profilowanie za pomocą 'skimr'
+skim(df)
+
+# Usuwanie duplikaów
+cat("Liczba wierszy PRZED deduplikacją:", nrow(df), "\n")
+df_clean <- df %>%
+  distinct(ID, .keep_all = TRUE)
+cat("Liczba wierszy PO deduplikacji:", nrow(df_clean), "\n")
+
+# Usunięcie zbędnych kolumn (duplikaty ID oraz 100% puste)
+df_clean <- df_clean %>%
+  select(
+    -ID.1,                           # Duplikat ID
+    -cases.submitter_id,             # Duplikat ID
+    -patient,                        # Duplikat ID
+    -cases.case_id,                  # Inny, zbędny identyfikator
+    -Tumor_Grade,                    # 100% pusty
+    -tobacco_smoking_history         # 100% pusty
+  )
+
+# Czyszczenie "brudnych" kolumn (konwersja '--' na NA) ---
+# Identyfikujemy kolumny, które są 'character', ale powinny być 'numeric'
+# (te, które zawierają '--' zamiast NA)
+cols_to_clean_numeric <- c(
+  "demographic.days_to_death",
+  "cases.days_to_lost_to_followup",
+  "diagnoses.age_at_diagnosis",
+  "diagnoses.year_of_diagnosis"
+)
+
+df_clean <- df_clean %>%
+  # Krok 1: Zamień tekst "'--'" na prawdziwe 'NA'
+  mutate(across(all_of(cols_to_clean_numeric), ~ na_if(., "'--'"))) %>%
+  # Krok 2: Konwertuj te kolumny na typ numeryczny
+  mutate(across(all_of(cols_to_clean_numeric), as.numeric))
+
+
+# Obsługa braków danych (NA) w kolumnach kategorycznych ---
+# Po deduplikacji 'BRCA_Pathology' i 'pathologic_stage' nadal będą miały braki (NA).
+# Zamiast usuwać wiersze, lepiej zamienić NA na nową kategorię "Unknown".
+# Używamy forcats::fct_explicit_na()
+df_clean <- df_clean %>%
+  mutate(
+    pathologic_stage = fct_explicit_na(pathologic_stage, na_level = "Unknown"),
+    BRCA_Pathology = fct_explicit_na(BRCA_Pathology, na_level = "Unknown")
+  )
+
+# Sprawdzenie danych
+cat("--- Wynik po czyszczeniu (glimpse) ---\n")
+glimpse(df_clean)
+
+cat("\n--- Wynik po czyszczeniu (skim) ---\n")
+skim(df_clean)
+
+
+# Lista kolumn diagnostycznych do czyszczenia
+cols_to_factor <- c(
+  "diagnoses.ajcc_pathologic_stage",
+  "diagnoses.ajcc_pathologic_t",
+  "diagnoses.ajcc_pathologic_n",
+  "diagnoses.ajcc_pathologic_m",
+  "treatments.treatment_outcome"
+)
+
+# Czyścimy '--' na NA i konwertujemy na faktor
+df_clean <- df_clean %>%
+  mutate(across(all_of(cols_to_factor), ~ na_if(., "'--'"))) %>%
+  mutate(across(all_of(cols_to_factor), as.factor))
+
+cat("--- Glimpse po doczyszczeniu metadanych ---\n")
+glimpse(df_clean)
+install.packages("caret")
+library(caret)
+
+
+# Wybieramy tylko kolumny z danymi numerycznymi (od ERALPHA do CD24)
+df_features <- df_clean %>%
+  select(ERALPHA:CD24) # Używamy nazw do zaznaczenia zakresu
+
+nzv_metrics <- nearZeroVar(df_features, saveMetrics = TRUE)
+
+# Sprawdzamy, czy któreś kolumny zostały oflagowane jako NZV
+problematic_cols <- filter(nzv_metrics, nzv == TRUE)
+
+if(nrow(problematic_cols) > 0) {
+  cat("Znaleziono kolumny o niskiej wariancji (NZV):\n")
+  print(rownames(problematic_cols))
+  
+  # Usuwamy te kolumny
+  cols_to_remove <- rownames(problematic_cols)
+  df_clean <- df_clean %>%
+    select(-all_of(cols_to_remove))
+  
+  cat("\nUsunięto kolumny NZV. Nowa liczba kolumn:", ncol(df_clean), "\n")
+  
+} else {
+  cat("Gratulacje! Brak kolumn o niskiej wariancji (NZV).\n")
+}
+
+library(janitor)
+
+
+df_final <- df_clean %>%
+  clean_names()
+
+
+cat("--- Podgląd oczyszczonych nazw kolumn ---\n")
+glimpse(df_final)
+
+library(readr) 
+
+write_csv(df_final, "merged_data_cleaned.csv")
+
+
+```
+
+**STANDARYZACJA DANYCH** 
+
+```{r}
+
+merged_data_cleaned <- read.csv("merged_data_cleaned.csv", 
+                        header = TRUE, 
+                        sep = ",", 
+                        stringsAsFactors = FALSE)
+
+ 
+# Sprawdzenie rozkładu danych czasowych
+hist(merged_data_cleaned$days_to_death, main = "Dni do zgonu", col = "red")
+hist(merged_data_cleaned$days_to_last_followup, main = "Dni do ostatniego kontaktu", col = "blue")
+ 
+# Sprawdzenie braków danych
+#sum(is.na(merged_data_cleaned$days_to_death))
+#sum(is.na(merged_data_cleaned$days_to_last_followup))
+
+# Ujednolicenie zapisu statusu życia
+merged_data_cleaned$vital_status <- toupper(merged_data_cleaned$vital_status)
+ 
+# Utworzenie zmiennej event: 1 = DEAD, 0 = ALIVE
+merged_data_cleaned$event <- ifelse(merged_data_cleaned$vital_status == "DEAD", 1, 0)
+
+# Utworzenie zmiennej time_to_event
+merged_data_cleaned$time_to_event <- ifelse(merged_data_cleaned$event == 1, 
+                                            merged_data_cleaned$days_to_death, 
+                                            merged_data_cleaned$days_to_last_followup)
+
+# Sprawdzenie wyników
+# table(merged_data_cleaned$vital_status, merged_data_cleaned$event)  # DEAD → 1, ALIVE → 0
+# head(merged_data_cleaned)
+
+```
+
+**Standaryzacja białek** 
+
+
+```{r}
+
+bialka <- c("eralpha", "pr", "her2", "egfr_mirnaprot", "p53", "pten_mirnaprot",
+            "mek1", "bcl2_mirnaprot", "bax", "parpcleaved", "ecadherin",
+            "ncadherin", "betacatenin", "brca1", "pdl1")
+
+merged_data_cleaned[bialka] <- lapply(merged_data_cleaned[bialka], as.numeric)
+
+bialka_z <- paste0(bialka, "_z")
+merged_data_cleaned[bialka_z] <- scale(merged_data_cleaned[bialka])
+
+```
+
+
+### Rozkłady standaryzowanych poziomów białek
+
+Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów ekspresji
+wybranych białek wśród pacjentek. Każda zmienna została przekształcona do skali 
+Z-score, co oznacza, że wartości mają średnią bliską 0 
+i odchylenie standardowe bliskie 1. Taka transformacja umożliwia bezpośrednie
+porównywanie zmiennych o różnych jednostkach i zakresach.
+
+Większość rozkładów jest względnie symetryczna, co sugeruje brak silnych 
+odchyleń od normalności. W niektórych przypadkach widoczne są lekkie skośności
+lub spłaszczenia, które mogą wynikać z biologicznego zróżnicowania w populacji
+lub obecności podgrup pacjentek. Brak wyraźnych wartości odstających świadczy 
+o dobrej jakości danych.
+
+Ze względu na obecność wartości ujemnych oraz względnie symetryczne rozkłady 
+większości zmiennych, nie zastosowano dodatkowej transformacji logarytmicznej.
+Logarytmizacja wymaga dodatnich wartości i mogłaby prowadzić 
+do błędów obliczeniowych (NaN) w przypadku danych z wartościami poniżej zera.
+
+
+```{r}
+
+plot_density_chunks <- function(vars, data, fill_color = "lightblue", ncol = 2, chunk_size = 6) {
+  chunks <- split(vars, ceiling(seq_along(vars) / chunk_size))
+  
+  for (chunk in chunks) {
+    plots <- lapply(chunk, function(var) {
+      df <- data[!is.na(data[[var]]), ]
+      
+      ggplot(df, aes_string(x = var)) +
+        geom_density(fill = fill_color, alpha = 0.6) +
+        labs(title = var, x = "Z-score", y = "Gęstość") +
+        theme_minimal(base_size = 12)
+    })
+    
+    print(wrap_plots(plots, ncol = ncol))
+  }
+}
+
+plot_density_chunks(bialka_z, merged_data_cleaned, fill_color = "lightblue", ncol = 2)
+
+
+```
+
+
+**Standaryzacja miRNA** 
+
+
+```{r}
+
+mirna <- c("hsa_let_7a_1", "hsa_let_7a_2", "hsa_let_7a_3", "hsa_let_7b", "hsa_let_7c", "hsa_let_7d",
+           "hsa_let_7e", "hsa_let_7f_1", "hsa_let_7f_2", "hsa_let_7g", "hsa_let_7i", "hsa_mir_21",
+           "hsa_mir_141", "hsa_mir_200a", "hsa_mir_200b", "hsa_mir_200c", "hsa_mir_429", "hsa_mir_221",
+           "hsa_mir_222", "hsa_mir_205", "hsa_mir_155", "hsa_mir_10b", "hsa_mir_31", "hsa_mir_34a")
+
+merged_data_cleaned[mirna] <- lapply(merged_data_cleaned[mirna], as.numeric)
+
+mirna_z <- paste0(mirna, "_z")
+merged_data_cleaned[mirna_z] <- scale(merged_data_cleaned[mirna])
+
+
+```
+
+### Rozkłady standaryzowanych poziomów miRNA
+
+Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów ekspresji 
+wybranych cząsteczek miRNA. Standaryzacja do skali Z-score
+pozwala na porównywanie miRNA między sobą oraz z innymi typami danych biologicznych,
+niezależnie od pierwotnej skali pomiarowej.
+
+Rozkłady miRNA są bardziej zróżnicowane niż w przypadku białek — część z nich 
+wykazuje wyraźną skośność, wielomodalność lub obecność wartości odstających.
+Może to wskazywać na różnice biologiczne między pacjentkami 
+lub specyficzne wzorce regulacji genów.
+
+Ze względu na obecność wartości ujemnych oraz względnie symetryczne rozkłady 
+większości zmiennych, nie zastosowano dodatkowej transformacji logarytmicznej.
+Logarytmizacja wymaga dodatnich wartości i mogłaby prowadzić 
+do błędów obliczeniowych (NaN) w przypadku danych z wartościami poniżej zera.
+
+
+```{r}
+
+plot_mirna_density <- function(vars, data, ncol = 2) {
+  plots <- lapply(vars, function(var) {
+    df <- data[!is.na(data[[var]]), ]
+    
+    ggplot(df, aes_string(x = var)) +
+      geom_density(fill = "plum", alpha = 0.6) +
+      labs(title = var, x = "Z-score", y = "Gęstość") +
+      theme_minimal(base_size = 12)
+  })
+  
+  wrap_plots(plots, ncol = ncol)
+}
+
+mirna_z_chunks <- split(mirna_z, ceiling(seq_along(mirna_z) / 6))
+for (chunk in mirna_z_chunks) {
+  print(plot_mirna_density(chunk, merged_data_cleaned, ncol = 2))
+}
+
+```
+
+
+ Zmienna `pathologic_stage` opisująca stadium zaawansowania nowotworu została 
+ przekształcona na wartości:
+ - Stage I → I
+ - Stage II → II
+ - Stage III → III
+Wartości nieznane (np. "Unknown") zostały usunięte ze zbioru, ponieważ stanowiły 
+niewielki odsetek (11 przypadków) i nie wpływają istotnie na dalszą analizę.
+
+
+Kolumna `gender` została usunięta ze względu na brak zmienności — wszystkie przypadki 
+w zbiorze dotyczą kobiet, więc zmienna nie wnosi informacji analitycznej. 
+Analogicznie postąpiono z `tumor_type` - tylko jeden typ nowotworu jest przedmiotem 
+analizy w projekcie.
+
+Ujednolicono nazewnictwo ras poprzez przypisanie spójnych etykiet typu `factor`.
+Dzięki temu możliwe jest łatwe grupowanie i porównywanie danych w dalszej analizie.
+
+``` {r standaryzacja_pozostałych_danych_1}
+
+#pathologic_stage 
+#Zamieniamy tutaj stadia zaawansowania nowotworu na dane liczbowe, dane Unknown, 
+#co do których nie mamy danych - usuwamy. Z racji tego, że jest ich tylko 11, nie 
+#jest to "zagrożeniem" dla dalszych etapów analizy.
+
+table(merged_data_cleaned$pathologic_stage, useNA = "always")
+
+merged_data_cleaned$pathologic_stage <- ifelse(merged_data_cleaned$pathologic_stage == "Stage_I", "I",
+                                         ifelse(merged_data_cleaned$pathologic_stage == "Stage_II", "II",
+                                         ifelse(merged_data_cleaned$pathologic_stage == "Stage_III", "III",
+                                         NA)))
+merged_data_cleaned <- merged_data_cleaned[!is.na(merged_data_cleaned$pathologic_stage), ]
+#table(merged_data_cleaned$pathologic_stage)
+
+#demographic_gender 
+#Kolumna gender została usunięta ze względu na brak zmienności — wszystkie 
+#przypadki w zbiorze dotyczą kobiet
+table(merged_data_cleaned$demographic_gender, useNA = "always")
+merged_data_cleaned$demographic_gender <- NULL
+merged_data_cleaned$tumor_type <- NULL
+
+#demographic_race
+#Ujednolicenie nazewnictwa 
+merged_data_cleaned$demographic_race <- factor(
+  merged_data_cleaned$demographic_race,
+  levels = c(
+    "white",
+    "black or african american",
+    "asian",
+    "american indian or alaska native",
+    "not reported"
+  ),
+  labels = c(
+    "White",
+    "Black",
+    "Asian",
+    "Native",
+    "Unknown"
+  )
+)
+
+```
+
+W ramach przygotowania danych do analizy, przeprowadzono standaryzację zmiennej 
+`demographic_ethnicity`, która opisuje przynależność etniczną pacjentek.
+Występowały w niej wartości brakujące (`NA`) oraz niejednolite zapisy, takie jak 
+`"not reported"`, które mogły utrudniać dalszą analizę.
+
+Wszystkie wartości `NA` oraz `"not reported"` zostały zastąpione wartością 
+`"Unknown"`, co pozwala zachować informację o braku danych bez ich całkowitego usuwania.
+
+Następnie zmienna została przekształcona do typu `factor` z trzema spójnymi etykietami:
+   - `"Non-Hispanic"` – osoby niebędące Latynoskiego pochodzenia
+   - `"Hispanic"` – osoby Latynoskiego pochodzenia
+   - `"Unknown"` – brak informacji
+
+Dodatkowo usunięto kolumny `demographic_days_to_death` oraz `cases_days_to_lost_to_followup`,
+które zawierały nadmiarowe lub nieprzydatne informacje czasowe.
+
+
+```{r transformacje_cdn}
+
+#demographic_ethnicity
+merged_data_cleaned$demographic_ethnicity[is.na(merged_data_cleaned$demographic_ethnicity)] <- "Unknown"
+
+merged_data_cleaned$demographic_ethnicity[
+  merged_data_cleaned$demographic_ethnicity == "not reported"
+] <- "Unknown"
+
+merged_data_cleaned$demographic_ethnicity <- factor(
+  merged_data_cleaned$demographic_ethnicity,
+  levels = c(
+    "not hispanic or latino",
+    "hispanic or latino",
+    "Unknown"
+  ),
+  labels = c(
+    "Non-Hispanic",
+    "Hispanic",
+    "Unknown"
+  )
+)
+
+#demographic_days_to_death & cases_days_to_lost_to_followup <- NA
+
+merged_data_cleaned <- merged_data_cleaned %>%
+  select(-demographic_days_to_death, -cases_days_to_lost_to_followup)
+
+
+#treatments_treatment_outcome 
+# Znak braku wystarczających danych został zastąpiony wyrażeniem "Unknown"
+#w celu ujednolicenia i ułatwienia analizy. 
+
+merged_data_cleaned$treatments_treatment_outcome[
+  merged_data_cleaned$treatments_treatment_outcome %in% c("'--", "Not Reported")
+] <- "Unknown"
+
+```
+
+W ramach czyszczenia danych uporządkowano wartości w kilku kluczowych kolumnach:
+
+ - `diagnoses_year_of_diagnosis`, 
+ - `diagnoses_laterality`, 
+ - `diagnoses_ajcc_pathologic_stage`, 
+ - `diagnoses_ajcc_pathologic_t`,
+ - `diagnoses_ajcc_pathologic_n`, 
+ - `diagnoses_ajcc_pathologic_m`, 
+ - `treatments_treatment_type`, 
+ - `treatments_treatment_outcome`
+ - `diagnoses_primary_diagnosis`. 
+ 
+Wszelkie nieczytelne wpisy typu "--", "'--" czy "Not Reported" 
+oraz braki danych (NA) zostały zastąpione jednolitą wartością "Unknown", 
+co pozwala na spójne traktowanie braków w dalszej analizie. 
+Dodatkowo w `diagnoses_ajcc_pathologic_stage` usunięto słowo "Stage" 
+dzięki czemu wartości są bardziej czytelne.
+
+```{r}
+
+# Wszystkie pozostałe kolumny do czyszczenia
+cols_to_clean <- c(
+  "diagnoses_year_of_diagnosis",
+  "diagnoses_laterality",
+  "diagnoses_ajcc_pathologic_stage",
+  "diagnoses_ajcc_pathologic_t",
+  "diagnoses_ajcc_pathologic_n",
+  "diagnoses_ajcc_pathologic_m",
+  "treatments_treatment_type",
+  "treatments_treatment_outcome",
+  "diagnoses_primary_diagnosis"
+)
+
+# Czyszczenie i standaryzacja danych
+for (col in cols_to_clean) {
+  merged_data_cleaned[[col]] <- as.character(merged_data_cleaned[[col]])
+  merged_data_cleaned[[col]] <- trimws(merged_data_cleaned[[col]])
+  merged_data_cleaned[[col]][merged_data_cleaned[[col]] %in% c("--", "'--")] <- "Unknown"
+  merged_data_cleaned[[col]][is.na(merged_data_cleaned[[col]])] <- "Unknown"
+  merged_data_cleaned[[col]][merged_data_cleaned[[col]] %in% c("--", "'--", "Not Reported")] <- "Unknown"
+  merged_data_cleaned$diagnoses_ajcc_pathologic_stage <- gsub("^Stage ", "", merged_data_cleaned$diagnoses_ajcc_pathologic_stage)
+}
+ 
+
+```
+
+### Standaryzacja wieku pacjentek
+
+W celu ujednolicenia zmiennej wieku pacjentek, obliczono wartość `age_mean_years` 
+jako średnią z dostępnych źródeł wieku (wiek w dniach, wiek przy diagnozie, wiek indeksowy).
+Następnie zastosowano standaryzację Z-score (`age_z`), co pozwala na porównywanie 
+pacjentek względem średniego wieku w populacji:
+
+- `age_z = 0` → pacjentka o przeciętnym wieku
+- `age_z > 0` → starsza niż średnia
+- `age_z < 0` → młodsza niż średnia
+
+Dzięki temu zmienna wiekowa może być użyta w modelach statystycznych jako zmienna 
+ilościowa, bez ryzyka błędnej interpretacji skali.
+
+
+```{r age_at_diagnosis_years} 
+
+merged_data_cleaned$age_from_days <- round(merged_data_cleaned$diagnoses_age_at_diagnosis / 365, 1)
+
+merged_data_cleaned$age_mean_years <- rowMeans(
+  merged_data_cleaned[, c("age_from_days", "age_at_initial_pathologic_diagnosis", "demographic_age_at_index")],
+  na.rm = TRUE
+)
+
+merged_data_cleaned$age_z <- as.numeric(scale(merged_data_cleaned$age_mean_years))
+
+
+hist(merged_data_cleaned$age_mean_years, col = "lightblue", main = "Średni wiek w latach", xlab = "Lata")
+
+merged_data_cleaned <- merged_data_cleaned %>%
+  select(-age_from_days, -age_at_initial_pathologic_diagnosis, -demographic_age_at_index)
+
+
+ggplot(merged_data_cleaned, aes(x = age_mean_years)) +
+  geom_density(fill = "plum", alpha = 0.5) +
+  labs(title = "Rozkład wieku", x = "Wiek", y = "Gęstość")
+
+qqnorm(merged_data_cleaned$age_mean_years); qqline(merged_data_cleaned$age_mean_years)
+
+
+```
+
+*Rozkład stadiów zaawansowania choroby*
+
+Wykres słupkowy przedstawia liczbę przypadków w poszczególnych stadiach choroby (1–3). 
+Stadium 4 oraz wartości nieznane zostały usunięte ze względu na ich marginalną liczbę.
+Rozkład pokazuje, że większość pacjentek znajduje się w stadium II, co może mieć 
+wpływ na dalszą analizę przeżycia i modelowanie ryzyka.
+
+```{r}
+
+ggplot(merged_data_cleaned, aes(x = factor(pathologic_stage))) +
+  geom_bar(fill = "#dba09f") +
+  labs(title = "Rozkład stadiów zaawansowania choroby", x = "Stadium", y = "Liczba przypadków") +
+  theme_minimal()
+
+```
+
+*Rozkład demograficzny pacjentek* 
+
+Wykresy słupkowe przedstawiają strukturę rasową i etniczną pacjentek. 
+Dominującą grupą są osoby rasy białej oraz niebędące Latynoskiego pochodzenia.
+Wartości brakujące zostały zakodowane jako `"Unknown"`, co pozwala zachować 
+informację o niepełnych danych bez ich usuwania. Taka struktura demograficzna 
+może mieć znaczenie w analizie przeżycia i interpretacji wyników.
+
+
+```{r}
+
+ggplot(merged_data_cleaned, aes(x = demographic_race)) +
+  geom_bar(fill = "lightblue") +
+  labs(title = "Rozkład ras pacjentek", x = "Rasa", y = "Liczba przypadków") +
+  theme_minimal()
+
+ggplot(merged_data_cleaned, aes(x = demographic_ethnicity)) +
+  geom_bar(fill = "plum") +
+  labs(title = "Rozkład etniczności pacjentek", x = "Etniczność", y = "Liczba przypadków") +
+  theme_minimal()
+
+write_csv(merged_data_cleaned, "actual_merged_data.csv")
+```
+
+
