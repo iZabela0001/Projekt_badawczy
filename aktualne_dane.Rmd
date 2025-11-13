@@ -6,21 +6,34 @@ output: html_document
 ---
 
 ```{r instalowanie_bibliotek}
+# install.packages("tidyverse")
+# install.packages("skimr")
+# install.packages("caret")
+# install.packages("ggplot2")
+# install.packages("patchwork")
+# install.packages ("e1071")
+# install.packages("caret")
+#install.packages("pheatmap")
+#install.packages("RColorBrewer")
+```
 
-install.packages("tidyverse")
-install.packages("skimr")
-install.packages("caret")
-install.packages("ggplot2")
-install.packages("patchwork")
-install.packages ("e1071")
 
+```{r ladowanie_bibliotek}
+library(caret)
 library(tidyverse)
 library(skimr)
 library(caret)
 library(ggplot2)
 library(patchwork)
 library(e1071)
+library(pheatmap)
+library(dplyr)
+library(RColorBrewer)
+library(ggplot2)
 ```
+
+
+
 
 **DATA WRANGLING**
 
@@ -42,13 +55,12 @@ skim(df)
 # Usuwanie duplikaów
 cat("Liczba wierszy PRZED deduplikacją:", nrow(df), "\n")
 df_clean <- df %>%
-  distinct(ID, .keep_all = TRUE)
+  distinct(ID.1, .keep_all = TRUE)
 cat("Liczba wierszy PO deduplikacji:", nrow(df_clean), "\n")
 
 # Usunięcie zbędnych kolumn (duplikaty ID oraz 100% puste)
 df_clean <- df_clean %>%
-  select(
-    -ID.1,                           # Duplikat ID
+  select(                          # Duplikat ID
     -cases.submitter_id,             # Duplikat ID
     -patient,                        # Duplikat ID
     -cases.case_id,                  # Inny, zbędny identyfikator
@@ -107,8 +119,7 @@ df_clean <- df_clean %>%
 
 cat("--- Glimpse po doczyszczeniu metadanych ---\n")
 glimpse(df_clean)
-install.packages("caret")
-library(caret)
+
 
 
 # Wybieramy tylko kolumny z danymi numerycznymi (od ERALPHA do CD24)
@@ -151,6 +162,13 @@ write_csv(df_final, "merged_data_cleaned.csv")
 
 
 ```
+
+
+```{r}
+####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+```
+
+
 
 **STANDARYZACJA DANYCH** 
 
@@ -253,11 +271,33 @@ plot_density_chunks(bialka_z, merged_data_cleaned, fill_color = "lightblue", nco
 
 
 ```{r}
+mirna <- c(
+  'hsa_mir_17',
+  'hsa_mir_206',
+  'hsa_mir_210',
+  'hsa_mir_100',
+  'hsa_mir_130a',
+  'hsa_mir_27b',
+  'hsa_let_7f_1',
+  'hsa_let_7f_2',
+  'hsa_mir_20a',
+  'hsa_mir_34a',
+  'hsa_mir_25',
+  'hsa_mir_21',
+  'hsa_mir_23b',
+  'hsa_mir_29a',
+  'hsa_mir_181d',
+  'hsa_mir_203a',
+  'hsa_mir_181c',
+  'hsa_mir_155',
+  'hsa_mir_205',
+  'hsa_mir_10a',
+  'hsa_let_7b',
+  'hsa_mir_15a',
+  'hsa_mir_134',
+  'hsa_mir_200c'
+)
 
-mirna <- c("hsa_let_7a_1", "hsa_let_7a_2", "hsa_let_7a_3", "hsa_let_7b", "hsa_let_7c", "hsa_let_7d",
-           "hsa_let_7e", "hsa_let_7f_1", "hsa_let_7f_2", "hsa_let_7g", "hsa_let_7i", "hsa_mir_21",
-           "hsa_mir_141", "hsa_mir_200a", "hsa_mir_200b", "hsa_mir_200c", "hsa_mir_429", "hsa_mir_221",
-           "hsa_mir_222", "hsa_mir_205", "hsa_mir_155", "hsa_mir_10b", "hsa_mir_31", "hsa_mir_34a")
 
 merged_data_cleaned[mirna] <- lapply(merged_data_cleaned[mirna], as.numeric)
 
@@ -553,5 +593,392 @@ ggplot(merged_data_cleaned, aes(x = demographic_ethnicity)) +
 
 write_csv(merged_data_cleaned, "actual_merged_data.csv")
 ```
+
+
+
+
+
+```{r}
+####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+```
+
+
+```{r}
+final_data <- read.csv("actual_merged_data.csv", 
+                        header = TRUE, 
+                        sep = ",", 
+                        stringsAsFactors = FALSE)
+```
+
+
+```{r kolumny_etap2, echo=FALSE, eval=TRUE, results='asis'}
+pam50_col <- "brca_subtype_pam50"
+patient_id_col <- "id_1"
+```
+
+```{r}
+print(
+  table(final_data[[pam50_col]], useNA = "always")
+)
+```
+
+```{r}
+final_data <- final_data %>%
+  filter(.data[[pam50_col]] != "Normal")
+
+final_data[[pam50_col]] <- factor(final_data[[pam50_col]])
+```
+
+
+
+```{r}
+####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+```
+
+
+
+
+# Etap2 mi-RNA
+
+
+
+```{r markerymiRNA_etap2}
+mirna_markers <- c(
+  'hsa_mir_17_z',
+  'hsa_mir_206_z',
+  'hsa_mir_210_z',
+  'hsa_mir_100_z',
+  'hsa_mir_130a_z',
+  'hsa_mir_27b_z',
+  'hsa_let_7f_1_z',
+  'hsa_let_7f_2_z',
+  'hsa_mir_20a_z',
+  'hsa_mir_34a_z',
+  'hsa_mir_25_z',
+  'hsa_mir_21_z',
+  'hsa_mir_23b_z',
+  'hsa_mir_29a_z',
+  'hsa_mir_181d_z',
+  'hsa_mir_203a_z',
+  'hsa_mir_181c_z',
+  'hsa_mir_155_z',
+  'hsa_mir_205_z',
+  'hsa_mir_10a_z',
+  'hsa_let_7b_z',
+  'hsa_mir_15a_z',
+  'hsa_mir_134_z',
+  'hsa_mir_200c_z'
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# SPRAWDZCIE AJPIERW CZY NA PEWNO WASZE WSZYSTKIE ZMIENNE SĄ W RAMCE DANYCH FINAL DATA (NIZEJ KOD)
+
+
+
+
+
+
+
+
+
+
+
+# mirna_markers_exist <- mirna[mirna %in% colnames(final_data)]
+# if (length(mirna_markers_exist) == 0) {
+#   stop("BŁĄD: Nnie znaleziono żadnych kolumn  miRNA w pliku")
+# }
+# cat("są", length(mirna_markers_exist), "z", length(mirna), "oczekiwanych markerów miRNA.\n\n")
+```
+
+
+Macierz do heatmapy (miRNA x pacjentci)
+
+
+```{r macierzmiRNA_etap2}
+matric_mirna_only <- final_data[, mirna_markers]
+```
+
+
+```{r nazwypacjentow_etap2}
+rownames(matric_mirna_only) <- final_data[[patient_id_col]]
+```
+
+```{r transpozycjaaa_etap2}
+heatmap_matrix_mirna <- t(matric_mirna_only)
+```
+
+
+```{r pasekkolorow_etap2}
+adn_mirna <- data.frame(PAM50 = final_data[[pam50_col]])
+rownames(adn_mirna) <- final_data[[patient_id_col]]
+```
+
+```{r sortowaniewgpam50_mirRNA_etap2}
+kolejnosc_pacjentow <- order(final_data[[pam50_col]])
+posortowane_id <- final_data[[patient_id_col]][kolejnosc_pacjentow]
+```
+
+```{r mix_miRNA_etap2}
+heatmap_matrix_sorted <- heatmap_matrix_mirna[, posortowane_id]
+annotation_df_sorted <- adn_mirna[posortowane_id, , drop = FALSE]
+```
+
+
+```{r generowanie_MIRNA_etap2_heatmapa}
+pheatmap(
+  heatmap_matrix_sorted,
+  #scale = "row",
+  cluster_cols = FALSE,
+  cluster_rows = TRUE,
+  annotation_col = annotation_df_sorted,
+  show_colnames = FALSE,
+  show_rownames = TRUE,
+  main = "Heatmapa miRNA vs PAM50 (Posortowana wg Podtypu)",
+  color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
+  breaks = seq(-2, 2, length.out = 100),  
+  #filename = "Iza_Heatmapa_miRNA_kontrastowa.png",
+  width = 10,
+  height = 13
+)
+
+
+#print(heatmapa_miRNA_etap2)
+```
+
+Analiza wizualna mapy cieplnej wykazuje istotne korelacje z wynikami uzyskanymi przy użyciu algorytmów uczenia maszynowego opisanymi w artykule źródłowym, potwierdzając molekularną odrębność podtypu bazalnego (Basal/TNBC), jednocześnie ujawniając pewne niejednoznaczności w pozostałych grupach.
+
+----------------------------------------------------------------------------------------------------------------
+1. Podtyp Bazalny (Basal / TNBC)
+
+Jest to podtyp, w którym wizualizacja wykazuje największą zgodność z danymi literaturowymi, ujawniając kluczowe biomarkery agresywności guza.
+
+- Nadekspresja klastra (Zgodność: Wysoka): Na mapie ciepła w sekcji Basal widoczny jest intensywny, czerwony blok dla miR-17 oraz miR-20a. Jest to bezpośrednie potwierdzenie wyników artykułu, który identyfikuje miR-17 jako jeden z najważniejszych markerów predykcyjnych dla podtypu potrójnie ujemnego. Badania wskazują, że nadekspresja tej rodziny jest skorelowana z wysokim stopniem złośliwości guza i regulacją szlaku c-MYC.
+
+
+- Obniżenie poziomu miR-206 (Zgodność: Wysoka): Wiersz miR-206 na Twoim wykresie jest wyraźnie "chłodny" (niebieski/biały) w grupie bazalnej. Koreluje to idealnie z danymi z Tabeli II artykułu, gdzie miR-206 odnotowano jako najsilniej obniżony (downregulated) miRNA w grupie TNBC względem kontroli.
+
+- Niejednoznaczność miR-155 (Rozbieżność): Na mapie ciepła miR-155 jest silnie nadekspresjonowany w grupie bazalnej. Warto odnotować, że w artykule Triantafyllou et al. nadekspresję miR-155 przypisano głównie do grupy Luminal A , a w tabeli wyników dla TNBC odnotowano nawet jego obniżenie. wynik może sugerować specyfikę badanej kohorty, odmienną od tej opisanej w artykule.
+
+- mir-210 w TNBC: Artykuł identyfikuje miR-210 jako jeden z kluczowych markerów predykcyjnych dla TNBC (z nadekspresją +38-krotną). Na wykresie wiersz ten jest dość niejednorodny – choć widać pewne podwyższenie w sekcji Basal, nie jest ono tak spektakularne wizualnie jak w przypadku miR-17, gdzie ekspresja mir-17 według badań jest niższa niż w przypadku mir-210 ale nadal przeważający kolor to czerwony więc raczej ok. 
+----------------------------------------------------------------------------------------------------------------
+
+2. Podtyp HER2-dodatni (HER2+)
+
+W tym podtypie analiza wykresu w kontekście artykułu wskazuje na pewne różnice w sile sygnału dla kluczowych markerów.
+
+- Brak wyraźnej sygnatury miR-200c (Rozbieżność): Według artykułu, miR-200c powinien być najsilniej nadekspresjonowanym markerem w grupie HER2+ (ok. 15-krotny wzrost). Na  mapie ciepła w sekcji HER2 (różowy pasek) wiersz ten nie wyróżnia się intensywną czerwienią na tle innych podtypów. Oznacza to, że w danych ten konkretny marker nie jest tak dominujący, jak sugeruje literatura.
+
+- Obecność miR-21: Podobnie jak w innych podtypach, miR-21 wykazuje tu podwyższoną ekspresję, co jest zgodne z tezą o jego uniwersalnej roli onkogennej, choć w artykule wskazano, że jego poziom w HER2+ jest nieco niższy niż w grupach Luminal B czy TNBC
+
+- mir-155 (umiarkowana)
+Względna ekspresja miR-155 była najsilniejsza w fazie III, następnie w fazie II i I; była najsilniejsza w podtypie „potrójnie ujemnym”, następnie w HER-2(+), luminalnym B i luminalnym A (https://cjcr.amegroups.org/article/view/1256/1952)
+
+----------------------------------------------------------------------------------------------------------------
+
+3. Luminal A
+
+"Dane wykazały znacząco obniżony poziom miR-17-5p i miR-20a-5p, które odgrywają istotną rolę w inwazji i migracji komórek nowotworowych poprzez supresję Wnt/β-kateniny w grupie pacjentów z LumA - https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/" - zgodność z naszym wykresem.
+
+- miR-29a (Niezgodność):
+
+Heatmapa: Wiersz hsa_mir_29a_z wykazuje w sekcji LumA intensywny kolor czerwony, co sugeruje wysoką nadekspresję. Artykuł: W surowicy pacjentek z Luminal A odnotowano drastyczny spadek poziomu tego miRNA (Fold Regulation: -19.808). Jest to całkowita odwrotność tego, co widać na wykresie.
+
+- Rodzina miR-181 (miR-181d i miR-181c) (Niezgodność):
+
+Heatmapa: W dolnej części wykresu wiersze dla hsa_mir_181d_z i hsa_mir_181c_z są w większości czerwone (wysokie) dla grupy LumA. Artykuł: Dane wskazują na silne obniżenie ekspresji w surowicy (miR-181d: -19.524, miR-181c: -4.574).
+
+- miR-206 (Niezgodność):
+
+Heatmapa: Wiersz hsa_mir_206_z w kolumnach turkusowych jest bardzo wyraźnie niebieski, co oznacza niemal brak ekspresji lub bardzo niski poziom. Artykuł: W badaniu wykazano, że w surowicy Luminal A poziom miR-206 jest podwyższony (Fold Regulation: +9.034).
+
+-miR-23b (Umiarkowane / Wysoka):
+
+Heatmapa: Wiersz hsa_mir_23b_z ma czasami tendencję do koloru czerwonego/pomarańczowego jednak przeważa kolor niebieski który sugeruje niską ekspresję. Artykuł: Zanotowano spadek ekspresji (Fold Regulation: -9.030).
+
+- miR-155 (Niezgodność):
+
+Heatmapa: Wiersz hsa_mir_155_z jest raczej jasny/niebieskawy (niski/średni). Artykuł: Wskazuje na wyraźną nadekspresję (Fold Regulation: +7.865).
+
+- miR-17 + miR-20a (Zgodność: Wysoka)
+
+Porównując profile ekspresji guzów potrójnie ujemnych i luminalnych A, zaobserwowano zwiększoną ekspresję miR-17-5p (4,27-krotnie; p = 0,000664), miR-18a-5p (9,68-krotnie; p = 0,000545) i miR-20a-5 (4,07-krotnie; p = 0,001487) w guzach potrójnie ujemnych w porównaniu z guzami luminalnymi A (https://pubmed.ncbi.nlm.nih.gov/24810926/)
+
+-let-7b (Umiarkowana)
+
+Najbardziej uderzające odkrycia ujawniły podwyższony poziom miRNA supresora guza let-7 u pacjentek z rakiem piersi luminalnym, niezależnie od podtypu (https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/)
+
+----------------------------------------------------------------------------------------------------------------
+
+4. Luminal B
+
+- mir-210
+
+w podtypie Luminalnym B mediana jest wyższa (1.24) niż w pozostałych, szerokie zakresy międzykwartylowe i wysoka wartość p wskazują, że miR-210 nie jest skutecznym markerem do rozróżniania tych podtypów między sobą (https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/)
+
+- miR-20a
+
+Artykuł: Wykazuje silne obniżenie ekspresji w surowicy (Fold Regulation: -9.541). Heatmapa: Wiersz hsa_mir_20a_z w sekcji LumB jest dominująco niebieski, co potwierdza niską ekspresję - Pełna zgodność.
+
+- miR-205
+
+Artykuł: Wykazuje obniżenie ekspresji (Fold Regulation: -5.844). Heatmapa: Wiersz hsa_mir_205_z w sekcji LumB jest w większości niebieski/blady, wskazując na niski poziom.
+
+- miR-21
+
+Artykuł: To najważniejszy biomarker w badaniu, wykazujący gigantyczną nadekspresję w Luminal B (Fold Regulation: +117.043). Heatmapa: Wiersz hsa_mir_21_z zawiera dużo pól czerwonych/pomarańczowych w sekcji LumB (choć może nie jest to aż tak jaskrawe jak w sekcji Basal, to nadal jest to poziom wysoki).
+
+- miR-25
+Artykuł: Autorzy raportują ogromną nadekspresję w surowicy dla Luminal B (Fold Regulation: +77.079). Heatmapa: Wiersz hsa_mir_25_z w sekcji LumB jest zaskakująco blady (niska/średnia ekspresja). Nie widać tu odzwierciedlenia tak silnego wzrostu, o jakim mówi artykuł.
+
+- miR-100
+
+Artykuł: Raportuje obniżenie poziomu (Fold Regulation: -4.403). Heatmapa: Wiersz hsa_mir_100_z jest jednorodny, ale w sekcji LumB wykazuje sporo pól niebieskich (niska ekspresja. 
+
+----------------------------------------------------------------------------------------------------------------
+
+Ładniejsza forma:
+
+**Analiza porównawcza profili ekspresji miRNA: wizualizacja heatmapy a dane literaturowe**
+
+Obserwacje potwierdzają wyraźną odrębność molekularną podtypu bazalnego (Basal/TNBC), jednocześnie ujawniając specyficzne wzorce oraz pewne niejednoznaczności w grupach luminalnych i HER2-dodatnich.
+
+### 1. Podtyp Bazalny (Basal / TNBC)
+W obrębie tego podtypu wizualizacja wykazuje najwyższy stopień zgodności z danymi literaturowymi, skutecznie ujawniając kluczowe biomarkery związane z agresywnością nowotworu.
+
+* **Klastry miR-17 oraz miR-20a (Wysoka zgodność):** W sekcji odpowiadającej podtypowi Basal widoczny jest intensywny sygnał (nadekspresja) dla miR-17 oraz miR-20a. Stanowi to bezpośrednie potwierdzenie wyników Triantafyllou *et al.* [1], którzy identyfikują miR-17 jako jeden z kluczowych markerów predykcyjnych dla podtypu potrójnie ujemnego. Literatura wskazuje, że nadekspresja tej rodziny miRNA jest skorelowana z wysokim stopniem złośliwości histologicznej guza oraz regulacją szlaku c-MYC. Ponadto, badania porównawcze wykazują istotnie wyższą ekspresję miR-17-5p, miR-18a-5p i miR-20a-5p w guzach TNBC w porównaniu do guzów Luminal A [2].
+* **miR-206 (Wysoka zgodność):** Analiza wykresu wykazuje wyraźne obniżenie ekspresji („chłodne” barwy) miR-206 w grupie bazalnej. Koreluje to z danymi tabelarycznymi z pracy źródłowej [1], gdzie miR-206 odnotowano jako najsilniej obniżony (*downregulated*) miRNA w grupie TNBC względem kontroli.
+* **miR-155 (Rozbieżność):** Na mapie ciepła miR-155 wykazuje silną nadekspresję w grupie bazalnej. Jest to wynik odmienny od przedstawionego przez Triantafyllou *et al.* [1], gdzie nadekspresję tego markera przypisano głównie do grupy Luminal A. Niemniej jednak, inne doniesienia literaturowe [3] sugerują, że względna ekspresja miR-155 jest najsilniejsza właśnie w podtypie potrójnie ujemnym, a następnie w HER2+, co może tłumaczyć obserwowany na naszym wykresie obraz.
+* **miR-210:** Choć Triantafyllou *et al.* [1] identyfikują miR-210 jako kluczowy marker predykcyjny dla TNBC (z 38-krotną nadekspresją), na analizowanej mapie ciepła wiersz ten jest niejednorodny. Mimo to, widoczne podwyższenie sygnału w sekcji Basal, przy dominującej barwie czerwonej, pozostaje w zgodzie z ogólnymi trendami literaturowymi, nawet jeśli wizualnie nie jest tak spektakularne jak w przypadku klastra miR-17.
+
+### 2. Podtyp HER2-dodatni (HER2+)
+Analiza tego podtypu w kontekście danych literaturowych wskazuje na zróżnicowaną siłę sygnału dla kluczowych markerów.
+
+* **miR-200c (Rozbieżność):** Wbrew danym z artykułu źródłowego [1], który wskazuje na miR-200c jako najsilniej nadekspresjonowany marker w grupie HER2+ (ok. 15-krotny wzrost), na mapie ciepła nie obserwuje się tak intensywnej nadekspresji. Sugeruje to, że w badanej kohorcie marker ten może nie posiadać tak dominującej wartości dyskryminującej.
+* **miR-21 (Zgodność):** Marker ten wykazuje podwyższoną ekspresję, co potwierdza jego uniwersalną rolę onkogenną, zgodną z opisem w literaturze [1], choć jego poziom może być niższy niż w grupach Luminal B czy TNBC.
+* **miR-155:** Obserwowana ekspresja jest umiarkowana, co wpisuje się w hierarchię opisaną w literaturze [3], gdzie poziom miR-155 w HER2+ plasuje się pomiędzy wysokim poziomem w TNBC a niższym w podtypach luminalnych.
+
+### 3. Podtyp Luminal A (LumA)
+Analiza podtypu Luminal A ujawniła zarówno zgodności, jak i istotne różnice w stosunku do danych dotyczących surowicy.
+
+* **miR-17 i miR-20a (Wysoka zgodność):** Dane literaturowe wskazują na znacząco obniżony poziom miR-17-5p i miR-20a-5p u pacjentek z Luminal A, co wiąże się z supresją szlaku Wnt/β-kateniny i ograniczeniem inwazyjności [4]. Obraz heatmapy jest spójny z tymi doniesieniami, wykazując niską ekspresję tych markerów.
+* **miR-23b (Zgodność):** Przeważająca niska ekspresja (barwa niebieska) na wykresie koreluje ze spadkiem ekspresji (Fold Regulation: -9.030) odnotowanym w artykule źródłowym [1].
+* **let-7b (Umiarkowana zgodność):** Badania wskazują na podwyższony poziom supresora guza let-7 u pacjentek z rakiem luminalnym [5]. Na heatmapie widoczna jest tendencja do wyższych wartości, co wspiera te wnioski.
+* **Rozbieżności (miR-29a, miR-181, miR-206, miR-155):** Odnotowano szereg inwersji względem wyników z surowicy [1]. Na heatmapie miR-29a oraz rodzina miR-181 (c/d) wykazują wysoką ekspresję, podczas gdy w surowicy są silnie obniżone. Odwrotnie, miR-206 i miR-155 na mapie wykazują niski poziom, podczas gdy w surowicy opisywana jest ich nadekspresja. Różnice te mogą wynikać z odmienności materiału biologicznego (tkanka guza vs. krążące miRNA).
+
+### 4. Podtyp Luminal B (LumB)
+W podtypie tym zaobserwowano specyficzne wzorce ekspresji, częściowo pokrywające się z danymi literaturowymi.
+
+* **miR-20a i miR-205 (Zgodność):** Wiersze odpowiadające tym miRNA na mapie ciepła wykazują dominująco niską ekspresję (barwa niebieska), co jest w pełni zgodne z wynikami Triantafyllou *et al.* [1], raportującymi ich obniżenie w surowicy (odpowiednio -9.5 i -5.8).
+* **miR-21 (Zgodność):** Potwierdzono wysoką ekspresję tego kluczowego onkomiR-u, co odpowiada jego silnej nadekspresji opisanej w artykule źródłowym [1].
+* **miR-100 (Zgodność):** Heatmapa wykazuje obszary obniżonej ekspresji w sekcji Luminal B, co jest spójne z raportowanym w literaturze [1] spadkiem poziomu tego markera (Fold Regulation: -4.403).
+* **miR-210:** Analiza wykresu potwierdza wnioski z literatury [6], sugerujące, że mimo wyższej mediany, szerokie zakresy zmienności czynią miR-210 markerem o ograniczonej skuteczności w różnicowaniu podtypów luminalnych.
+* **miR-25 (Rozbieżność):** Mimo doniesień o ogromnej nadekspresji w surowicy (+77-krotnej) [1], wizualizacja na mapie ciepła sugeruje poziom niski lub średni, co stanowi istotną różnicę wymagającą dalszej weryfikacji.
+
+
+**Literatura:**
+
+1.  Triantafyllou A, et al. *Circulating miRNA Expression Profiling in Breast Cancer Molecular Subtypes: Applying Machine Learning Analysis in Bioinformatics*. Cancer Diagnosis & Prognosis, 2022; 2: 739-749.
+2.  *Differential expression of miR-17 family in breast cancer subtypes*. Dostępne w: [PubMed 24810926](https://pubmed.ncbi.nlm.nih.gov/24810926/)
+3.  *Expression of miR-155 in breast cancer subtypes*. Dostępne w: [CJCR Article](https://cjcr.amegroups.org/article/view/1256/1952)
+4.  *Role of miR-17-5p and miR-20a-5p in Luminal A breast cancer*. Dostępne w: [PMC7589921](https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/)
+5.  *Let-7 miRNA levels in luminal breast cancer*. Dostępne w: [PMC5706292](https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/)
+6.  *miR-210 as a marker in breast cancer subtypes*. Dostępne w: [PMC11134088](https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/)
+
+
+### BATCH EFFECT 
+
+
+
+```{r}
+final_data$Batch_ID <- sapply(strsplit(as.character(final_data[[patient_id_col]]), "-"), function(x) x[2])
+#print(unique(final_data$Batch_ID))
+```
+
+```{r}
+pca_result_miRNA <- prcomp(matric_mirna_only, center = TRUE, scale. = FALSE)
+```
+
+```{r}
+variance_explained_miRNA <- round(summary(pca_result_miRNA)$importance[2, 1:2] * 100, 1)
+```
+
+```{r}
+pca_plot_data_mirna <- data.frame(
+  PC1 = pca_result_miRNA$x[, 1],
+  PC2 = pca_result_miRNA$x[, 2],
+  PAM50 = final_data[[pam50_col]],
+  Batch = final_data$Batch_ID
+)
+
+plot_bio <- ggplot(pca_plot_data_mirna, aes(x = PC1, y = PC2, color = PAM50)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA miRNA: Weryfikacja Biologiczna (wg PAM50)",
+    subtitle = "Czy kropki grupują się kolorami podtypów?",
+    x = paste0("PC1 (", variance_explained_miRNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_miRNA[2], "%)")
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") 
+
+print(plot_bio)
+
+
+plot_batch <- ggplot(pca_plot_data_mirna, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA miRNA: Kontrola Batch Effect (wg Centrum)",
+    subtitle = "CZYSTO = Wymieszane kolory | BŁĄD = Odseparowane klastry",
+    x = paste0("PC1 (", variance_explained_miRNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_miRNA[2], "%)")
+  ) +
+  theme_minimal()
+print(plot_batch)
+```
+WERYFIKACJA BIOLOGICZNA:
+
+dane miRNA wykazują silnA zgodność biologiczną. Próbki nie są wymieszane losowo – tworzą wyraźne grupy zgodne z podtypami raka piersi.
+
+1.  Odseparowany podtyp Basal-like (Czerwone kropki):
+    - To jest najbardziej rzucająca się w oczy cecha wykresu. Próbki tworzą odrębny, zwarty klaster po lewej stronie wykresu.
+    - To idealnie pasuje do wiedzy medycznej oraz jest zgodne z heatmapą. Raki bazalne są molekularnie najbardziej odmienne od raków luminalnych. 
+
+2.  Blok Luminalny (Zielone i Fioletowe kropki):
+    -  Próbki Luminal A oraz Luminal B grupują się razem po prawej stronie wykresu.
+    - To również jest poprawne. Oba te podtypy wywodzą się z komórek luminalnych i są ER-dodatnie (mają receptory estrogenowe). Są do siebie podobne genetycznie, więc na wykresie PCA leżą blisko siebie. 
+
+3.  HER2
+    - Te próbki są bardziej rozsypane i znajdują się w strefie pośredniej, co często obserwuje się w analizach dla tego podtypu.
+
+
+KONTROLA BATCH EFFECT:
+
+Wykres wygląda prawidłowo (próbki nie grupują się wg ośrodków badawczych są rozrzucone wszędzie).
+
+
+PODSUMOWANIE:
+
+Analiza PCA wykazała brak istotnego efektu partii (Batch Effect) w danych miRNA. Próbki grupują się zgodnie z biologią podtypów (PAM50), a nie według ośrodków badawczych. Dane zostały uznane za technicznie poprawne i zakwalifikowane do dalszej analizy różnicowej bez konieczności korekcji algorytmem ComBat.
+
+
+
+```{r}
+####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+```
+
+
+
 
 
