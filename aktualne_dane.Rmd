@@ -979,6 +979,164 @@ Analiza PCA wykazała brak istotnego efektu partii (Batch Effect) w danych miRNA
 ```
 
 
+# Etap 2 - RNA
+
+
+```{r markeryRNA_etap2}
+
+    
+ rna_markers <- c(
+   'esr1',
+   'pgr',
+   'erbb2',
+   'egfr_rna',
+   'krt5',
+   'krt14',
+   'krt17',
+   'foxa1',
+   'gata3',
+   'bcl2_rna',
+   'cdh1',
+   'vim',
+   'cldn3',
+   'cldn4',
+   'cldn7',
+   'mki67',
+   'ccnd1',
+   'myc',
+   'tp53',
+   'pik3ca',
+   'akt1',
+   'brca1',
+   'brca2',
+   'ar',
+   'fgfr1',
+   'krt18',
+   'krt19',
+   'muc1',
+   'epcam',
+   'snai1',
+   'snai2',
+   'zeb1',
+   'zeb2',
+   'twist1',
+   'tgfbr2',
+   'cd24',
+   'cd44'
+)
+
+
+rna_markers_exist <- rna_markers[rna_markers %in% colnames(final_data)]
+ if (length(rna_markers_exist) == 0) {
+   stop("BŁĄD: Nnie znaleziono żadnych kolumn RNA w pliku")
+ }
+ cat("są", length(rna_markers_exist), "z", length(rna_markers), "oczekiwanych markerów RNA.\n\n")
+
+```
+
+# Macierz do heatmapy (RNA x pacjenci)
+
+
+```{r macierzRNA_etap2}
+matric_rna_only_rna <- final_data[, rna_markers]
+```
+
+```{r nazwypacjentow_RNA_etap2}
+rownames(matric_rna_only_rna) <- final_data[[patient_id_col]]
+```
+
+```{r transpozycja_RNA_etap2}
+heatmap_matrix_rna <- t(matric_rna_only_rna)
+```
+
+```{r pasekkolorow_RNA_etap2}
+adn_rna <- data.frame(PAM50 = final_data[[pam50_col]])
+rownames(adn_rna) <- final_data[[patient_id_col]]
+```
+
+```{r sortowaniewgpam50_RNA_etap2}
+kolejnosc_pacjentow <- order(final_data[[pam50_col]])
+posortowane_id <- final_data[[patient_id_col]][kolejnosc_pacjentow]
+```
+
+```{r RNA_etap2}
+heatmap_matrix_sorted_rna <- heatmap_matrix_rna[, posortowane_id]
+annotation_df_sorted_rna <- adn_rna[posortowane_id, , drop = FALSE]
+```
+
+```{r generowanie_RNA_etap2_heatmapa}
+rna_heatmapa <- pheatmap(
+  heatmap_matrix_sorted_rna,
+  #scale = "row",
+  cluster_cols = FALSE,
+  cluster_rows = TRUE,
+  annotation_col = annotation_df_sorted_rna,
+  show_colnames = FALSE,
+  show_rownames = TRUE,
+  main = "Heatmapa RNA vs PAM50 (Posortowana wg Podtypu)",
+  color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
+  #breaks = seq(-1, 6, length.out = 100),  
+  #filename = "Klaudia_Heatmapa_RNA_kontrastowa.png",
+  width = 10,
+  height = 13
+)
+
+
+print(rna_heatmapa)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+pca_result_RNA <- prcomp(matric_rna_only_rna, center = TRUE, scale. = FALSE)
+```
+
+```{r}
+variance_explained_RNA <- round(summary(pca_result_RNA)$importance[2, 1:2] * 100, 1)
+```
+
+```{r}
+pca_plot_data_rna <- data.frame(
+  PC1 = pca_result_RNA$x[, 1],
+  PC2 = pca_result_RNA$x[, 2],
+  PAM50 = final_data[[pam50_col]],
+  Batch = final_data$Batch_ID
+)
+
+plot_bio_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = PAM50)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA RNA: Weryfikacja Biologiczna (wg PAM50)",
+    subtitle = "Czy kropki grupują się kolorami podtypów?",
+    x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") 
+
+print(plot_bio_rna)
+
+
+plot_batch_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA RNA: Kontrola Batch Effect (wg Centrum)",
+    subtitle = "CZYSTO = Wymieszane kolory | BŁĄD = Odseparowane klastry",
+    x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+  ) +
+  theme_minimal()
+print(plot_batch_rna)
+```
+
+
 
 
 
