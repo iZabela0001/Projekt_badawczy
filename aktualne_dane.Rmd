@@ -979,6 +979,234 @@ Analiza PCA wykazała brak istotnego efektu partii (Batch Effect) w danych miRNA
 ```
 
 
+# Etap 2 - RNA
 
 
+```{r markeryRNA_etap2}
 
+    
+ rna_markers <- c(
+   'esr1',
+   'pgr',
+   'erbb2',
+   'egfr_rna',
+   'krt5',
+   'krt14',
+   'krt17',
+   'foxa1',
+   'gata3',
+   'bcl2_rna',
+   'cdh1',
+   'vim',
+   'cldn3',
+   'cldn4',
+   'cldn7',
+   'mki67',
+   'ccnd1',
+   'myc',
+   'tp53',
+   'pik3ca',
+   'akt1',
+   'brca1',
+   'brca2',
+   'ar',
+   'fgfr1',
+   'krt18',
+   'krt19',
+   'muc1',
+   'epcam',
+   'snai1',
+   'snai2',
+   'zeb1',
+   'zeb2',
+   'twist1',
+   'tgfbr2',
+   'cd24',
+   'cd44'
+)
+
+
+rna_markers_exist <- rna_markers[rna_markers %in% colnames(final_data)]
+ if (length(rna_markers_exist) == 0) {
+   stop("BŁĄD: Nnie znaleziono żadnych kolumn RNA w pliku")
+ }
+ cat("są", length(rna_markers_exist), "z", length(rna_markers), "oczekiwanych markerów RNA.\n\n")
+
+```
+
+# Macierz do heatmapy (RNA x pacjenci)
+
+
+```{r macierzRNA_etap2}
+matric_rna_only_rna <- final_data[, rna_markers]
+```
+
+```{r nazwypacjentow_RNA_etap2}
+rownames(matric_rna_only_rna) <- final_data[[patient_id_col]]
+```
+
+```{r transpozycja_RNA_etap2}
+heatmap_matrix_rna <- t(matric_rna_only_rna)
+```
+
+```{r pasekkolorow_RNA_etap2}
+adn_rna <- data.frame(PAM50 = final_data[[pam50_col]])
+rownames(adn_rna) <- final_data[[patient_id_col]]
+```
+
+```{r sortowaniewgpam50_RNA_etap2}
+kolejnosc_pacjentow <- order(final_data[[pam50_col]])
+posortowane_id <- final_data[[patient_id_col]][kolejnosc_pacjentow]
+```
+
+```{r RNA_etap2}
+heatmap_matrix_sorted_rna <- heatmap_matrix_rna[, posortowane_id]
+annotation_df_sorted_rna <- adn_rna[posortowane_id, , drop = FALSE]
+```
+
+```{r generowanie_RNA_etap2_heatmapa}
+
+rna_heatmapa <- pheatmap(
+  heatmap_matrix_sorted_rna,
+  #scale = "row",
+  cluster_cols = FALSE,
+  cluster_rows = TRUE,
+  annotation_col = annotation_df_sorted_rna,
+  show_colnames = FALSE,
+  show_rownames = TRUE,
+  main = "Heatmapa RNA vs PAM50 (Posortowana wg Podtypu)",
+  color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
+  breaks = seq(0, 10, length.out = 100),  
+  #filename = "Klaudia_Heatmapa_RNA_kontrastowa.png",
+  width = 10,
+  height = 13
+)
+
+
+print(rna_heatmapa)
+```
+
+**Analiza porównawcza profili ekspresji RNA: wizualizacja heatmapy a dane literaturowe**
+
+### 1. Podtyp Basal (Zielony pasek na górze heatmapy)
+
+* *Keratyny bazalne (*KRT5, KRT14, KRT17):**
+    * *Heatmapa:* Widać intensywny *czerwony blok* (wysoka ekspresja) w kolumnach odpowiadających podtypowi Basal, podczas gdy w innych podtypach są one niebieskie (niska ekspresja).
+    *Zgodność z artykułem :* Podtyp Basal charakteryzuje się wysoką ekspresją markerów bazalnych, w tym KRT5, KRT14 i KRT17, oraz niską ekspresją markerów luminalnych.
+* *Receptory hormonalne (*ESR1, PGR, AR, FOXA1):**
+    * *Heatmapa:* W sekcji Basal te geny są *ciemnoniebieskie*, co oznacza bardzo niską ekspresję lub jej brak.
+    *  *Zgodność z artykułem :* Heatmapa wyraźnie stwierdza, że ekspresja ESR1, PGR, AR oraz FOXA1 jest najniższa w podtypie Basal    .
+* *Proliferacja (*MKI67):**
+    * *Heatmapa:* Widać przewagę kolorów żółtych/pomarańczowych (wysoka/średnia ekspresja), co odróżnia ten podtyp od Luminal A.
+    *  *Zgodność z artykułem :* Potwierdza, że podtyp Basal wykazuje wysoką ekspresję genów cyklu komórkowego, w tym MKI67.
+* *EGFR:*
+    * *Heatmapa:* Gen egfr_rna wykazuje wyższą ekspresję (żółty/jasnoniebieski) w grupie Basal w porównaniu do głębokiego błękitu w grupach Luminalnych.
+    *  *Zgodność z artykułem :* Wskazuje na wysoką ekspresję EGFR w podtypie Basal (choć zaznacza, że jest ona jeszcze wyższa w nowym podtypie HER2-low, który tu jest ukryty w innych grupach).
+
+### 2. Podtyp HER2 (Różowy pasek)
+Tutaj również widać silną korelację, zwłaszcza w przypadku genu definiującego tę grupę.
+
+* *ERBB2 (HER2):*
+    * *Heatmapa:* Można tutaj zauważyć bardzo wyraźny, *czerwony prostokąt* przy genie erbb2 tylko w tej grupie. Jest to najbardziej charakterystyczna cecha tej części wykresu.
+    *  *Zgodność z artykułem :* Podtyp HER2-high (odpowiednik PAM50 HER2-enriched) wykazuje najwyższą ekspresję ERBB2.
+* *Receptory hormonalne:*
+    * *Heatmapa:* Ekspresja esr1 i pgr jest tu przeważnie niska (niebieska), choć wyższa niż w Basal.
+    *  *Zgodność z artykułem :*Podtyp ten ma zazwyczaj niższą ekspresję receptorów hormonalnych niż podtypy Luminalne.
+
+### 3. Różnicowanie Luminal A (Turkusowy) vs Luminal B (Fioletowy)
+To jest najbardziej subtelna, ale kluczowa część analizy, gdzie heatmapa świetnie ilustruje niuanse opisane w artykule.
+
+* *Receptory hormonalne i czynniki transkrypcyjne (*GATA3, FOXA1, ESR1):**
+    * *Heatmapa:* Obie grupy (LumA i LumB) mają *bardzo intensywny czerwony kolor* dla tych genów.
+    *  *Zgodność z artykułem :* Potwierdza to, opisując wysoką ekspresję GATA3, FOXA1 i ESR1 w obu podtypach luminalnych  .
+* *Kluczowa różnica: Proliferacja (*MKI67):**
+    * *Heatmapa:* Zwróć uwagę na rząd mki67. W grupie *LumA (Turkus)* jest on przeważnie *niebieski/jasnożółty* (niska ekspresja). W grupie *LumB (Fiolet)* staje się wyraźnie bardziej *żółty/pomarańczowy* (wyższa ekspresja).
+    * *Zgodność z artykułem :* Jest to zgodne z główną tezą artykułu, Wyższa ekspresja genów cyklu komórkowego w LumB jest cechą różnicującą.
+* *Receptor Progesteronowy (*PGR):**
+    * *Heatmapa:* W LumA (Turkus) pgr jest często *czerwony/pomarańczowy* (wysoki). W LumB (Fiolet) widać więcej *niebieskich/jasnych* prążków (niższa ekspresja).
+    *  *Zgodność z artykułem :* "PGR expression was higher in subtype LumA and showed a bimodal distribution in subtype LumB" (Ekspresja PGR była wyższa w podtypie LumA).
+
+* *BCL2 (*bcl2_rna):**
+    * *Heatmapa:* Wysoka ekspresja (czerwony) w LumA i LumB, niska w Basal i HER2.
+    * *Zgodność z artykułem:* Zgodnie z artykułem  wymienia BCL2 na liście genów różnicujących, typowo kojarzonych z fenotypem luminalnym i lepszym rokowaniem, co widać na heatmapie.
+    
+* *AR (Receptor Androgenowy):*
+    * *Heatmapa:* Widać nadekspresję w grupach Luminalnych (współwystępowanie z ER), ale też pewną aktywność w HER2. W Basal jest niebieski (brak).
+    *  *Zgodność z artykułem :* Potwierdza, że AR jest współeksprymowany z ER w rakach HR+. Co ważne, Zgodność z artykułem  sugeruje, że AR jest wysoki w nowym podtypie HER2-low, którego tu wprost nie widzimy, ale jego brak w typowym Basal na heatmapie jest zgodny z danymi.
+
+### Podsumowanie
+
+1.  *Basal:* Wysokie keratyny bazalne, brak receptorów.
+2.  *HER2:* Dominacja ERBB2.
+3.  *Luminal A:* Wysokie hormony, niska proliferacja (MKI67).
+4.  *Luminal B:* Wysokie hormony (ale PGR słabszy), wyższa proliferacja.
+
+**Literatura:**
+
+*The Breast Cancer Classifier refines molecular breast cancer classification to delineate the HER2-low subtype*. Dostępne na: https://www.nature.com/articles/s41523-025-00723-0
+
+
+```{r}
+pca_result_RNA <- prcomp(matric_rna_only_rna, center = TRUE, scale. = FALSE)
+```
+
+```{r}
+variance_explained_RNA <- round(summary(pca_result_RNA)$importance[2, 1:2] * 100, 1)
+```
+
+```{r}
+pca_plot_data_rna <- data.frame(
+  PC1 = pca_result_RNA$x[, 1],
+  PC2 = pca_result_RNA$x[, 2],
+  PAM50 = final_data[[pam50_col]],
+  Batch = final_data$Batch_ID
+)
+
+plot_bio_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = PAM50)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA RNA: Weryfikacja Biologiczna (wg PAM50)",
+    subtitle = "Czy kropki grupują się kolorami podtypów?",
+    x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") 
+
+print(plot_bio_rna)
+
+
+plot_batch_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "PCA RNA: Kontrola Batch Effect (wg Centrum)",
+    subtitle = "CZYSTO = Wymieszane kolory | BŁĄD = Odseparowane klastry",
+    x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+  ) +
+  theme_minimal()
+print(plot_batch_rna)
+```
+
+**Weryfikacja biologiczna klasyfikacji PAM50 na podstawie analizy PCA RNA**
+
+Dane RNA wykazują silną zgodność biologiczną. Próbki nie są rozmieszczone losowo — tworzą wyraźne grupy zgodne z podtypami raka piersi według klasyfikacji PAM50.
+
+**1.Odseparowany podtyp Basal-like**:
+
+To najbardziej wyrazista cecha wykresu PCA. Próbki Basal tworzą zwarty, odrębny klaster w dolnej części wykresu. Jest to zgodne z wiedzą biologiczną — raki bazalne są molekularnie najbardziej odmienne od pozostałych podtypów. Ich separacja potwierdza trafność klasyfikacji.
+
+**2.Blok Luminalny A i B**:
+
+Próbki Luminal A i Luminal B grupują się razem w górnej części wykresu. To poprawne — oba podtypy wywodzą się z komórek luminalnych, są ER-dodatnie i genetycznie podobne, co skutkuje ich bliskim położeniem w PCA.
+
+**3.HER2**:
+
+Próbki HER2 są bardziej rozproszone i zajmują strefę pośrednią między Luminalnymi a Basal. Taki rozkład jest typowy — podtyp HER2-enriched często wykazuje cechy przejściowe i większą heterogeniczność.
+
+**KONTROLA BATCH EFFECT:**
+Wykres PCA wg ośrodków badawczych (kolory centrów) nie wykazuje żadnych niepokojących wzorców. Próbki są równomiernie rozproszone — nie tworzą odseparowanych klastrów zależnych od miejsca pozyskania materiału.
+
+**PODSUMOWANIE:**
+
+Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA. Próbki grupują się zgodnie z biologią podtypów PAM50, a nie według ośrodków badawczych. Dane zostały uznane za technicznie poprawne i zakwalifikowane do dalszej analizy różnicowej bez konieczności korekcji algorytmem ComBat.
