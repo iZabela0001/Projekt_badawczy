@@ -2,7 +2,9 @@
 title: "Różnice w przeżyciu pacjentek z rakiem piersi w zależności od podtypu nowotworu"
 authors: "Izabela Reszka, Piotr Wiśniewski, Klaudia Woźniak"
 output: html_document
-
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r instalowanie_bibliotek}
@@ -13,10 +15,11 @@ output: html_document
 # install.packages("patchwork")
 # install.packages ("e1071")
 # install.packages("caret")
-#install.packages("pheatmap")
-#install.packages("RColorBrewer")
+# install.packages("pheatmap")
+# install.packages("RColorBrewer")
+# install.packages("janitor")
+# install.packages("readr")
 ```
-
 
 ```{r ladowanie_bibliotek}
 library(caret)
@@ -30,10 +33,9 @@ library(pheatmap)
 library(dplyr)
 library(RColorBrewer)
 library(ggplot2)
+library(janitor)
+library(readr)
 ```
-
-
-
 
 **DATA WRANGLING**
 
@@ -163,14 +165,11 @@ write_csv(df_final, "merged_data_cleaned.csv")
 
 ```
 
-
 ```{r}
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 ```
 
-
-
-**STANDARYZACJA DANYCH** 
+**STANDARYZACJA DANYCH**
 
 ```{r}
 
@@ -205,8 +204,7 @@ merged_data_cleaned$time_to_event <- ifelse(merged_data_cleaned$event == 1,
 
 ```
 
-**Standaryzacja białek** 
-
+**Standaryzacja białek**
 
 ```{r}
 
@@ -221,26 +219,26 @@ merged_data_cleaned[bialka_z] <- scale(merged_data_cleaned[bialka])
 
 ```
 
-
 ### Rozkłady standaryzowanych poziomów białek
 
-Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów ekspresji
-wybranych białek wśród pacjentek. Każda zmienna została przekształcona do skali 
-Z-score, co oznacza, że wartości mają średnią bliską 0 
-i odchylenie standardowe bliskie 1. Taka transformacja umożliwia bezpośrednie
-porównywanie zmiennych o różnych jednostkach i zakresach.
+Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów
+ekspresji wybranych białek wśród pacjentek. Każda zmienna została
+przekształcona do skali Z-score, co oznacza, że wartości mają średnią
+bliską 0 i odchylenie standardowe bliskie 1. Taka transformacja
+umożliwia bezpośrednie porównywanie zmiennych o różnych jednostkach i
+zakresach.
 
-Większość rozkładów jest względnie symetryczna, co sugeruje brak silnych 
-odchyleń od normalności. W niektórych przypadkach widoczne są lekkie skośności
-lub spłaszczenia, które mogą wynikać z biologicznego zróżnicowania w populacji
-lub obecności podgrup pacjentek. Brak wyraźnych wartości odstających świadczy 
-o dobrej jakości danych.
+Większość rozkładów jest względnie symetryczna, co sugeruje brak silnych
+odchyleń od normalności. W niektórych przypadkach widoczne są lekkie
+skośności lub spłaszczenia, które mogą wynikać z biologicznego
+zróżnicowania w populacji lub obecności podgrup pacjentek. Brak
+wyraźnych wartości odstających świadczy o dobrej jakości danych.
 
-Ze względu na obecność wartości ujemnych oraz względnie symetryczne rozkłady 
-większości zmiennych, nie zastosowano dodatkowej transformacji logarytmicznej.
-Logarytmizacja wymaga dodatnich wartości i mogłaby prowadzić 
-do błędów obliczeniowych (NaN) w przypadku danych z wartościami poniżej zera.
-
+Ze względu na obecność wartości ujemnych oraz względnie symetryczne
+rozkłady większości zmiennych, nie zastosowano dodatkowej transformacji
+logarytmicznej. Logarytmizacja wymaga dodatnich wartości i mogłaby
+prowadzić do błędów obliczeniowych (NaN) w przypadku danych z
+wartościami poniżej zera.
 
 ```{r}
 
@@ -266,9 +264,7 @@ plot_density_chunks(bialka_z, merged_data_cleaned, fill_color = "lightblue", nco
 
 ```
 
-
-**Standaryzacja miRNA** 
-
+**Standaryzacja miRNA**
 
 ```{r}
 mirna <- c(
@@ -309,21 +305,21 @@ merged_data_cleaned[mirna_z] <- scale(merged_data_cleaned[mirna])
 
 ### Rozkłady standaryzowanych poziomów miRNA
 
-Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów ekspresji 
-wybranych cząsteczek miRNA. Standaryzacja do skali Z-score
-pozwala na porównywanie miRNA między sobą oraz z innymi typami danych biologicznych,
-niezależnie od pierwotnej skali pomiarowej.
+Wykresy gęstości przedstawiają rozkład standaryzowanych poziomów
+ekspresji wybranych cząsteczek miRNA. Standaryzacja do skali Z-score
+pozwala na porównywanie miRNA między sobą oraz z innymi typami danych
+biologicznych, niezależnie od pierwotnej skali pomiarowej.
 
-Rozkłady miRNA są bardziej zróżnicowane niż w przypadku białek — część z nich 
-wykazuje wyraźną skośność, wielomodalność lub obecność wartości odstających.
-Może to wskazywać na różnice biologiczne między pacjentkami 
+Rozkłady miRNA są bardziej zróżnicowane niż w przypadku białek — część z
+nich wykazuje wyraźną skośność, wielomodalność lub obecność wartości
+odstających. Może to wskazywać na różnice biologiczne między pacjentkami
 lub specyficzne wzorce regulacji genów.
 
-Ze względu na obecność wartości ujemnych oraz względnie symetryczne rozkłady 
-większości zmiennych, nie zastosowano dodatkowej transformacji logarytmicznej.
-Logarytmizacja wymaga dodatnich wartości i mogłaby prowadzić 
-do błędów obliczeniowych (NaN) w przypadku danych z wartościami poniżej zera.
-
+Ze względu na obecność wartości ujemnych oraz względnie symetryczne
+rozkłady większości zmiennych, nie zastosowano dodatkowej transformacji
+logarytmicznej. Logarytmizacja wymaga dodatnich wartości i mogłaby
+prowadzić do błędów obliczeniowych (NaN) w przypadku danych z
+wartościami poniżej zera.
 
 ```{r}
 
@@ -347,25 +343,22 @@ for (chunk in mirna_z_chunks) {
 
 ```
 
+Zmienna `pathologic_stage` opisująca stadium zaawansowania nowotworu
+została przekształcona na wartości: - Stage I → I - Stage II → II -
+Stage III → III Wartości nieznane (np. "Unknown") zostały usunięte ze
+zbioru, ponieważ stanowiły niewielki odsetek (11 przypadków) i nie
+wpływają istotnie na dalszą analizę.
 
- Zmienna `pathologic_stage` opisująca stadium zaawansowania nowotworu została 
- przekształcona na wartości:
- - Stage I → I
- - Stage II → II
- - Stage III → III
-Wartości nieznane (np. "Unknown") zostały usunięte ze zbioru, ponieważ stanowiły 
-niewielki odsetek (11 przypadków) i nie wpływają istotnie na dalszą analizę.
+Kolumna `gender` została usunięta ze względu na brak zmienności —
+wszystkie przypadki w zbiorze dotyczą kobiet, więc zmienna nie wnosi
+informacji analitycznej. Analogicznie postąpiono z `tumor_type` - tylko
+jeden typ nowotworu jest przedmiotem analizy w projekcie.
 
+Ujednolicono nazewnictwo ras poprzez przypisanie spójnych etykiet typu
+`factor`. Dzięki temu możliwe jest łatwe grupowanie i porównywanie
+danych w dalszej analizie.
 
-Kolumna `gender` została usunięta ze względu na brak zmienności — wszystkie przypadki 
-w zbiorze dotyczą kobiet, więc zmienna nie wnosi informacji analitycznej. 
-Analogicznie postąpiono z `tumor_type` - tylko jeden typ nowotworu jest przedmiotem 
-analizy w projekcie.
-
-Ujednolicono nazewnictwo ras poprzez przypisanie spójnych etykiet typu `factor`.
-Dzięki temu możliwe jest łatwe grupowanie i porównywanie danych w dalszej analizie.
-
-``` {r standaryzacja_pozostałych_danych_1}
+```{r standaryzacja_pozostałych_danych_1}
 
 #pathologic_stage 
 #Zamieniamy tutaj stadia zaawansowania nowotworu na dane liczbowe, dane Unknown, 
@@ -410,22 +403,24 @@ merged_data_cleaned$demographic_race <- factor(
 
 ```
 
-W ramach przygotowania danych do analizy, przeprowadzono standaryzację zmiennej 
-`demographic_ethnicity`, która opisuje przynależność etniczną pacjentek.
-Występowały w niej wartości brakujące (`NA`) oraz niejednolite zapisy, takie jak 
-`"not reported"`, które mogły utrudniać dalszą analizę.
+W ramach przygotowania danych do analizy, przeprowadzono standaryzację
+zmiennej `demographic_ethnicity`, która opisuje przynależność etniczną
+pacjentek. Występowały w niej wartości brakujące (`NA`) oraz
+niejednolite zapisy, takie jak `"not reported"`, które mogły utrudniać
+dalszą analizę.
 
-Wszystkie wartości `NA` oraz `"not reported"` zostały zastąpione wartością 
-`"Unknown"`, co pozwala zachować informację o braku danych bez ich całkowitego usuwania.
+Wszystkie wartości `NA` oraz `"not reported"` zostały zastąpione
+wartością `"Unknown"`, co pozwala zachować informację o braku danych bez
+ich całkowitego usuwania.
 
-Następnie zmienna została przekształcona do typu `factor` z trzema spójnymi etykietami:
-   - `"Non-Hispanic"` – osoby niebędące Latynoskiego pochodzenia
-   - `"Hispanic"` – osoby Latynoskiego pochodzenia
-   - `"Unknown"` – brak informacji
+Następnie zmienna została przekształcona do typu `factor` z trzema
+spójnymi etykietami: - `"Non-Hispanic"` – osoby niebędące Latynoskiego
+pochodzenia - `"Hispanic"` – osoby Latynoskiego pochodzenia -
+`"Unknown"` – brak informacji
 
-Dodatkowo usunięto kolumny `demographic_days_to_death` oraz `cases_days_to_lost_to_followup`,
-które zawierały nadmiarowe lub nieprzydatne informacje czasowe.
-
+Dodatkowo usunięto kolumny `demographic_days_to_death` oraz
+`cases_days_to_lost_to_followup`, które zawierały nadmiarowe lub
+nieprzydatne informacje czasowe.
 
 ```{r transformacje_cdn}
 
@@ -466,23 +461,24 @@ merged_data_cleaned$treatments_treatment_outcome[
 
 ```
 
-W ramach czyszczenia danych uporządkowano wartości w kilku kluczowych kolumnach:
+W ramach czyszczenia danych uporządkowano wartości w kilku kluczowych
+kolumnach:
 
- - `diagnoses_year_of_diagnosis`, 
- - `diagnoses_laterality`, 
- - `diagnoses_ajcc_pathologic_stage`, 
- - `diagnoses_ajcc_pathologic_t`,
- - `diagnoses_ajcc_pathologic_n`, 
- - `diagnoses_ajcc_pathologic_m`, 
- - `treatments_treatment_type`, 
- - `treatments_treatment_outcome`
- - `diagnoses_primary_diagnosis`. 
- 
-Wszelkie nieczytelne wpisy typu "--", "'--" czy "Not Reported" 
-oraz braki danych (NA) zostały zastąpione jednolitą wartością "Unknown", 
-co pozwala na spójne traktowanie braków w dalszej analizie. 
-Dodatkowo w `diagnoses_ajcc_pathologic_stage` usunięto słowo "Stage" 
-dzięki czemu wartości są bardziej czytelne.
+-   `diagnoses_year_of_diagnosis`,
+-   `diagnoses_laterality`,
+-   `diagnoses_ajcc_pathologic_stage`,
+-   `diagnoses_ajcc_pathologic_t`,
+-   `diagnoses_ajcc_pathologic_n`,
+-   `diagnoses_ajcc_pathologic_m`,
+-   `treatments_treatment_type`,
+-   `treatments_treatment_outcome`
+-   `diagnoses_primary_diagnosis`.
+
+Wszelkie nieczytelne wpisy typu "--", "'--" czy "Not Reported" oraz
+braki danych (NA) zostały zastąpione jednolitą wartością "Unknown", co
+pozwala na spójne traktowanie braków w dalszej analizie. Dodatkowo w
+`diagnoses_ajcc_pathologic_stage` usunięto słowo "Stage" dzięki czemu
+wartości są bardziej czytelne.
 
 ```{r}
 
@@ -514,20 +510,20 @@ for (col in cols_to_clean) {
 
 ### Standaryzacja wieku pacjentek
 
-W celu ujednolicenia zmiennej wieku pacjentek, obliczono wartość `age_mean_years` 
-jako średnią z dostępnych źródeł wieku (wiek w dniach, wiek przy diagnozie, wiek indeksowy).
-Następnie zastosowano standaryzację Z-score (`age_z`), co pozwala na porównywanie 
-pacjentek względem średniego wieku w populacji:
+W celu ujednolicenia zmiennej wieku pacjentek, obliczono wartość
+`age_mean_years` jako średnią z dostępnych źródeł wieku (wiek w dniach,
+wiek przy diagnozie, wiek indeksowy). Następnie zastosowano
+standaryzację Z-score (`age_z`), co pozwala na porównywanie pacjentek
+względem średniego wieku w populacji:
 
-- `age_z = 0` → pacjentka o przeciętnym wieku
-- `age_z > 0` → starsza niż średnia
-- `age_z < 0` → młodsza niż średnia
+-   `age_z = 0` → pacjentka o przeciętnym wieku
+-   `age_z > 0` → starsza niż średnia
+-   `age_z < 0` → młodsza niż średnia
 
-Dzięki temu zmienna wiekowa może być użyta w modelach statystycznych jako zmienna 
-ilościowa, bez ryzyka błędnej interpretacji skali.
+Dzięki temu zmienna wiekowa może być użyta w modelach statystycznych
+jako zmienna ilościowa, bez ryzyka błędnej interpretacji skali.
 
-
-```{r age_at_diagnosis_years} 
+```{r age_at_diagnosis_years}
 
 merged_data_cleaned$age_from_days <- round(merged_data_cleaned$diagnoses_age_at_diagnosis / 365, 1)
 
@@ -556,10 +552,11 @@ qqnorm(merged_data_cleaned$age_mean_years); qqline(merged_data_cleaned$age_mean_
 
 *Rozkład stadiów zaawansowania choroby*
 
-Wykres słupkowy przedstawia liczbę przypadków w poszczególnych stadiach choroby (1–3). 
-Stadium 4 oraz wartości nieznane zostały usunięte ze względu na ich marginalną liczbę.
-Rozkład pokazuje, że większość pacjentek znajduje się w stadium II, co może mieć 
-wpływ na dalszą analizę przeżycia i modelowanie ryzyka.
+Wykres słupkowy przedstawia liczbę przypadków w poszczególnych stadiach
+choroby (1–3). Stadium 4 oraz wartości nieznane zostały usunięte ze
+względu na ich marginalną liczbę. Rozkład pokazuje, że większość
+pacjentek znajduje się w stadium II, co może mieć wpływ na dalszą
+analizę przeżycia i modelowanie ryzyka.
 
 ```{r}
 
@@ -570,14 +567,14 @@ ggplot(merged_data_cleaned, aes(x = factor(pathologic_stage))) +
 
 ```
 
-*Rozkład demograficzny pacjentek* 
+*Rozkład demograficzny pacjentek*
 
-Wykresy słupkowe przedstawiają strukturę rasową i etniczną pacjentek. 
-Dominującą grupą są osoby rasy białej oraz niebędące Latynoskiego pochodzenia.
-Wartości brakujące zostały zakodowane jako `"Unknown"`, co pozwala zachować 
-informację o niepełnych danych bez ich usuwania. Taka struktura demograficzna 
-może mieć znaczenie w analizie przeżycia i interpretacji wyników.
-
+Wykresy słupkowe przedstawiają strukturę rasową i etniczną pacjentek.
+Dominującą grupą są osoby rasy białej oraz niebędące Latynoskiego
+pochodzenia. Wartości brakujące zostały zakodowane jako `"Unknown"`, co
+pozwala zachować informację o niepełnych danych bez ich usuwania. Taka
+struktura demograficzna może mieć znaczenie w analizie przeżycia i
+interpretacji wyników.
 
 ```{r}
 
@@ -594,14 +591,9 @@ ggplot(merged_data_cleaned, aes(x = demographic_ethnicity)) +
 write_csv(merged_data_cleaned, "actual_merged_data.csv")
 ```
 
-
-
-
-
 ```{r}
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 ```
-
 
 ```{r}
 final_data <- read.csv("actual_merged_data.csv", 
@@ -609,7 +601,6 @@ final_data <- read.csv("actual_merged_data.csv",
                         sep = ",", 
                         stringsAsFactors = FALSE)
 ```
-
 
 ```{r kolumny_etap2, echo=FALSE, eval=TRUE, results='asis'}
 pam50_col <- "brca_subtype_pam50"
@@ -629,18 +620,11 @@ final_data <- final_data %>%
 final_data[[pam50_col]] <- factor(final_data[[pam50_col]])
 ```
 
-
-
 ```{r}
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 ```
 
-
-
-
 # Etap2 mi-RNA
-
-
 
 ```{r markerymiRNA_etap2}
 mirna_markers <- c(
@@ -702,14 +686,11 @@ mirna_markers <- c(
 # cat("są", length(mirna_markers_exist), "z", length(mirna), "oczekiwanych markerów miRNA.\n\n")
 ```
 
-
 Macierz do heatmapy (miRNA x pacjentci)
-
 
 ```{r macierzmiRNA_etap2}
 matric_mirna_only <- final_data[, mirna_markers]
 ```
-
 
 ```{r nazwypacjentow_etap2}
 rownames(matric_mirna_only) <- final_data[[patient_id_col]]
@@ -718,7 +699,6 @@ rownames(matric_mirna_only) <- final_data[[patient_id_col]]
 ```{r transpozycjaaa_etap2}
 heatmap_matrix_mirna <- t(matric_mirna_only)
 ```
-
 
 ```{r pasekkolorow_etap2}
 adn_mirna <- data.frame(PAM50 = final_data[[pam50_col]])
@@ -734,7 +714,6 @@ posortowane_id <- final_data[[patient_id_col]][kolejnosc_pacjentow]
 heatmap_matrix_sorted <- heatmap_matrix_mirna[, posortowane_id]
 annotation_df_sorted <- adn_mirna[posortowane_id, , drop = FALSE]
 ```
-
 
 ```{r generowanie_MIRNA_etap2_heatmapa}
 pheatmap(
@@ -757,149 +736,282 @@ pheatmap(
 #print(heatmapa_miRNA_etap2)
 ```
 
-Analiza wizualna mapy cieplnej wykazuje istotne korelacje z wynikami uzyskanymi przy użyciu algorytmów uczenia maszynowego opisanymi w artykule źródłowym, potwierdzając molekularną odrębność podtypu bazalnego (Basal/TNBC), jednocześnie ujawniając pewne niejednoznaczności w pozostałych grupach.
+Analiza wizualna mapy cieplnej wykazuje istotne korelacje z wynikami
+uzyskanymi przy użyciu algorytmów uczenia maszynowego opisanymi w
+artykule źródłowym, potwierdzając molekularną odrębność podtypu
+bazalnego (Basal/TNBC), jednocześnie ujawniając pewne niejednoznaczności
+w pozostałych grupach.
 
-----------------------------------------------------------------------------------------------------------------
-1. Podtyp Bazalny (Basal / TNBC)
+|  |
+|:-----------------------------------------------------------------------|
+| 1\. Podtyp Bazalny (Basal / TNBC) |
+| Jest to podtyp, w którym wizualizacja wykazuje największą zgodność z danymi literaturowymi, ujawniając kluczowe biomarkery agresywności guza. |
+| \- Nadekspresja klastra (Zgodność: Wysoka): Na mapie ciepła w sekcji Basal widoczny jest intensywny, czerwony blok dla miR-17 oraz miR-20a. Jest to bezpośrednie potwierdzenie wyników artykułu, który identyfikuje miR-17 jako jeden z najważniejszych markerów predykcyjnych dla podtypu potrójnie ujemnego. Badania wskazują, że nadekspresja tej rodziny jest skorelowana z wysokim stopniem złośliwości guza i regulacją szlaku c-MYC. |
+| \- Obniżenie poziomu miR-206 (Zgodność: Wysoka): Wiersz miR-206 na Twoim wykresie jest wyraźnie "chłodny" (niebieski/biały) w grupie bazalnej. Koreluje to idealnie z danymi z Tabeli II artykułu, gdzie miR-206 odnotowano jako najsilniej obniżony (downregulated) miRNA w grupie TNBC względem kontroli. |
+| \- Niejednoznaczność miR-155 (Rozbieżność): Na mapie ciepła miR-155 jest silnie nadekspresjonowany w grupie bazalnej. Warto odnotować, że w artykule Triantafyllou et al. nadekspresję miR-155 przypisano głównie do grupy Luminal A , a w tabeli wyników dla TNBC odnotowano nawet jego obniżenie. wynik może sugerować specyfikę badanej kohorty, odmienną od tej opisanej w artykule. |
+| \- mir-210 w TNBC: Artykuł identyfikuje miR-210 jako jeden z kluczowych markerów predykcyjnych dla TNBC (z nadekspresją +38-krotną). Na wykresie wiersz ten jest dość niejednorodny – choć widać pewne podwyższenie w sekcji Basal, nie jest ono tak spektakularne wizualnie jak w przypadku miR-17, gdzie ekspresja mir-17 według badań jest niższa niż w przypadku mir-210 ale nadal przeważający kolor to czerwony więc raczej ok. |
 
-Jest to podtyp, w którym wizualizacja wykazuje największą zgodność z danymi literaturowymi, ujawniając kluczowe biomarkery agresywności guza.
+2.  Podtyp HER2-dodatni (HER2+)
 
-- Nadekspresja klastra (Zgodność: Wysoka): Na mapie ciepła w sekcji Basal widoczny jest intensywny, czerwony blok dla miR-17 oraz miR-20a. Jest to bezpośrednie potwierdzenie wyników artykułu, który identyfikuje miR-17 jako jeden z najważniejszych markerów predykcyjnych dla podtypu potrójnie ujemnego. Badania wskazują, że nadekspresja tej rodziny jest skorelowana z wysokim stopniem złośliwości guza i regulacją szlaku c-MYC.
+W tym podtypie analiza wykresu w kontekście artykułu wskazuje na pewne
+różnice w sile sygnału dla kluczowych markerów.
 
+-   Brak wyraźnej sygnatury miR-200c (Rozbieżność): Według artykułu,
+    miR-200c powinien być najsilniej nadekspresjonowanym markerem w
+    grupie HER2+ (ok. 15-krotny wzrost). Na mapie ciepła w sekcji HER2
+    (różowy pasek) wiersz ten nie wyróżnia się intensywną czerwienią na
+    tle innych podtypów. Oznacza to, że w danych ten konkretny marker
+    nie jest tak dominujący, jak sugeruje literatura.
 
-- Obniżenie poziomu miR-206 (Zgodność: Wysoka): Wiersz miR-206 na Twoim wykresie jest wyraźnie "chłodny" (niebieski/biały) w grupie bazalnej. Koreluje to idealnie z danymi z Tabeli II artykułu, gdzie miR-206 odnotowano jako najsilniej obniżony (downregulated) miRNA w grupie TNBC względem kontroli.
+-   Obecność miR-21: Podobnie jak w innych podtypach, miR-21 wykazuje tu
+    podwyższoną ekspresję, co jest zgodne z tezą o jego uniwersalnej
+    roli onkogennej, choć w artykule wskazano, że jego poziom w HER2+
+    jest nieco niższy niż w grupach Luminal B czy TNBC
 
-- Niejednoznaczność miR-155 (Rozbieżność): Na mapie ciepła miR-155 jest silnie nadekspresjonowany w grupie bazalnej. Warto odnotować, że w artykule Triantafyllou et al. nadekspresję miR-155 przypisano głównie do grupy Luminal A , a w tabeli wyników dla TNBC odnotowano nawet jego obniżenie. wynik może sugerować specyfikę badanej kohorty, odmienną od tej opisanej w artykule.
+-   mir-155 (umiarkowana) Względna ekspresja miR-155 była najsilniejsza
+    w fazie III, następnie w fazie II i I; była najsilniejsza w podtypie
+    „potrójnie ujemnym”, następnie w HER-2(+), luminalnym B i luminalnym
+    A (<https://cjcr.amegroups.org/article/view/1256/1952>)
 
-- mir-210 w TNBC: Artykuł identyfikuje miR-210 jako jeden z kluczowych markerów predykcyjnych dla TNBC (z nadekspresją +38-krotną). Na wykresie wiersz ten jest dość niejednorodny – choć widać pewne podwyższenie w sekcji Basal, nie jest ono tak spektakularne wizualnie jak w przypadku miR-17, gdzie ekspresja mir-17 według badań jest niższa niż w przypadku mir-210 ale nadal przeważający kolor to czerwony więc raczej ok. 
-----------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------
 
-2. Podtyp HER2-dodatni (HER2+)
+3.  Luminal A
 
-W tym podtypie analiza wykresu w kontekście artykułu wskazuje na pewne różnice w sile sygnału dla kluczowych markerów.
+"Dane wykazały znacząco obniżony poziom miR-17-5p i miR-20a-5p, które
+odgrywają istotną rolę w inwazji i migracji komórek nowotworowych
+poprzez supresję Wnt/β-kateniny w grupie pacjentów z LumA -
+<https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/>" - zgodność z naszym
+wykresem.
 
-- Brak wyraźnej sygnatury miR-200c (Rozbieżność): Według artykułu, miR-200c powinien być najsilniej nadekspresjonowanym markerem w grupie HER2+ (ok. 15-krotny wzrost). Na  mapie ciepła w sekcji HER2 (różowy pasek) wiersz ten nie wyróżnia się intensywną czerwienią na tle innych podtypów. Oznacza to, że w danych ten konkretny marker nie jest tak dominujący, jak sugeruje literatura.
+-   miR-29a (Niezgodność):
 
-- Obecność miR-21: Podobnie jak w innych podtypach, miR-21 wykazuje tu podwyższoną ekspresję, co jest zgodne z tezą o jego uniwersalnej roli onkogennej, choć w artykule wskazano, że jego poziom w HER2+ jest nieco niższy niż w grupach Luminal B czy TNBC
+Heatmapa: Wiersz hsa_mir_29a_z wykazuje w sekcji LumA intensywny kolor
+czerwony, co sugeruje wysoką nadekspresję. Artykuł: W surowicy pacjentek
+z Luminal A odnotowano drastyczny spadek poziomu tego miRNA (Fold
+Regulation: -19.808). Jest to całkowita odwrotność tego, co widać na
+wykresie.
 
-- mir-155 (umiarkowana)
-Względna ekspresja miR-155 była najsilniejsza w fazie III, następnie w fazie II i I; była najsilniejsza w podtypie „potrójnie ujemnym”, następnie w HER-2(+), luminalnym B i luminalnym A (https://cjcr.amegroups.org/article/view/1256/1952)
+-   Rodzina miR-181 (miR-181d i miR-181c) (Niezgodność):
 
-----------------------------------------------------------------------------------------------------------------
+Heatmapa: W dolnej części wykresu wiersze dla hsa_mir_181d_z i
+hsa_mir_181c_z są w większości czerwone (wysokie) dla grupy LumA.
+Artykuł: Dane wskazują na silne obniżenie ekspresji w surowicy
+(miR-181d: -19.524, miR-181c: -4.574).
 
-3. Luminal A
+-   miR-206 (Niezgodność):
 
-"Dane wykazały znacząco obniżony poziom miR-17-5p i miR-20a-5p, które odgrywają istotną rolę w inwazji i migracji komórek nowotworowych poprzez supresję Wnt/β-kateniny w grupie pacjentów z LumA - https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/" - zgodność z naszym wykresem.
-
-- miR-29a (Niezgodność):
-
-Heatmapa: Wiersz hsa_mir_29a_z wykazuje w sekcji LumA intensywny kolor czerwony, co sugeruje wysoką nadekspresję. Artykuł: W surowicy pacjentek z Luminal A odnotowano drastyczny spadek poziomu tego miRNA (Fold Regulation: -19.808). Jest to całkowita odwrotność tego, co widać na wykresie.
-
-- Rodzina miR-181 (miR-181d i miR-181c) (Niezgodność):
-
-Heatmapa: W dolnej części wykresu wiersze dla hsa_mir_181d_z i hsa_mir_181c_z są w większości czerwone (wysokie) dla grupy LumA. Artykuł: Dane wskazują na silne obniżenie ekspresji w surowicy (miR-181d: -19.524, miR-181c: -4.574).
-
-- miR-206 (Niezgodność):
-
-Heatmapa: Wiersz hsa_mir_206_z w kolumnach turkusowych jest bardzo wyraźnie niebieski, co oznacza niemal brak ekspresji lub bardzo niski poziom. Artykuł: W badaniu wykazano, że w surowicy Luminal A poziom miR-206 jest podwyższony (Fold Regulation: +9.034).
+Heatmapa: Wiersz hsa_mir_206_z w kolumnach turkusowych jest bardzo
+wyraźnie niebieski, co oznacza niemal brak ekspresji lub bardzo niski
+poziom. Artykuł: W badaniu wykazano, że w surowicy Luminal A poziom
+miR-206 jest podwyższony (Fold Regulation: +9.034).
 
 -miR-23b (Umiarkowane / Wysoka):
 
-Heatmapa: Wiersz hsa_mir_23b_z ma czasami tendencję do koloru czerwonego/pomarańczowego jednak przeważa kolor niebieski który sugeruje niską ekspresję. Artykuł: Zanotowano spadek ekspresji (Fold Regulation: -9.030).
+Heatmapa: Wiersz hsa_mir_23b_z ma czasami tendencję do koloru
+czerwonego/pomarańczowego jednak przeważa kolor niebieski który sugeruje
+niską ekspresję. Artykuł: Zanotowano spadek ekspresji (Fold Regulation:
+-9.030).
 
-- miR-155 (Niezgodność):
+-   miR-155 (Niezgodność):
 
-Heatmapa: Wiersz hsa_mir_155_z jest raczej jasny/niebieskawy (niski/średni). Artykuł: Wskazuje na wyraźną nadekspresję (Fold Regulation: +7.865).
+Heatmapa: Wiersz hsa_mir_155_z jest raczej jasny/niebieskawy
+(niski/średni). Artykuł: Wskazuje na wyraźną nadekspresję (Fold
+Regulation: +7.865).
 
-- miR-17 + miR-20a (Zgodność: Wysoka)
+-   miR-17 + miR-20a (Zgodność: Wysoka)
 
-Porównując profile ekspresji guzów potrójnie ujemnych i luminalnych A, zaobserwowano zwiększoną ekspresję miR-17-5p (4,27-krotnie; p = 0,000664), miR-18a-5p (9,68-krotnie; p = 0,000545) i miR-20a-5 (4,07-krotnie; p = 0,001487) w guzach potrójnie ujemnych w porównaniu z guzami luminalnymi A (https://pubmed.ncbi.nlm.nih.gov/24810926/)
+Porównując profile ekspresji guzów potrójnie ujemnych i luminalnych A,
+zaobserwowano zwiększoną ekspresję miR-17-5p (4,27-krotnie; p =
+0,000664), miR-18a-5p (9,68-krotnie; p = 0,000545) i miR-20a-5
+(4,07-krotnie; p = 0,001487) w guzach potrójnie ujemnych w porównaniu z
+guzami luminalnymi A (<https://pubmed.ncbi.nlm.nih.gov/24810926/>)
 
 -let-7b (Umiarkowana)
 
-Najbardziej uderzające odkrycia ujawniły podwyższony poziom miRNA supresora guza let-7 u pacjentek z rakiem piersi luminalnym, niezależnie od podtypu (https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/)
+Najbardziej uderzające odkrycia ujawniły podwyższony poziom miRNA
+supresora guza let-7 u pacjentek z rakiem piersi luminalnym, niezależnie
+od podtypu (<https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/>)
 
-----------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------
 
-4. Luminal B
+4.  Luminal B
 
-- mir-210
+-   mir-210
 
-w podtypie Luminalnym B mediana jest wyższa (1.24) niż w pozostałych, szerokie zakresy międzykwartylowe i wysoka wartość p wskazują, że miR-210 nie jest skutecznym markerem do rozróżniania tych podtypów między sobą (https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/)
+w podtypie Luminalnym B mediana jest wyższa (1.24) niż w pozostałych,
+szerokie zakresy międzykwartylowe i wysoka wartość p wskazują, że
+miR-210 nie jest skutecznym markerem do rozróżniania tych podtypów
+między sobą (<https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/>)
 
-- miR-20a
+-   miR-20a
 
-Artykuł: Wykazuje silne obniżenie ekspresji w surowicy (Fold Regulation: -9.541). Heatmapa: Wiersz hsa_mir_20a_z w sekcji LumB jest dominująco niebieski, co potwierdza niską ekspresję - Pełna zgodność.
+Artykuł: Wykazuje silne obniżenie ekspresji w surowicy (Fold Regulation:
+-9.541). Heatmapa: Wiersz hsa_mir_20a_z w sekcji LumB jest dominująco
+niebieski, co potwierdza niską ekspresję - Pełna zgodność.
 
-- miR-205
+-   miR-205
 
-Artykuł: Wykazuje obniżenie ekspresji (Fold Regulation: -5.844). Heatmapa: Wiersz hsa_mir_205_z w sekcji LumB jest w większości niebieski/blady, wskazując na niski poziom.
+Artykuł: Wykazuje obniżenie ekspresji (Fold Regulation: -5.844).
+Heatmapa: Wiersz hsa_mir_205_z w sekcji LumB jest w większości
+niebieski/blady, wskazując na niski poziom.
 
-- miR-21
+-   miR-21
 
-Artykuł: To najważniejszy biomarker w badaniu, wykazujący gigantyczną nadekspresję w Luminal B (Fold Regulation: +117.043). Heatmapa: Wiersz hsa_mir_21_z zawiera dużo pól czerwonych/pomarańczowych w sekcji LumB (choć może nie jest to aż tak jaskrawe jak w sekcji Basal, to nadal jest to poziom wysoki).
+Artykuł: To najważniejszy biomarker w badaniu, wykazujący gigantyczną
+nadekspresję w Luminal B (Fold Regulation: +117.043). Heatmapa: Wiersz
+hsa_mir_21_z zawiera dużo pól czerwonych/pomarańczowych w sekcji LumB
+(choć może nie jest to aż tak jaskrawe jak w sekcji Basal, to nadal jest
+to poziom wysoki).
 
-- miR-25
-Artykuł: Autorzy raportują ogromną nadekspresję w surowicy dla Luminal B (Fold Regulation: +77.079). Heatmapa: Wiersz hsa_mir_25_z w sekcji LumB jest zaskakująco blady (niska/średnia ekspresja). Nie widać tu odzwierciedlenia tak silnego wzrostu, o jakim mówi artykuł.
+-   miR-25 Artykuł: Autorzy raportują ogromną nadekspresję w surowicy
+    dla Luminal B (Fold Regulation: +77.079). Heatmapa: Wiersz
+    hsa_mir_25_z w sekcji LumB jest zaskakująco blady (niska/średnia
+    ekspresja). Nie widać tu odzwierciedlenia tak silnego wzrostu, o
+    jakim mówi artykuł.
 
-- miR-100
+-   miR-100
 
-Artykuł: Raportuje obniżenie poziomu (Fold Regulation: -4.403). Heatmapa: Wiersz hsa_mir_100_z jest jednorodny, ale w sekcji LumB wykazuje sporo pól niebieskich (niska ekspresja. 
+Artykuł: Raportuje obniżenie poziomu (Fold Regulation: -4.403).
+Heatmapa: Wiersz hsa_mir_100_z jest jednorodny, ale w sekcji LumB
+wykazuje sporo pól niebieskich (niska ekspresja.
 
-----------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 Ładniejsza forma:
 
-**Analiza porównawcza profili ekspresji miRNA: wizualizacja heatmapy a dane literaturowe**
+**Analiza porównawcza profili ekspresji miRNA: wizualizacja heatmapy a
+dane literaturowe**
 
-Obserwacje potwierdzają wyraźną odrębność molekularną podtypu bazalnego (Basal/TNBC), jednocześnie ujawniając specyficzne wzorce oraz pewne niejednoznaczności w grupach luminalnych i HER2-dodatnich.
+Obserwacje potwierdzają wyraźną odrębność molekularną podtypu bazalnego
+(Basal/TNBC), jednocześnie ujawniając specyficzne wzorce oraz pewne
+niejednoznaczności w grupach luminalnych i HER2-dodatnich.
 
 ### 1. Podtyp Bazalny (Basal / TNBC)
-W obrębie tego podtypu wizualizacja wykazuje najwyższy stopień zgodności z danymi literaturowymi, skutecznie ujawniając kluczowe biomarkery związane z agresywnością nowotworu.
 
-* **Klastry miR-17 oraz miR-20a (Wysoka zgodność):** W sekcji odpowiadającej podtypowi Basal widoczny jest intensywny sygnał (nadekspresja) dla miR-17 oraz miR-20a. Stanowi to bezpośrednie potwierdzenie wyników Triantafyllou *et al.* [1], którzy identyfikują miR-17 jako jeden z kluczowych markerów predykcyjnych dla podtypu potrójnie ujemnego. Literatura wskazuje, że nadekspresja tej rodziny miRNA jest skorelowana z wysokim stopniem złośliwości histologicznej guza oraz regulacją szlaku c-MYC. Ponadto, badania porównawcze wykazują istotnie wyższą ekspresję miR-17-5p, miR-18a-5p i miR-20a-5p w guzach TNBC w porównaniu do guzów Luminal A [2].
-* **miR-206 (Wysoka zgodność):** Analiza wykresu wykazuje wyraźne obniżenie ekspresji („chłodne” barwy) miR-206 w grupie bazalnej. Koreluje to z danymi tabelarycznymi z pracy źródłowej [1], gdzie miR-206 odnotowano jako najsilniej obniżony (*downregulated*) miRNA w grupie TNBC względem kontroli.
-* **miR-155 (Rozbieżność):** Na mapie ciepła miR-155 wykazuje silną nadekspresję w grupie bazalnej. Jest to wynik odmienny od przedstawionego przez Triantafyllou *et al.* [1], gdzie nadekspresję tego markera przypisano głównie do grupy Luminal A. Niemniej jednak, inne doniesienia literaturowe [3] sugerują, że względna ekspresja miR-155 jest najsilniejsza właśnie w podtypie potrójnie ujemnym, a następnie w HER2+, co może tłumaczyć obserwowany na naszym wykresie obraz.
-* **miR-210:** Choć Triantafyllou *et al.* [1] identyfikują miR-210 jako kluczowy marker predykcyjny dla TNBC (z 38-krotną nadekspresją), na analizowanej mapie ciepła wiersz ten jest niejednorodny. Mimo to, widoczne podwyższenie sygnału w sekcji Basal, przy dominującej barwie czerwonej, pozostaje w zgodzie z ogólnymi trendami literaturowymi, nawet jeśli wizualnie nie jest tak spektakularne jak w przypadku klastra miR-17.
+W obrębie tego podtypu wizualizacja wykazuje najwyższy stopień zgodności
+z danymi literaturowymi, skutecznie ujawniając kluczowe biomarkery
+związane z agresywnością nowotworu.
+
+-   **Klastry miR-17 oraz miR-20a (Wysoka zgodność):** W sekcji
+    odpowiadającej podtypowi Basal widoczny jest intensywny sygnał
+    (nadekspresja) dla miR-17 oraz miR-20a. Stanowi to bezpośrednie
+    potwierdzenie wyników Triantafyllou *et al.* [1], którzy
+    identyfikują miR-17 jako jeden z kluczowych markerów predykcyjnych
+    dla podtypu potrójnie ujemnego. Literatura wskazuje, że nadekspresja
+    tej rodziny miRNA jest skorelowana z wysokim stopniem złośliwości
+    histologicznej guza oraz regulacją szlaku c-MYC. Ponadto, badania
+    porównawcze wykazują istotnie wyższą ekspresję miR-17-5p, miR-18a-5p
+    i miR-20a-5p w guzach TNBC w porównaniu do guzów Luminal A [2].
+-   **miR-206 (Wysoka zgodność):** Analiza wykresu wykazuje wyraźne
+    obniżenie ekspresji („chłodne” barwy) miR-206 w grupie bazalnej.
+    Koreluje to z danymi tabelarycznymi z pracy źródłowej [1], gdzie
+    miR-206 odnotowano jako najsilniej obniżony (*downregulated*) miRNA
+    w grupie TNBC względem kontroli.
+-   **miR-155 (Rozbieżność):** Na mapie ciepła miR-155 wykazuje silną
+    nadekspresję w grupie bazalnej. Jest to wynik odmienny od
+    przedstawionego przez Triantafyllou *et al.* [1], gdzie nadekspresję
+    tego markera przypisano głównie do grupy Luminal A. Niemniej jednak,
+    inne doniesienia literaturowe [3] sugerują, że względna ekspresja
+    miR-155 jest najsilniejsza właśnie w podtypie potrójnie ujemnym, a
+    następnie w HER2+, co może tłumaczyć obserwowany na naszym wykresie
+    obraz.
+-   **miR-210:** Choć Triantafyllou *et al.* [1] identyfikują miR-210
+    jako kluczowy marker predykcyjny dla TNBC (z 38-krotną
+    nadekspresją), na analizowanej mapie ciepła wiersz ten jest
+    niejednorodny. Mimo to, widoczne podwyższenie sygnału w sekcji
+    Basal, przy dominującej barwie czerwonej, pozostaje w zgodzie z
+    ogólnymi trendami literaturowymi, nawet jeśli wizualnie nie jest tak
+    spektakularne jak w przypadku klastra miR-17.
 
 ### 2. Podtyp HER2-dodatni (HER2+)
-Analiza tego podtypu w kontekście danych literaturowych wskazuje na zróżnicowaną siłę sygnału dla kluczowych markerów.
 
-* **miR-200c (Rozbieżność):** Wbrew danym z artykułu źródłowego [1], który wskazuje na miR-200c jako najsilniej nadekspresjonowany marker w grupie HER2+ (ok. 15-krotny wzrost), na mapie ciepła nie obserwuje się tak intensywnej nadekspresji. Sugeruje to, że w badanej kohorcie marker ten może nie posiadać tak dominującej wartości dyskryminującej.
-* **miR-21 (Zgodność):** Marker ten wykazuje podwyższoną ekspresję, co potwierdza jego uniwersalną rolę onkogenną, zgodną z opisem w literaturze [1], choć jego poziom może być niższy niż w grupach Luminal B czy TNBC.
-* **miR-155:** Obserwowana ekspresja jest umiarkowana, co wpisuje się w hierarchię opisaną w literaturze [3], gdzie poziom miR-155 w HER2+ plasuje się pomiędzy wysokim poziomem w TNBC a niższym w podtypach luminalnych.
+Analiza tego podtypu w kontekście danych literaturowych wskazuje na
+zróżnicowaną siłę sygnału dla kluczowych markerów.
+
+-   **miR-200c (Rozbieżność):** Wbrew danym z artykułu źródłowego [1],
+    który wskazuje na miR-200c jako najsilniej nadekspresjonowany marker
+    w grupie HER2+ (ok. 15-krotny wzrost), na mapie ciepła nie obserwuje
+    się tak intensywnej nadekspresji. Sugeruje to, że w badanej kohorcie
+    marker ten może nie posiadać tak dominującej wartości
+    dyskryminującej.
+-   **miR-21 (Zgodność):** Marker ten wykazuje podwyższoną ekspresję, co
+    potwierdza jego uniwersalną rolę onkogenną, zgodną z opisem w
+    literaturze [1], choć jego poziom może być niższy niż w grupach
+    Luminal B czy TNBC.
+-   **miR-155:** Obserwowana ekspresja jest umiarkowana, co wpisuje się
+    w hierarchię opisaną w literaturze [3], gdzie poziom miR-155 w HER2+
+    plasuje się pomiędzy wysokim poziomem w TNBC a niższym w podtypach
+    luminalnych.
 
 ### 3. Podtyp Luminal A (LumA)
-Analiza podtypu Luminal A ujawniła zarówno zgodności, jak i istotne różnice w stosunku do danych dotyczących surowicy.
 
-* **miR-17 i miR-20a (Wysoka zgodność):** Dane literaturowe wskazują na znacząco obniżony poziom miR-17-5p i miR-20a-5p u pacjentek z Luminal A, co wiąże się z supresją szlaku Wnt/β-kateniny i ograniczeniem inwazyjności [4]. Obraz heatmapy jest spójny z tymi doniesieniami, wykazując niską ekspresję tych markerów.
-* **miR-23b (Zgodność):** Przeważająca niska ekspresja (barwa niebieska) na wykresie koreluje ze spadkiem ekspresji (Fold Regulation: -9.030) odnotowanym w artykule źródłowym [1].
-* **let-7b (Umiarkowana zgodność):** Badania wskazują na podwyższony poziom supresora guza let-7 u pacjentek z rakiem luminalnym [5]. Na heatmapie widoczna jest tendencja do wyższych wartości, co wspiera te wnioski.
-* **Rozbieżności (miR-29a, miR-181, miR-206, miR-155):** Odnotowano szereg inwersji względem wyników z surowicy [1]. Na heatmapie miR-29a oraz rodzina miR-181 (c/d) wykazują wysoką ekspresję, podczas gdy w surowicy są silnie obniżone. Odwrotnie, miR-206 i miR-155 na mapie wykazują niski poziom, podczas gdy w surowicy opisywana jest ich nadekspresja. Różnice te mogą wynikać z odmienności materiału biologicznego (tkanka guza vs. krążące miRNA).
+Analiza podtypu Luminal A ujawniła zarówno zgodności, jak i istotne
+różnice w stosunku do danych dotyczących surowicy.
+
+-   **miR-17 i miR-20a (Wysoka zgodność):** Dane literaturowe wskazują
+    na znacząco obniżony poziom miR-17-5p i miR-20a-5p u pacjentek z
+    Luminal A, co wiąże się z supresją szlaku Wnt/β-kateniny i
+    ograniczeniem inwazyjności [4]. Obraz heatmapy jest spójny z tymi
+    doniesieniami, wykazując niską ekspresję tych markerów.
+-   **miR-23b (Zgodność):** Przeważająca niska ekspresja (barwa
+    niebieska) na wykresie koreluje ze spadkiem ekspresji (Fold
+    Regulation: -9.030) odnotowanym w artykule źródłowym [1].
+-   **let-7b (Umiarkowana zgodność):** Badania wskazują na podwyższony
+    poziom supresora guza let-7 u pacjentek z rakiem luminalnym [5]. Na
+    heatmapie widoczna jest tendencja do wyższych wartości, co wspiera
+    te wnioski.
+-   **Rozbieżności (miR-29a, miR-181, miR-206, miR-155):** Odnotowano
+    szereg inwersji względem wyników z surowicy [1]. Na heatmapie
+    miR-29a oraz rodzina miR-181 (c/d) wykazują wysoką ekspresję,
+    podczas gdy w surowicy są silnie obniżone. Odwrotnie, miR-206 i
+    miR-155 na mapie wykazują niski poziom, podczas gdy w surowicy
+    opisywana jest ich nadekspresja. Różnice te mogą wynikać z
+    odmienności materiału biologicznego (tkanka guza vs. krążące miRNA).
 
 ### 4. Podtyp Luminal B (LumB)
-W podtypie tym zaobserwowano specyficzne wzorce ekspresji, częściowo pokrywające się z danymi literaturowymi.
 
-* **miR-20a i miR-205 (Zgodność):** Wiersze odpowiadające tym miRNA na mapie ciepła wykazują dominująco niską ekspresję (barwa niebieska), co jest w pełni zgodne z wynikami Triantafyllou *et al.* [1], raportującymi ich obniżenie w surowicy (odpowiednio -9.5 i -5.8).
-* **miR-21 (Zgodność):** Potwierdzono wysoką ekspresję tego kluczowego onkomiR-u, co odpowiada jego silnej nadekspresji opisanej w artykule źródłowym [1].
-* **miR-100 (Zgodność):** Heatmapa wykazuje obszary obniżonej ekspresji w sekcji Luminal B, co jest spójne z raportowanym w literaturze [1] spadkiem poziomu tego markera (Fold Regulation: -4.403).
-* **miR-210:** Analiza wykresu potwierdza wnioski z literatury [6], sugerujące, że mimo wyższej mediany, szerokie zakresy zmienności czynią miR-210 markerem o ograniczonej skuteczności w różnicowaniu podtypów luminalnych.
-* **miR-25 (Rozbieżność):** Mimo doniesień o ogromnej nadekspresji w surowicy (+77-krotnej) [1], wizualizacja na mapie ciepła sugeruje poziom niski lub średni, co stanowi istotną różnicę wymagającą dalszej weryfikacji.
+W podtypie tym zaobserwowano specyficzne wzorce ekspresji, częściowo
+pokrywające się z danymi literaturowymi.
 
+-   **miR-20a i miR-205 (Zgodność):** Wiersze odpowiadające tym miRNA na
+    mapie ciepła wykazują dominująco niską ekspresję (barwa niebieska),
+    co jest w pełni zgodne z wynikami Triantafyllou *et al.* [1],
+    raportującymi ich obniżenie w surowicy (odpowiednio -9.5 i -5.8).
+-   **miR-21 (Zgodność):** Potwierdzono wysoką ekspresję tego kluczowego
+    onkomiR-u, co odpowiada jego silnej nadekspresji opisanej w artykule
+    źródłowym [1].
+-   **miR-100 (Zgodność):** Heatmapa wykazuje obszary obniżonej
+    ekspresji w sekcji Luminal B, co jest spójne z raportowanym w
+    literaturze [1] spadkiem poziomu tego markera (Fold Regulation:
+    -4.403).
+-   **miR-210:** Analiza wykresu potwierdza wnioski z literatury [6],
+    sugerujące, że mimo wyższej mediany, szerokie zakresy zmienności
+    czynią miR-210 markerem o ograniczonej skuteczności w różnicowaniu
+    podtypów luminalnych.
+-   **miR-25 (Rozbieżność):** Mimo doniesień o ogromnej nadekspresji w
+    surowicy (+77-krotnej) [1], wizualizacja na mapie ciepła sugeruje
+    poziom niski lub średni, co stanowi istotną różnicę wymagającą
+    dalszej weryfikacji.
 
 **Literatura:**
 
-1.  Triantafyllou A, et al. *Circulating miRNA Expression Profiling in Breast Cancer Molecular Subtypes: Applying Machine Learning Analysis in Bioinformatics*. Cancer Diagnosis & Prognosis, 2022; 2: 739-749.
-2.  *Differential expression of miR-17 family in breast cancer subtypes*. Dostępne w: [PubMed 24810926](https://pubmed.ncbi.nlm.nih.gov/24810926/)
-3.  *Expression of miR-155 in breast cancer subtypes*. Dostępne w: [CJCR Article](https://cjcr.amegroups.org/article/view/1256/1952)
-4.  *Role of miR-17-5p and miR-20a-5p in Luminal A breast cancer*. Dostępne w: [PMC7589921](https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/)
-5.  *Let-7 miRNA levels in luminal breast cancer*. Dostępne w: [PMC5706292](https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/)
-6.  *miR-210 as a marker in breast cancer subtypes*. Dostępne w: [PMC11134088](https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/)
+1.  Triantafyllou A, et al. *Circulating miRNA Expression Profiling in
+    Breast Cancer Molecular Subtypes: Applying Machine Learning Analysis
+    in Bioinformatics*. Cancer Diagnosis & Prognosis, 2022; 2: 739-749.
+2.  *Differential expression of miR-17 family in breast cancer
+    subtypes*. Dostępne w: [PubMed
+    24810926](https://pubmed.ncbi.nlm.nih.gov/24810926/)
+3.  *Expression of miR-155 in breast cancer subtypes*. Dostępne w: [CJCR
+    Article](https://cjcr.amegroups.org/article/view/1256/1952)
+4.  *Role of miR-17-5p and miR-20a-5p in Luminal A breast cancer*.
+    Dostępne w:
+    [PMC7589921](https://pmc.ncbi.nlm.nih.gov/articles/PMC7589921/)
+5.  *Let-7 miRNA levels in luminal breast cancer*. Dostępne w:
+    [PMC5706292](https://pmc.ncbi.nlm.nih.gov/articles/PMC5706292/)
+6.  *miR-210 as a marker in breast cancer subtypes*. Dostępne w:
+    [PMC11134088](https://pmc.ncbi.nlm.nih.gov/articles/PMC11134088/)
 
-
-### BATCH EFFECT 
-
-
+### BATCH EFFECT
 
 ```{r}
 final_data$Batch_ID <- sapply(strsplit(as.character(final_data[[patient_id_col]]), "-"), function(x) x[2])
@@ -947,1265 +1059,301 @@ plot_batch <- ggplot(pca_plot_data_mirna, aes(x = PC1, y = PC2, color = Batch)) 
   theme_minimal()
 print(plot_batch)
 ```
+
 WERYFIKACJA BIOLOGICZNA:
 
-dane miRNA wykazują silnA zgodność biologiczną. Próbki nie są wymieszane losowo – tworzą wyraźne grupy zgodne z podtypami raka piersi.
+dane miRNA wykazują silnA zgodność biologiczną. Próbki nie są wymieszane
+losowo – tworzą wyraźne grupy zgodne z podtypami raka piersi.
 
 1.  Odseparowany podtyp Basal-like (Czerwone kropki):
-    - To jest najbardziej rzucająca się w oczy cecha wykresu. Próbki tworzą odrębny, zwarty klaster po lewej stronie wykresu.
-    - To idealnie pasuje do wiedzy medycznej oraz jest zgodne z heatmapą. Raki bazalne są molekularnie najbardziej odmienne od raków luminalnych. 
-
+    -   To jest najbardziej rzucająca się w oczy cecha wykresu. Próbki
+        tworzą odrębny, zwarty klaster po lewej stronie wykresu.
+    -   To idealnie pasuje do wiedzy medycznej oraz jest zgodne z
+        heatmapą. Raki bazalne są molekularnie najbardziej odmienne od
+        raków luminalnych.
 2.  Blok Luminalny (Zielone i Fioletowe kropki):
-    -  Próbki Luminal A oraz Luminal B grupują się razem po prawej stronie wykresu.
-    - To również jest poprawne. Oba te podtypy wywodzą się z komórek luminalnych i są ER-dodatnie (mają receptory estrogenowe). Są do siebie podobne genetycznie, więc na wykresie PCA leżą blisko siebie. 
-
+    -   Próbki Luminal A oraz Luminal B grupują się razem po prawej
+        stronie wykresu.
+    -   To również jest poprawne. Oba te podtypy wywodzą się z komórek
+        luminalnych i są ER-dodatnie (mają receptory estrogenowe). Są do
+        siebie podobne genetycznie, więc na wykresie PCA leżą blisko
+        siebie.
 3.  HER2
-    - Te próbki są bardziej rozsypane i znajdują się w strefie pośredniej, co często obserwuje się w analizach dla tego podtypu.
-
+    -   Te próbki są bardziej rozsypane i znajdują się w strefie
+        pośredniej, co często obserwuje się w analizach dla tego
+        podtypu.
 
 KONTROLA BATCH EFFECT:
 
-Wykres wygląda prawidłowo (próbki nie grupują się wg ośrodków badawczych są rozrzucone wszędzie).
-
+Wykres wygląda prawidłowo (próbki nie grupują się wg ośrodków badawczych
+są rozrzucone wszędzie).
 
 PODSUMOWANIE:
 
-Analiza PCA wykazała brak istotnego efektu partii (Batch Effect) w danych miRNA. Próbki grupują się zgodnie z biologią podtypów (PAM50), a nie według ośrodków badawczych. Dane zostały uznane za technicznie poprawne i zakwalifikowane do dalszej analizy różnicowej bez konieczności korekcji algorytmem ComBat.
-
-
+Analiza PCA wykazała brak istotnego efektu partii (Batch Effect) w
+danych miRNA. Próbki grupują się zgodnie z biologią podtypów (PAM50), a
+nie według ośrodków badawczych. Dane zostały uznane za technicznie
+poprawne i zakwalifikowane do dalszej analizy różnicowej bez
+konieczności korekcji algorytmem ComBat.
 
 ```{r}
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 ```
 
-# Wstęp
+# Etap 3: Analiza Białek (Proteomika)
 
-Celem analizy jest weryfikacja zgodności profili ekspresji białek z klasyfikacją molekularną PAM50 (Prediction Analysis of Microarray 50) w raku piersi. Analiza obejmuje dane z projektu TCGA-BRCA z 855 próbkami pacjentek z rakiem piersi reprezentującymi pięć podtypów molekularnych: Luminal A (LumA), Luminal B (LumB), HER2-enriched (Her2), Basal-like (Basal) i Normal-like (Normal).
+Celem analizy jest weryfikacja zgodności profili ekspresji białek z
+klasyfikacją molekularną PAM50. Wykorzystujemy dane z macierzy RPPA,
+które zostały wcześniej znormalizowane (Z-score).
 
-**Główne pytania badawcze:**
-- Czy ekspresja białek ER-ALPHA jest wysoka w podtypie Luminal A?
-- Czy ekspresja HER2 jest amplifikowana w podtypie HER2-enriched?
-- Czy markery basalne (KRT5, KRT14, EGFR) są wysoko ekspresjonowane w podtypie Basal?
-- Czy wszystkie białka wykazują statystycznie istotne różnice między podtypami?
-
-
-```{r instalacja_bibliotek, message=FALSE, warning=FALSE}
-
-# Instalacja (jeśli potrzebna)
-# install.packages("tidyverse")
-# install.packages("pheatmap")
-# install.packages("RColorBrewer")
-# install.packages("dplyr")
-# install.packages("ggplot2")
-
-# Wczytanie bibliotek
-library(tidyverse)
-library(pheatmap)
-library(RColorBrewer)
-library(dplyr)
-library(ggplot2)
-
-```
-
-## 1.Wczytanie i eksploracja danych surowych
-
-Wczytujemy plik z danymi zawierający wyrażenie białek, metadane o pacjentach oraz informacje o klasyfikacji PAM50.
-
-```{r wczytanie_danych}
-
-# Wczytanie surowych danych
-data <- read.csv("merged_data_cleaned.csv", 
-                 header = TRUE, 
-                 sep = ",", 
-                 stringsAsFactors = FALSE)
-
-# Podstawowe informacje o zbiorze
-cat("=== INFORMACJE O ZBIORZE DANYCH ===\n\n")
-cat("Wymiary danych:", dim(data)[1], "wierszy,", dim(data)[2], "kolumn\n")
-cat("Pierwsze 10 kolumn:", paste(colnames(data)[1:10], collapse = ", "), "...\n\n")
-
-# Sprawdzenie kolumny PAM50
-cat("Liczba próbek wg podtypów PAM50:\n")
-print(table(data$brca_subtype_pam50))
-cat("\n")
-
-```
-
-## 1.1 Definiowanie markerów białkowych
-
-Na podstawie literatury i klasyfikacji PAM50, definiujemy listę białek do analizy. Białka te są kluczowymi markerami dla każdego podtypu raka piersi.
-
-```{r definiowanie_markerow}
-
-cat("=== DEFINIOWANIE MARKERÓW BIAŁKOWYCH ===\n\n")
-
-# Lista białek dla analizy PAM50
-proteins_for_analysis <- c(
-  # Receptory hormonalne
-  "eralpha",           # ER-alpha (protein) - marker Luminal
-  "esr1",              # ESR1 (RNA) - marker Luminal
-  "pr",                # PR (protein) - marker Luminal
-  "pgr",               # PGR (RNA) - marker Luminal
-
-  # HER2
-  "her2",              # HER2 (protein) - marker HER2+
-  "erbb2",             # ERBB2 (RNA) - marker HER2+
-
-  # EGFR
-  "egfr_mirnaprot",    # EGFR (protein) - marker Basal
-
-  # Markery basalne (keratyny)
-  "krt5",              # KRT5 - marker Basal
-  "krt14",             # KRT14 - marker Basal
-  "krt17",             # KRT17 - marker Basal
-
-  # Markery luminalne
-  "gata3",             # GATA3 - marker Luminal
-  "foxa1",             # FOXA1 - marker Luminal
-
-  # Proliferacja
-  "mki67",             # MKI67 (Ki67) - proliferacja
-
-  # Pozostałe markery
-  "bcl2_rna",          # BCL2
-  "p53",               # P53
-  "cd24",              # CD24
-  "cd44"               # CD44
+```{r przygotowanie_bialek, include=FALSE}
+# 1. Wybór markerów białkowych (korzystamy z kolumn _z utworzonych w etapie standaryzacji)
+# Lista zgodna z wektorem 'bialka' z etapu wranglingu + suffix "_z"
+protein_markers <- c(
+  "eralpha_z", "pr_z", "her2_z", "egfr_mirnaprot_z", "p53_z", "pten_mirnaprot_z",
+  "mek1_z", "bcl2_mirnaprot_z", "bax_z", "parpcleaved_z", "ecadherin_z",
+  "ncadherin_z", "betacatenin_z", "brca1_z", "pdl1_z"
 )
 
-# Weryfikacja dostępności białek w danych
-proteins_available <- proteins_for_analysis[proteins_for_analysis %in% colnames(data)]
-proteins_missing <- proteins_for_analysis[!proteins_for_analysis %in% colnames(data)]
-
-cat("✓ Dostępne białka:", length(proteins_available), "/", length(proteins_for_analysis), "\n")
-if(length(proteins_missing) > 0) {
-  cat("  Brakujące:", paste(proteins_missing, collapse = ", "), "\n")
-} else {
-  cat("  Wszystkie białka dostępne.\n")
-}
-cat("\nBiałka dostępne:\n")
-cat(paste("-", proteins_available, "\n", collapse = ""))
-
-```
-
----
-
-# 2. NORMALIZACJA DANYCH
-
-## 2.1 Przygotowanie macierzy ekspresji
-
-Wybieramy tylko dostępne białka i przygotowujemy macierz ekspresji do normalizacji.
-
-```{r przygotowanie_macierzy}
-
-cat("\n=== NORMALIZACJA DANYCH (Z-SCORE) ===\n\n")
-
-# Wybór tylko dostępnych białek
-protein_data_raw <- data[, proteins_available]
-
-cat("Wymiary surowych danych:", dim(protein_data_raw)[1], "×", dim(protein_data_raw)[2], "\n")
-cat("Liczba brakujących wartości:\n")
-missing_counts <- colSums(is.na(protein_data_raw))
-print(missing_counts[missing_counts > 0])
-cat("Brak brakujących wartości.\n\n")
-
-```
-
-## 2.2 Normalizacja Z-score
-
-Normalizacja Z-score (standaryzacja) transformuje dane tak, aby każda zmienna miała średnią bliską 0 i odchylenie standardowe bliskie 1. Umożliwia to bezpośrednie porównywanie zmiennych o różnych skalach.
-
-**Interpretacja Z-score:**
-- Z-score = 0 → ekspresja równa średniej populacji
-- Z-score > 0 → ekspresja wyższa od średniej
-- Z-score < 0 → ekspresja niższa od średniej
-
-```{r normalizacja_zscore}
-
-# Normalizacja Z-score dla każdego białka
-protein_data_normalized <- protein_data_raw %>%
-  mutate(across(everything(), ~ (. - mean(., na.rm = TRUE)) / sd(., na.rm = TRUE)))
-
-# Weryfikacja normalizacji
-cat("Średnia po normalizacji (powinno być ~0):\n")
-print(round(colMeans(protein_data_normalized, na.rm = TRUE), 10))
-cat("\nOdchylenie standardowe (powinno być ~1):\n")
-print(round(sapply(protein_data_normalized, sd, na.rm = TRUE), 3))
-
-cat("\n Normalizacja wykonana pomyślnie\n\n")
-
-```
-
-## 2.3 Sortowanie próbek wg podtypów PAM50
-
-Sortujemy próbki podle podtypów PAM50, aby ułatwić wizualizację i porównanie profili ekspresji.
-
-```{r sortowanie_pam50}
-
-cat("=== SORTOWANIE WEDŁUG PODTYPÓW PAM50 ===\n\n")
-
-# Kolejność podtypów w wizualizacji
-pam50_order <- c("LumA", "LumB", "Her2", "Basal", "Normal")
-
-# Przygotowanie metadanych
-metadata <- data.frame(
-  SampleID = data$id_1,
-  PAM50 = data$brca_subtype_pam50,
-  stringsAsFactors = FALSE
-)
-
-# Sortowanie próbek
-sort_indices <- order(match(metadata$PAM50, pam50_order))
-
-protein_data_sorted <- protein_data_normalized[sort_indices, ]
-metadata_sorted <- metadata[sort_indices, ]
-
-# Nowe rownames
-rownames(protein_data_sorted) <- metadata_sorted$SampleID
-
-cat("Liczba próbek po sortowaniu:\n")
-print(table(metadata_sorted$PAM50))
-cat("\nRazem:", nrow(metadata_sorted), "próbek\n\n")
-
-```
-
-## 2.4 Przygotowanie macierzy dla heatmapy
-
-Transponujemy macierz - białka będą w wierszach, próbki w kolumnach, co jest standardowym formatem dla heatmap.
-
-```{r przygotowanie_heatmapy}
-
-# Transponowanie - białka w wierszach, próbki w kolumnach
-heatmap_matrix <- t(protein_data_sorted)
-
-cat("Wymiary macierzy heatmapy:", dim(heatmap_matrix)[1], "×", dim(heatmap_matrix)[2], "\n")
-cat("  - Wiersze (białka):", dim(heatmap_matrix)[1], "\n")
-cat("  - Kolumny (próbki):", dim(heatmap_matrix)[2], "\n\n")
-
-```
-
----
-
-# 3. DEFINIOWANIE NAZW I KOLORÓW
-
-## 3.1 Lepsze nazwy dla białek
-
-Zmieniamy nazwy z formatów technicznych na bardziej czytelne dla wizualizacji.
-
-```{r definiowanie_nazw}
-
-cat("=== DEFINIOWANIE NAZW I KOLORÓW ===\n\n")
-
-# Mapowanie nazw białek
-protein_labels <- c(
-  "eralpha" = "ER-alpha (protein)",
-  "esr1" = "ESR1 (RNA)",
-  "pr" = "PR (protein)",
-  "pgr" = "PGR (RNA)",
-  "her2" = "HER2 (protein)",
-  "erbb2" = "ERBB2 (RNA)",
-  "egfr_mirnaprot" = "EGFR (protein)",
-  "krt5" = "KRT5 (Basal)",
-  "krt14" = "KRT14 (Basal)",
-  "krt17" = "KRT17 (Basal)",
-  "gata3" = "GATA3 (Luminal)",
-  "foxa1" = "FOXA1 (Luminal)",
-  "mki67" = "MKI67 (Ki67)",
-  "bcl2_rna" = "BCL2 (RNA)",
-  "p53" = "P53",
-  "cd24" = "CD24",
-  "cd44" = "CD44"
-)
-
-# Zmiana nazw wierszy
-rownames(heatmap_matrix) <- protein_labels[rownames(heatmap_matrix)]
-
-# Kolory dla podtypów PAM50
-pam50_colors <- list(
-  PAM50 = c(
-    "LumA" = "#377EB8",    # niebieski
-    "LumB" = "#4DAF4A",    # zielony
-    "Her2" = "#E41A1C",    # czerwony
-    "Basal" = "#984EA3",   # fioletowy
-    "Normal" = "#FF7F00"   # pomarańczowy
-  )
-)
-
-```
-
----
-
-# 4. OBLICZANIE ŚREDNICH EKSPRESJI
-
-## 4.1 Średnie wartości dla każdego podtypu
-
-Obliczamy średnią ekspresję każdego białka w każdym podtypie. To pomaga w interpretacji profili molekularnych.
-
-```{r srednie_ekspresje}
-
-cat("=== OBLICZANIE ŚREDNICH EKSPRESJI ===\n\n")
-
-# Obliczenie średnich wartości dla każdego podtypu
-mean_expression_list <- list()
-
-for(subtype in pam50_order) {
-  subtype_samples <- metadata_sorted$SampleID[metadata_sorted$PAM50 == subtype]
-  if(length(subtype_samples) > 0) {
-    mean_vals <- colMeans(protein_data_sorted[metadata_sorted$SampleID %in% subtype_samples, ], na.rm = TRUE)
-    mean_expression_list[[subtype]] <- mean_vals
-  }
+# 2. Weryfikacja czy kolumny istnieją w final_data
+# Jeśli final_data nie jest w pamięci, upewnij się, że uruchomiłeś górne chunki
+missing_proteins <- setdiff(protein_markers, colnames(final_data))
+if(length(missing_proteins) > 0) {
+  warning("Brakuje następujących kolumn białkowych: ", paste(missing_proteins, collapse = ", "))
 }
 
-# Konwersja do data.frame z gwarancją typów numeric
-mean_expression_by_subtype <- as.data.frame(t(do.call(rbind, mean_expression_list)))
+# 3. Przygotowanie macierzy do heatmapy
+# Wybieramy tylko białka i ID pacjenta
+matrix_protein_only <- final_data[, protein_markers]
+rownames(matrix_protein_only) <- final_data$id_1
 
-cat("Średnia ekspresja białek (Z-score) dla każdego podtypu PAM50:\n\n")
-print(round(mean_expression_by_subtype, 3))
+# Transpozycja (Białka w wierszach, Pacjenci w kolumnach - wymagane przez pheatmap)
+heatmap_matrix_protein <- t(matrix_protein_only)
 
+# 4. Przygotowanie adnotacji (Pasek kolorów dla PAM50)
+annotation_protein <- data.frame(PAM50 = final_data$brca_subtype_pam50)
+rownames(annotation_protein) <- final_data$id_1
+
+# 5. Sortowanie pacjentów wg podtypu (dla czytelności heatmapy)
+kolejnosc_pacjentow_prot <- order(final_data$brca_subtype_pam50)
+posortowane_id_prot <- final_data$id_1[kolejnosc_pacjentow_prot]
+
+# Przeorganizowanie macierzy i adnotacji wg posortowanych ID
+heatmap_matrix_protein_sorted <- heatmap_matrix_protein[, posortowane_id_prot]
+annotation_protein_sorted <- annotation_protein[posortowane_id_prot, , drop = FALSE]
 ```
 
----
+### Wizualizacja: Heatmapa ekspresji białek wg podtypów PAM50
 
-# 5. GENEROWANIE HEATMAP
+Wykres przedstawia znormalizowaną ekspresję (Z-score) kluczowych białek
+dla wszystkich pacjentek. Próbki zostały zgrupowane według podtypu
+molekularnego (PAM50).
 
-## 5.1 Heatmapa 1: Wszystkie próbki
-
-Pierwsza wizualizacja pokazuje pełny profil ekspresji dla wszystkich 855 próbek, zorganizowanych wg podtypów PAM50.
-
-```{r heatmapa_wszystkie_probki, fig.width=14, fig.height=10}
-
-cat("\n=== GENEROWANIE HEATMAPY 1: WSZYSTKIE PRÓBKI ===\n\n")
-
-cat("Ta heatmapa zawiera:\n")
-cat("- Wszystkie 855 próbki pacjentek\n")
-cat("- 17 białek (wiersze)\n")
-cat("- Zorganizowane wg podtypów PAM50 (kolumny)\n")
-cat("- Hierarchiczne klasterowanie białek\n\n")
-
-cat("Interpretacja kolorów:\n")
-cat("- Czerwony (JASNY) = wysoka ekspresja (Z-score > 0)\n")
-cat("- Biały (NEUTRALNY) = ekspresja na poziomie średniej (Z-score = 0)\n")
-cat("- Niebieski (CIEMNY) = niska ekspresja (Z-score < 0)\n\n")
-
-cat("Oczekiwane wzorce:\n")
-cat("- Kolor NIEBIESKI w lewej części (Luminal A): markery luminalnej (ER-alpha, PR)\n")
-cat("- Kolor CZERWONY w górze sekcji Her2: HER2 i ERBB2\n")
-cat("- Kolor CZERWONY na dole sekcji Basal: KRT5, KRT14, EGFR\n\n")
-
-
+```{r heatmapa_bialka, fig.height=8, fig.width=10, include=FALSE}
 pheatmap(
-heatmap_matrix,
-annotation_col = metadata_sorted[, "PAM50", drop = FALSE],
-annotation_colors = pam50_colors,
-cluster_cols = FALSE,
-cluster_rows = TRUE,
-show_colnames = FALSE,
-show_rownames = TRUE,
-main = "Ekspresja białek wg podtypów PAM50 (wszystkie próbki)",
-color = colorRampPalette(c("blue", "white", "red"))(100),
-breaks = seq(-2, 2, length.out = 101),
-fontsize_row = 10,
-fontsize = 12,
-cellwidth = 2,
-cellheight = 12,
-legend_breaks = c(-2, -1, 0, 1, 2),
-legend_labels = c("-2", "-1", "0", "1", "2")
+  heatmap_matrix_protein_sorted,
+  cluster_cols = FALSE,       # Nie klastrujemy kolumn, (posortowane wg PAM50)
+  cluster_rows = TRUE,        # Klastrujemy białka, żeby zobaczyć podobne grupy markerów
+  annotation_col = annotation_protein_sorted,
+  show_colnames = FALSE,      # Ukrywamy ID pacjentów (zbyt gęste)
+  show_rownames = TRUE,       # Pokazujemy nazwy białek
+  main = "Profil białkowy podtypów PAM50",
+  color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
+  breaks = seq(-2, 2, length.out = 100) # Skala ucięta na -2/+2 dla lepszego kontrastu
+)
+```
+
+Interpretacja biologiczna i weryfikacja z literaturą
+
+Analiza heatmapy potwierdza, że klasyfikacja genomowa PAM50 znajduje
+silne odzwierciedlenie w fenotypie białkowym guza. Obserwowane
+klastrowanie próbek jest zgodne z wnioskami pracy "Comprehensive
+comparison of molecular portraits between cell lines and tumors in
+breast cancer", która wskazuje na wysoką zgodność między transkryptomem
+a proteomem w głównych podtypach raka piersi.
+
+Poniżej przedstawiono szczegółową weryfikację poszczególnych podtypów w
+oparciu o literaturę referencyjną:
+
+1.  Podtypy Luminalne (Luminal A vs Luminal B) Grupa luminalna
+    charakteryzuje się nadekspresją receptorów hormonalnych (widoczne
+    czerwone bloki dla eralpha_z i pr_z).
+
+Luminal A: Próbki te wykazują najwyższą ekspresję ERα oraz białka BCL2,
+co jest zgodne z charakterystyką przedstawioną w badaniu "A Comparison
+of PAM50 Intrinsic Subtyping with Immunohistochemistry...". Kluczowym
+wyróżnikiem jest tu niska proliferacja (niski poziom cyclinb1_z na
+heatmapie). Jak wskazują Cheang et al. w pracy "Difference between
+Luminal A and Luminal B Subtypes According to Ki-67...", to właśnie
+niska aktywność mitotyczna najlepiej odróżnia ten podtyp od Luminal B.
+
+Luminal B: W tej grupie obserwujemy wyraźny wzrost ekspresji Cykliny B1
+(cyclinb1_z), mimo zachowanej ekspresji receptorów. Potwierdza to
+wnioski z pracy "Luminal B Breast Cancer: Molecular Characterization,
+Clinical Management, and Future Perspectives", definiujące Luminal B
+jako podtyp o gorszym rokowaniu napędzanym przez deregulację cyklu
+komórkowego.
+
+2.  Podtyp HER2-Enriched (HER2-E) Analiza potwierdza, że podtyp ten jest
+    napędzany przez nadekspresję i aktywację szlaku HER2.
+
+Na heatmapie wiersz her2_z wykazuje silną nadekspresję. Jest to zgodne z
+badaniem "HER2-Enriched Subtype and ERBB2 Expression in HER2-Positive
+Breast Cancer...", które wykazuje, że podtyp HER2-E charakteryzuje się
+najwyższą aktywnością szlaku kinazowego EGFR/HER2.
+
+Dodatkowo obserwujemy nadekspresję białek z rodziny EGFR, co jest
+charakterystyczne dla profilu opisanego w pracy "Molecular Features and
+Survival Outcomes of the Intrinsic Subtypes Within Her2-Positive Breast
+Cancer".
+
+3.  Podtyp Bazalny (Basal-like / TNBC) Podtyp ten wyróżnia się brakiem
+    ekspresji receptorów (ER-/PR-/HER2-) oraz unikalnym profilem
+    sygnałowym.
+
+W dolnej części heatmapy widoczna jest nadekspresja EGFR
+(egfr_mirnaprot_z) oraz markerów bazalnych. Koreluje to z wynikami pracy
+"Reverse phase protein array identification of triple-negative breast
+cancer subtypes...", która identyfikuje nadekspresję EGFR jako kluczowy
+biomarker w podtypach TNBC.
+
+Wysoka ekspresja markerów naprawy DNA (np. parpcleaved_z) w tej grupie
+odpowiada opisanej w literaturze "niestabilności genomowej"
+charakterystycznej dla guzów bazalnych.
+
+### Źródła i literatura referencyjna
+
+Powyższa interpretacja biologiczna oraz weryfikacja podtypów została
+opracowana na podstawie następujących artykułów naukowych:
+
+-   **Ogólna zgodność transkryptomu i proteomu:**
+    -   "Comprehensive comparison of molecular portraits between cell
+        lines and tumors in breast cancer"
+        (PMC5001206)](<https://pmc.ncbi.nlm.nih.gov/articles/PMC5001206/>)
+-   **Podtypy Luminalne (A vs B) i rola Ki67/Cykliny B1:**
+    -   "A Comparison of PAM50 Intrinsic Subtyping with
+        Immunohistochemistry..." (AACR
+        Journals)](<https://aacrjournals.org/clincancerres/article/16/21/5222/14349/A-Comparison-of-PAM50-Intrinsic-Subtyping-with>)
+    -   "Difference between Luminal A and Luminal B Subtypes According
+        to Ki-67..." (Cheang et al.,
+        PMC4167319)](<https://pmc.ncbi.nlm.nih.gov/articles/PMC4167319/>)
+    -   "Luminal B Breast Cancer: Molecular Characterization, Clinical
+        Management, and Future Perspectives"
+        (JCO)](<https://ascopubs.org/doi/10.1200/JCO.2013.54.1870>)
+-   **Podtyp HER2-Enriched i aktywność szlaku:**
+    -   "HER2-Enriched Subtype and ERBB2 Expression in HER2-Positive
+        Breast Cancer..."
+        (JNCI)](<https://academic.oup.com/jnci/article/112/1/46/5475264>)
+    -   "Molecular Features and Survival Outcomes of the intrinsic
+        Subtypes Within Her2-Positive Breast cancer" (UNC
+        Lineberger)](<https://unclineberger.org/peroulab/wp-content/uploads/sites/1008/2015/04/HER2E-subtype-Prat-JNCI-2014.pdf>)
+-   **Podtyp Bazalny (TNBC) i EGFR:**
+    -   "Reverse phase protein array identification of triple-negative
+        breast cancer subtypes..."
+        (PMC5642571)](<https://pmc.ncbi.nlm.nih.gov/articles/PMC5642571/>)
+
+### Weryfikacja efektu serii (Batch Effect)
+
+W celu kontroli jakości danych przeprowadzono analizę PCA. Zgodnie z
+wytycznymi dotyczącymi detekcji efektu serii, sprawdzamy, czy głównym
+czynnikiem różnicującym próbki jest biologia (PAM50), czy pochodzenie
+tkanki z różnych ośrodków (Tissue Source Site - TSS).
+
+```{r pca_bialka_batch, fig.height=6, fig.width=14, include=FALSE}
+# 1. Wyciągnięcie Batch ID z identyfikatora pacjenta (drugi człon ID, np. TCGA-A2-...)
+# Kod TSS wskazuje na ośrodek pobierający materiał (np. 02 = MD Anderson)
+final_data$Batch_ID <- sapply(strsplit(as.character(final_data$id_1), "-"), function(x) x[2])
+
+# 2. Wykonanie PCA na macierzy białkowej
+pca_result_prot <- prcomp(matrix_protein_only, center = TRUE, scale. = FALSE) 
+
+# Obliczenie procentu wyjaśnianej wariancji dla osi
+var_explained_prot <- round(summary(pca_result_prot)$importance[2, 1:2] * 100, 1)
+
+# 3. Przygotowanie ramki danych do wykresu
+pca_plot_data_prot <- data.frame(
+  PC1 = pca_result_prot$x[, 1],
+  PC2 = pca_result_prot$x[, 2],
+  PAM50 = final_data$brca_subtype_pam50,
+  Batch = final_data$Batch_ID
 )
 
-```
-
-## 5.2 Heatmapa 2: Próbka (dla lepszej czytelności)
-
-Druga wizualizacja pokazuje próbkę ~40 próbek na podtyp, co ułatwia szczegółową inspekcję wzorów ekspresji.
-
-```{r heatmapa_probkowana, fig.width=12, fig.height=10}
-
-cat("=== GENEROWANIE HEATMAPY 2: PRÓBKA (40 na PODTYP) ===\n\n")
-
-cat("Ta heatmapa zawiera:\n")
-cat("- Próbkę: ~40 próbek na podtyp (łącznie ~225 próbek)\n")
-cat("- Lepsza czytelność dla szczegółowej analizy\n")
-cat("- Te same 17 białek\n\n")
-
-cat("Zastosowanie:\n")
-cat("Używamy jej do sprawdzenia szczegółów i wzorów ekspresji w każdej grupie.\n\n")
-
-# Losowe próbkowanie
-set.seed(42)
-sampled_samples <- c()
-
-for(subtype in pam50_order) {
-subtype_samples <- which(metadata_sorted$PAM50 == subtype)
-if(length(subtype_samples) > 0) {
-n_samples <- min(40, length(subtype_samples))
-sampled_samples <- c(sampled_samples, sample(subtype_samples, n_samples))
-}
-}
-
-# Sortowanie próbek wg podtypów
-sampled_samples <- sampled_samples[order(metadata_sorted$PAM50[sampled_samples])]
-
-heatmap_matrix_sampled <- heatmap_matrix[, sampled_samples]
-metadata_sampled <- metadata_sorted[sampled_samples, ]
-
-
-pheatmap(
-heatmap_matrix_sampled,
-annotation_col = metadata_sampled[, "PAM50", drop = FALSE],
-annotation_colors = pam50_colors,
-cluster_cols = FALSE,
-cluster_rows = TRUE,
-show_colnames = FALSE,
-show_rownames = TRUE,
-main = "Ekspresja białek wg podtypów PAM50 (próbka)",
-color = colorRampPalette(c("blue", "white", "red"))(100),
-breaks = seq(-2, 2, length.out = 101),
-fontsize_row = 10,
-fontsize = 12,
-cellwidth = 3,
-cellheight = 12
-)
-
-```
-
-## 5.3 Heatmapa 3: Średnie wartości (przegląd profili)
-
-Trzecia wizualizacja pokazuje średnie wartości z wartościami liczbowymi, co pozwala na łatwe porównanie profili.
-
-```{r heatmapa_srednie, fig.width=10, fig.height=8}
-
-cat("=== GENEROWANIE HEATMAPY 3: ŚREDNIE WARTOŚCI ===\n\n")
-
-cat("Ta heatmapa zawiera:\n")
-cat("- Średnie ekspresje dla każdego białka w każdym podtypie\n")
-cat("- Wartości liczbowe na heatmapie (Z-score)\n")
-cat("- Jasny przegląd profili molekularnych\n\n")
-
-cat("**Jak czytać:**\n")
-cat("- Każda komórka = średnia ekspresja\n")
-cat("- Liczby: wartość średnia (Z-score)\n")
-cat("- Kolory: wizualne odwzorowanie wartości\n\n")
-
-# Przygotowanie macierzy średnich z lepszymi nazwami
-mean_matrix <- as.matrix(mean_expression_by_subtype)
-colnames(mean_matrix) <- protein_labels[colnames(mean_matrix)]
-
-pheatmap(
-  t(mean_matrix),
-  cluster_rows = FALSE,
-  cluster_cols = FALSE,
-  display_numbers = TRUE,
-  number_format = "%.1f",
-  color = colorRampPalette(c("blue", "white", "red"))(100),
-  breaks = seq(-2, 2, length.out = 101),
-  main = "Średnia ekspresja białek wg podtypów PAM50",
-  fontsize = 12,
-  fontsize_number = 11,
-  fontsize_row = 8,
-  cellwidth = 30,
-  cellheight = 18
-)
-
-
-```
-
----
-
-# 6. ANALIZA STATYSTYCZNA - ANOVA
-
-## 6.1 Test ANOVA dla każdego białka
-
-Przeprowadzamy test ANOVA (Analysis of Variance) dla każdego białka, aby sprawdzić czy różnice między podtypami PAM50 są statystycznie istotne.
-
-**Interpretacja:**
-- **F-statystyka** - wysoka wartość oznacza duże różnice między grupami
-- **p-value** - prawdopodobieństwo że różnice są przypadkowe
-  - p < 0.001 (***) - bardzo istotne
-  - p < 0.01 (**) - istotne
-  - p < 0.05 (*) - umiarkowanie istotne
-
-```{r anova_test}
-
-cat("\n=== ANALIZA STATYSTYCZNA - TEST ANOVA ===\n\n")
-
-cat(sprintf("%-30s %12s %12s %8s\n", "Białko", "F-statistic", "p-value", "Sig."))
-cat(strrep("-", 70), "\n")
-
-anova_results <- data.frame()
-
-for(protein in colnames(protein_data_sorted)) {
-  expr_values <- protein_data_sorted[[protein]]
-  subtype_vector <- metadata_sorted$PAM50
-
-  # ANOVA
-  anova_test <- aov(expr_values ~ factor(subtype_vector))
-  anova_summary <- summary(anova_test)
-
-  f_stat <- anova_summary[[1]][1, "F value"]
-  p_value <- anova_summary[[1]][1, "Pr(>F)"]
-
-  significance <- if(p_value < 0.001) "***" else if(p_value < 0.01) "**" else if(p_value < 0.05) "*" else "ns"
-
-  cat(sprintf("%-30s %12.3f %12.2e %8s\n", 
-              protein_labels[protein], f_stat, p_value, significance))
-
-  anova_results <- rbind(anova_results, data.frame(
-    Protein = protein,
-    F_statistic = f_stat,
-    p_value = p_value,
-    Significance = significance
-  ))
-}
-
-cat("\n*** p < 0.001, ** p < 0.01, * p < 0.05, ns = nieistotny\n\n")
-
-cat("**WNIOSKI Z ANALIZY ANOVA:**\n")
-cat("- Wszystkie", nrow(anova_results), "białka wykazują statystycznie istotne różnice (p < 0.001)\n")
-cat("- Średnia F-statystyka:", round(mean(anova_results$F_statistic), 2), "\n")
-cat("- Potwierdza to biologiczną separację podtypów PAM50\n\n")
-
-```
-
----
-
-# 7. WERYFIKACJA ZGODNOŚCI Z PAM50
-
-## 7.1 Luminal A - Receptor Estrogenowy
-
-```{r weryfikacja_luminal_a}
-
-cat("=== WERYFIKACJA ZGODNOŚCI Z PAM50 ===\n\n")
-
-cat("## 1. LUMINAL A\n\n")
-
-# Wydobycie wartości średnich
-luminal_a_eralpha <- as.numeric(mean_expression_by_subtype[1, "LumA"]) # ERALPHA
-luminal_a_esr1 <- as.numeric(mean_expression_by_subtype[2, "LumA"]) # ESR1
-luminal_a_ki67 <- as.numeric(mean_expression_by_subtype[13, "LumA"]) # MKI67
-luminal_a_gata3 <- as.numeric(mean_expression_by_subtype[11, "LumA"]) # GATA3
-
-cat("Oczekiwane cechy Luminal A:\n")
-cat("- Wysoka ekspresja receptorów estrogenowych (ER-alpha, ESR1)\n")
-cat("- Wysoka ekspresja markerów luminalnych (GATA3, FOXA1)\n")
-cat("- Niska proliferacja (Ki67)\n\n")
-
-cat("Obserwacje w naszych danych:\n")
-cat(sprintf(" ER-ALPHA (protein): %7.3f %s\n", luminal_a_eralpha,
-if(luminal_a_eralpha > 0.3) "✓ Wysoka ekspresja" else "✗ Niska ekspresja"))
-cat(sprintf(" ESR1 (RNA): %7.3f %s\n", luminal_a_esr1,
-if(luminal_a_esr1 > 0.3) "✓ Wysoka ekspresja" else "✗ Niska ekspresja"))
-cat(sprintf(" GATA3 (Luminal): %7.3f %s\n", luminal_a_gata3,
-if(luminal_a_gata3 > 0.3) "✓ Wysoki marker" else "✗ Niski marker"))
-cat(sprintf(" MKI67 (Ki67): %7.3f %s\n", luminal_a_ki67,
-if(luminal_a_ki67 < -0.3) "✓ Niska proliferacja" else "✗ Wysoka proliferacja"))
-
-cat("\nKONKLUZJA: ")
-if(luminal_a_eralpha > 0.3 && luminal_a_esr1 > 0.3 && luminal_a_ki67 < -0.3) {
-cat("✓ PEŁNA ZGODNOŚĆ - Luminal A ma oczekiwany profil\n\n")
-} else {
-cat("⚠ CZĘŚCIOWA ZGODNOŚĆ - Niektóre markery odbiegają\n\n")
-}
-
-```
-
-## 7.2 HER2-enriched - Amplifikacja HER2
-
-```{r weryfikacja_her2}
-
-cat("## 2. HER2-ENRICHED\n\n")
-
-her2_her2_protein <- as.numeric(mean_expression_by_subtype[5,  "Her2"])   # HER2
-her2_erbb2_rna    <- as.numeric(mean_expression_by_subtype[6,  "Her2"])   # ERBB2
-her2_eralpha      <- as.numeric(mean_expression_by_subtype[1,  "Her2"])   # ERALPHA
-her2_pr           <- as.numeric(mean_expression_by_subtype[3,  "Her2"])   # PR
-
-cat("**Oczekiwane cechy HER2-enriched:**\n")
-cat("- BARDZO wysoka ekspresja HER2 (amplifikacja)\n")
-cat("- Niska ekspresja receptorów hormonalnych (ER-alpha, PR)\n\n")
-
-cat("**Obserwacje w naszych danych:**\n")
-cat(sprintf("  HER2 (protein):      %7.3f %s\n", her2_her2_protein,
-            if(her2_her2_protein > 1.5) "✓✓✓ BARDZO wysoka" else 
-            if(her2_her2_protein > 0)   "✓ Wysoka"          else "✗ Niska"))
-cat(sprintf("  ERBB2 (RNA):         %7.3f %s\n", her2_erbb2_rna,
-            if(her2_erbb2_rna > 1.5) "✓✓✓ BARDZO wysoka" else 
-            if(her2_erbb2_rna > 0)   "✓ Wysoka"          else "✗ Niska"))
-cat(sprintf("  ER-ALPHA:            %7.3f %s\n", her2_eralpha,
-            if(her2_eralpha < -0.5) "✓ Niska (ER-)" else 
-            if(her2_eralpha < 0)    "~ Umiarkowana" else "✗ Wysoka"))
-cat(sprintf("  PR:                  %7.3f %s\n", her2_pr,
-            if(her2_pr < -0.5) "✓ Niska (PR-)" else 
-            if(her2_pr < 0)    "~ Umiarkowana" else "✗ Wysoka"))
-
-cat("\n**KONKLUZJA:** ")
-if(her2_her2_protein > 1.5 && her2_eralpha < -0.5) {
-  cat("✓ PEŁNA ZGODNOŚĆ - HER2-enriched ma wyraźną amplifikację HER2\n\n")
-} else {
-  cat("✓ DOBRA ZGODNOŚĆ - HER2-enriched ma wzniesiony HER2\n\n")
-}
-
-```
-
-## 7.3 Basal-like - Markery Basalne
-
-```{r weryfikacja_basal}
-
-cat("## 3. BASAL-LIKE (Triple-Negative)\n\n")
-
-basal_krt5 <- as.numeric(mean_expression_by_subtype[8, "Basal"]) # KRT5
-basal_krt14 <- as.numeric(mean_expression_by_subtype[9, "Basal"]) # KRT14
-basal_egfr <- as.numeric(mean_expression_by_subtype[7, "Basal"]) # EGFR
-basal_eralpha <- as.numeric(mean_expression_by_subtype[1, "Basal"]) # ERALPHA
-basal_her2 <- as.numeric(mean_expression_by_subtype[5, "Basal"]) # HER2
-basal_ki67 <- as.numeric(mean_expression_by_subtype[13, "Basal"]) # MKI67
-
-cat("- Wysoka ekspresja markerów basalnych (KRT5, KRT14, EGFR)\n")
-cat("- BARDZO niska ekspresja receptorów hormonalnych (ER-, PR-)\n")
-cat("- BARDZO niska ekspresja HER2 (HER2-)\n")
-cat("- Wysoka proliferacja\n\n")
-
-cat("**Obserwacje w naszych danych:**\n")
-cat(sprintf(" KRT5 (Basal): %7.3f %s\n", basal_krt5,
-if(basal_krt5 > 0.3) "✓ Wysokie" else "✗ Niskie"))
-cat(sprintf(" KRT14 (Basal): %7.3f %s\n", basal_krt14,
-if(basal_krt14 > 0.2) "✓ Wysokie" else "✗ Niskie"))
-cat(sprintf(" EGFR (Basal): %7.3f %s\n", basal_egfr,
-if(basal_egfr > 0.3) "✓ Wysokie" else "✗ Niskie"))
-cat(sprintf(" ER-ALPHA: %7.3f %s\n", basal_eralpha,
-if(basal_eralpha < -1.2) "✓✓ Bardzo niskie (ER-)" else
-if(basal_eralpha < -0.5) "✓ Niskie" else "✗ Wysokie"))
-cat(sprintf(" HER2: %7.3f %s\n", basal_her2,
-if(basal_her2 < -0.5) "✓ Niskie (HER2-)" else "✗ Wysokie"))
-cat(sprintf(" MKI67 (Ki67): %7.3f %s\n", basal_ki67,
-if(basal_ki67 > 0.3) "✓ Wysoka proliferacja" else "✗ Niska proliferacja"))
-
-cat("\n**KONKLUZJA:** ")
-if(basal_krt5 > 0.3 && basal_eralpha < -1 && basal_her2 < -0.5) {
-  cat("✓ PEŁNA ZGODNOŚĆ - Basal-like ma profil Triple-Negative\n\n")
-} else {
-  cat("✓ DOBRA ZGODNOŚĆ - Basal-like wykazuje cechy triple-negative\n\n")
-}
-
-```
-
----
-
-# 8. ZAPIS WYNIKÓW
-
-## 8.1 Zapis danych do plików CSV
-
-```{r zapis_wynikow}
-
-cat("\n=== ZAPIS WYNIKÓW ===\n\n")
-
-# Zapis znormalizowanych danych
-write.csv(protein_data_normalized, 
-          file = "OUTPUT_protein_expression_normalized.csv",
-          row.names = TRUE)
-cat("✓ Dane znormalizowane: OUTPUT_protein_expression_normalized.csv\n")
-
-# Zapis metadanych
-write.csv(metadata_sorted,
-          file = "OUTPUT_metadata_sorted.csv",
-          row.names = TRUE)
-cat("✓ Metadane: OUTPUT_metadata_sorted.csv\n")
-
-# Zapis średnich wartości
-mean_expression_numeric <- apply(mean_expression_by_subtype, 2, as.numeric)
-write.csv(mean_expression_numeric,
-          file = "OUTPUT_mean_expression_by_subtype.csv",
-          row.names = TRUE)
-cat("✓ Średnie ekspresje: OUTPUT_mean_expression_by_subtype.csv\n")
-
-# Zapis wyników ANOVA
-write.csv(anova_results,
-          file = "OUTPUT_anova_results.csv",
-          row.names = FALSE)
-cat("✓ Wyniki ANOVA: OUTPUT_anova_results.csv\n\n")
-
-```
-
----
-
-# 9. PODSUMOWANIE I WNIOSKI
-
-## 9.1 Główne odkrycia
-
-```{r podsumowanie}
-
-cat("\n")
-cat(strrep("=", 80), "\n")
-cat("PODSUMOWANIE ANALIZY EKSPRESJI BIAŁEK WEDŁUG PODTYPÓW PAM50")
-cat(strrep("=", 80), "\n\n")
-
-cat(" **GŁÓWNE ODKRYCIA:**\n\n")
-
-cat("1. **LUMINAL A (431 próbek)**\n")
-cat("   - Wysoka ekspresja receptorów estrogenowych (ER-alpha: +0.461, ESR1: +0.534)\n")
-cat("   - Wysokie markery luminalne (GATA3, FOXA1)\n")
-cat("   - Niska proliferacja (Ki67: -0.481)\n")
-cat("   - ✓ PROFIL ZGODNY z oczekiwaniami\n\n")
-
-cat("2. **HER2-ENRICHED (74 próbki)**\n")
-cat("   - BARDZO wysoka ekspresja HER2 (protein: +1.633, ERBB2: +1.536)\n")
-cat("   - Bardzo niska ekspresja receptorów hormonalnych (ER: -1.029)\n")
-cat("   - ✓✓✓ AMPLIFIKACJA HER2 POTWIERDZONA\n\n")
-
-cat("3. **BASAL-LIKE (149 próbek)**\n")
-cat("   - Wysoka ekspresja markerów basalnych (KRT5: +0.811, EGFR: +0.779)\n")
-cat("   - Bardzo niska ekspresja receptorów hormonalnych (ER: -1.383)\n")
-cat("   - ✓ PROFIL TRIPLE-NEGATIVE POTWIERDZONE\n\n")
-
-cat("4. **ANALIZA STATYSTYCZNA**\n")
-cat("   - WSZYSTKIE białka wykazują p < 0.001 (***)\n")
-cat("   - Średnia F-statystyka:", round(mean(anova_results$F_statistic), 1), "\n")
-cat("   - ✓ Biologiczna separacja podtypów jest STATYSTYCZNIE ISTOTNA\n\n")
-
-cat(strrep("=", 80), "\n\n")
-
-cat(" **WNIOSKI BADAWCZE:**\n\n")
-cat("Analiza ekspresji białek potwierdza WYSOKĄ ZGODNOŚĆ z klasyfikacją PAM50.\n")
-cat("Każdy podtyp wykazuje charakterystyczny profil molekularny:\n")
-cat("- Luminal A: ER+/PR+ LOW PROLIFERATION\n")
-cat("- HER2-enriched: HER2+ ER- PR-\n")
-cat("- Basal-like: ER- PR- HER2- HIGH PROLIFERATION (Triple-Negative)\n\n")
-
-cat("Data potwierdzają biologiczną trafność klasyfikacji PAM50\n")
-cat("i mogą być wykorzystane do dalszych analiz (PCA, Batch Effect, itp.)\n\n")
-
-cat(strrep("=", 80), "\n\n")
-
-```
-
----
-
-# 10. NASTĘPNE KROKI
-
-## 10.1 Planowana analiza PCA
-
-Kolejnym etapem analizy będzie:
-
-1. **PCA (Principal Component Analysis)** na znormalizowanych danych białek
-2. **Ocena Batch Effect** - sprawdzenie czy próbki z tego samego laboratorium (TCGA-WT, TCGA-BH, etc.) grupują się razem
-3. **Korekta Batch Effect** - jeśli potrzebna, zastosowanie algorytmu ComBat
-4. **Powtórzenie PCA** na danych skorygowanych
-
-# Wstęp do Analizy PCA i Batch Effect
-
-W poprzedniej analizie potwierdziliśmy, że ekspresja białek jest wysoko zgodna z klasyfikacją PAM50. Teraz przystępujemy do oceny **Batch Effect** – czy pochodzenie próbek z różnych laboratoriów (batch ID) wpływa na profil ekspresji.
-
-**Cel analizy:**
-- Ocenić czy próbki z tego samego laboratorium grupują się razem (wskazuje batch effect)
-- Ewentualnie usunąć wpływ batch effect za pomocą regresji liniowej (prostszy algorytm)
-- Sprawdzić czy PAM50 pozostają separowane po korekcji
-
-**Batch ID** wyodrębniamy z drugiego członu ID pacjenta:
-- `TCGA-WT-AB41` → batch: `WT`
-- `TCGA-BH-A0DH` → batch: `BH`
-- `TCGA-A2-A0YF` → batch: `A2`
-- itd.
-
----
-
-# 1. PRZYGOTOWANIE DANYCH DLA PCA
-
-## 1.1 Wczytanie danych znormalizowanych i metadanych
-
-```{r wczytanie_pca_danych, message=FALSE, warning=FALSE}
-
-# Instalacja pakietów (jeśli potrzebna)
-# install.packages("ggplot2")
-# install.packages("tidyverse")
-
-# Wczytanie bibliotek
-library(ggplot2)
-library(tidyverse)
-
-cat("=== WCZYTANIE DANYCH DLA PCA ===\n\n")
-
-# Wczytanie znormalizowanych danych białek
-protein_data_normalized <- read.csv("OUTPUT_protein_expression_normalized.csv", 
-                                   row.names = 1,
-                                   stringsAsFactors = FALSE)
-
-# Wczytanie metadanych
-metadata_sorted <- read.csv("OUTPUT_metadata_sorted.csv",
-                            row.names = 1,
-                            stringsAsFactors = FALSE)
-
-cat("Wymiary danych białek:", dim(protein_data_normalized)[1], "×", dim(protein_data_normalized)[2], "\n")
-cat("Liczba próbek:", nrow(protein_data_normalized), "\n")
-cat("Liczba białek:", ncol(protein_data_normalized), "\n\n")
-
-```
-
-## 1.2 Ekstrakcja Batch ID z ID pacjenta
-
-Batch ID wyodrębniamy z drugiego członu ID (np. z `TCGA-WT-AB41` bierzemy `WT`).
-
-```{r ekstrahowanie_batch_id}
-
-cat("=== EKSTRAKCJA BATCH ID ===\n\n")
-
-# Ekstrakcja Batch ID z SampleID
-# Format: TCGA-XX-YYZZ, gdzie XX jest Batch ID
-metadata_sorted$BatchID <- sapply(strsplit(metadata_sorted$SampleID, "-"), function(x) x[2])
-
-cat("Dostępne Batch ID:\n")
-print(table(metadata_sorted$BatchID))
-
-cat("\nPrzykładowe mapowania Sample ID → Batch ID:\n")
-for(i in 1:min(10, nrow(metadata_sorted))) {
-  cat(sprintf("  %s → %s\n", metadata_sorted$SampleID[i], metadata_sorted$BatchID[i]))
-}
-
-cat("\nRazem:", length(unique(metadata_sorted$BatchID)), "różnych laboratoriów (batch ID)\n\n")
-
-# Tworzenie koloru dla każdego batch ID
-unique_batches <- unique(metadata_sorted$BatchID)
-n_batches <- length(unique_batches)
-batch_colors <- setNames(
-  rainbow(n_batches),
-  unique_batches
-)
-
-cat("Przydzielone kolory dla batch ID:\n")
-for(batch in unique_batches) {
-  cat(sprintf("  %s: %s\n", batch, batch_colors[batch]))
-}
-
-```
-
----
-
-# 2. ANALIZA PCA - PRZED KOREKTĄ BATCH EFFECT
-
-## 2.1 Przeprowadzenie PCA
-
-PCA (Principal Component Analysis) zmniejsza wymiarowość danych z 17 wymiarów (białek) do 2–3 głównych składowych, które wyjaśniają większość wariancji.
-
-```{r pca_przed_korekta}
-
-cat("\n=== PRZEPROWADZENIE PCA ===\n\n")
-
-# Wykonanie PCA
-pca_result <- prcomp(protein_data_normalized, scale = FALSE, center = TRUE)
-
-# Wyjaśniana wariancja przez każdą PC
-var_explained <- (pca_result$sdev^2) / sum(pca_result$sdev^2)
-cumsum_var <- cumsum(var_explained)
-
-cat("Wariancja wyjaśniana przez pierwsze 5 komponentów głównych:\n")
-for(i in 1:min(5, length(var_explained))) {
-  cat(sprintf("  PC%d: %.2f%% (skumulowana: %.2f%%)\n", 
-              i, var_explained[i]*100, cumsum_var[i]*100))
-}
-
-cat("\nPC1 i PC2 wyjaśniają razem:", round(cumsum_var[2]*100, 1), "% wariancji\n\n")
-
-# Przygotowanie danych do wizualizacji
-pca_data <- data.frame(
-  PC1 = pca_result$x[, 1],
-  PC2 = pca_result$x[, 2],
-  PC3 = pca_result$x[, 3],
-  SampleID = rownames(protein_data_normalized),
-  PAM50 = metadata_sorted$PAM50,
-  BatchID = metadata_sorted$BatchID,
-  stringsAsFactors = FALSE
-)
-
-```
-
-## 2.2 Wizualizacja PCA - Kolory wg Batch ID
-
-```{r pca_plot_batch, fig.width=12, fig.height=8}
-
-cat("=== WIZUALIZACJA PCA - WG BATCH ID ===\n\n")
-
-cat("Ta wizualizacja pokazuje próbki w przestrzeni dwóch głównych komponentów (PC1 vs PC2).\n")
-cat("Jeśli próbki z tego samego batch ID (laboratorium) grupują się razem → BATCH EFFECT\n")
-cat("Jeśli próbki są losowo rozrzucone → brak lub mały batch effect\n\n")
-
-# Liczba unikalnych batch ID
-n_unique_batches <- length(unique(pca_data$BatchID))
-
-# Wykres PCA kolorowany wg Batch ID
-ggplot(pca_data, aes(x = PC1, y = PC2, color = BatchID)) +
-  geom_point(size = 3, alpha = 0.7) +
+# 4. Wykres A: Weryfikacja Biologiczna (Kolory wg PAM50)
+p1 <- ggplot(pca_plot_data_prot, aes(x = PC1, y = PC2, color = PAM50)) +
+  geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA - Próbki kolorowane wg Batch ID (laboratorium)",
-    subtitle = paste("PC1 wyjaśnia", round(var_explained[1]*100, 1), 
-                     "% wariancji | PC2 wyjaśnia", round(var_explained[2]*100, 1), "%"),
-    x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
-    y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)"),
-    color = "Batch ID"
+    title = "Weryfikacja Biologiczna (PAM50)",
+    subtitle = "Oczekiwane grupowanie podtypów",
+    x = paste0("PC1 (", var_explained_prot[1], "%)"),
+    y = paste0("PC2 (", var_explained_prot[2], "%)")
   ) +
   theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_line(color = "gray95")
-  )
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 
-ggsave("04_pca_before_batch_correction.png", width = 12, height = 8, dpi = 300)
-
-cat("✓ Wykres zapisany: 04_pca_before_batch_correction.png\n\n")
-
-```
-
-## 2.3 Ocena Batch Effect - Analiza skupień
-
-```{r batch_effect_analysis}
-
-cat("=== OCENA BATCH EFFECT ===\n\n")
-
-# Obliczenie centroid dla każdego batch ID
-centroids <- pca_data %>%
-  group_by(BatchID) %>%
-  summarize(
-    mean_PC1 = mean(PC1),
-    mean_PC2 = mean(PC2),
-    n_samples = n(),
-    .groups = "drop"
-  )
-
-cat("Centroidy dla każdego Batch ID (średnie położenie w przestrzeni PCA):\n\n")
-print(centroids)
-
-cat("\n**Interpretacja:**\n")
-cat("- Jeśli centroidy leżą daleko od siebie w przestrzeni PCA → BATCH EFFECT\n")
-cat("- Jeśli centroidy są zbliżone → mały batch effect\n\n")
-
-# Obliczenie średniej odległości między batch ID
-cat("Sprawdzenie skupienia próbek wg Batch ID:\n")
-for(batch in unique(pca_data$BatchID)) {
-  batch_samples <- pca_data[pca_data$BatchID == batch, ]
-  within_dist <- mean(sqrt((batch_samples$PC1 - mean(batch_samples$PC1))^2 + 
-                           (batch_samples$PC2 - mean(batch_samples$PC2))^2))
-  cat(sprintf("  %s: %d próbek, średnia odległość od centroid = %.3f\n", 
-              batch, nrow(batch_samples), within_dist))
-}
-
-cat("\n")
-
-```
-
-## 2.4 Wizualizacja PCA - Kolory wg PAM50 (dla porównania)
-
-```{r pca_plot_pam50, fig.width=12, fig.height=8}
-
-cat("=== WIZUALIZACJA PCA - WG PAM50 (dla porównania) ===\n\n")
-
-cat("Ta wizualizacja pokazuje że próbki są separowane wg podtypów PAM50.\n")
-cat("Po korekcji batch effect, ta separacja PAM50 powinna pozostać.\n\n")
-
-# Kolory dla PAM50
-pam50_colors <- c(
-  "LumA" = "#377EB8",    # niebieski
-  "LumB" = "#4DAF4A",    # zielony
-  "Her2" = "#E41A1C",    # czerwony
-  "Basal" = "#984EA3",   # fioletowy
-  "Normal" = "#FF7F00"   # pomarańczowy
-)
-
-ggplot(pca_data, aes(x = PC1, y = PC2, color = PAM50)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_manual(values = pam50_colors) +
+# 5. Wykres B: Kontrola Techniczna (Kolory wg Laboratorium)
+p2 <- ggplot(pca_plot_data_prot, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA - Próbki kolorowane wg PAM50 (dla porównania)",
-    subtitle = "Wyraźna separacja podtypów PAM50 w przestrzeni PCA",
-    x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
-    y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)"),
-    color = "PAM50"
+    title = "Kontrola Batch Effect (TSS)",
+    subtitle = "Oczekiwane wymieszanie próbek (brak klastrów)",
+    x = paste0("PC1 (", var_explained_prot[1], "%)"),
+    y = paste0("PC2 (", var_explained_prot[2], "%)")
   ) +
   theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_line(color = "gray95")
-  )
+  theme(legend.position = "none") # Ukrywamy legendę (zbyt wiele ośrodków)
 
-ggsave("05_pca_before_pam50_colored.png", width = 12, height = 8, dpi = 300)
-
-cat("✓ Wykres zapisany: 05_pca_before_pam50_colored.png\n\n")
-
+# Wyświetlenie wykresów obok siebie (wymaga biblioteki patchwork)
+p1 + p2
 ```
 
----
-
-# 3. KOREKTA BATCH EFFECT - METODA REGRESJI LINIOWEJ
-
-## 3.1 Przygotowanie do korekcji
-
-```{r batch_correction_prep}
-
-cat("\n=== KOREKTA BATCH EFFECT - METODA REGRESJI LINIOWEJ ===\n\n")
-
-cat("W tej analizie używamy uproszczonej metody: regresja liniowa\n")
-cat("Dla każdego białka:\n")
-cat("1. Dopasowujemy model liniowy: ekspresja ~ BatchID + PAM50\n")
-cat("2. Usuwamy efekt BatchID, zachowując PAM50\n")
-cat("3. Obliczamy reszty (residuals) jako skorygowane dane\n\n")
-
-# Konwersja BatchID do faktora
-protein_data_corrected <- protein_data_normalized
-
-cat("Wykonywanie korekcji dla każdego białka...\n")
-
-# Dla każdego białka, dopasuj model i odejmij batch effect
-for(protein in colnames(protein_data_corrected)) {
-
-  # Model z BatchID i PAM50
-  model <- lm(protein_data_normalized[[protein]] ~ factor(metadata_sorted$BatchID) + factor(metadata_sorted$PAM50))
-
-  # Reszty (residuals) + średnia całego białka
-  protein_data_corrected[[protein]] <- residuals(model) + mean(protein_data_normalized[[protein]], na.rm = TRUE)
-
-}
-
-cat("Korekta batch effect zakończona\n\n")
-
-```
-
-## 3.2 Zapis skorygowanych danych
-
-```{r zapis_corrected}
-
-cat("=== ZAPIS SKORYGOWANYCH DANYCH ===\n\n")
-
-write.csv(protein_data_corrected,
-          file = "OUTPUT_protein_expression_corrected.csv",
-          row.names = TRUE)
-
-cat(" Skorygowane dane zapisane: OUTPUT_protein_expression_corrected.csv\n\n")
-
-```
-
----
-
-# 4. ANALIZA PCA - PO KOREKCJI BATCH EFFECT
-
-## 4.1 Przeprowadzenie PCA na danych skorygowanych
-
-```{r pca_po_korekcja}
-
-cat("\n=== PCA NA DANYCH PO KOREKCJI ===\n\n")
-
-# Wykonanie PCA na danych skorygowanych
-pca_result_corrected <- prcomp(protein_data_corrected, scale = FALSE, center = TRUE)
-
-# Wariancja wyjaśniana
-var_explained_corrected <- (pca_result_corrected$sdev^2) / sum(pca_result_corrected$sdev^2)
-cumsum_var_corrected <- cumsum(var_explained_corrected)
-
-cat("Wariancja wyjaśniana przez pierwsze 5 komponentów (PO KOREKCJI):\n")
-for(i in 1:min(5, length(var_explained_corrected))) {
-  cat(sprintf("  PC%d: %.2f%% (skumulowana: %.2f%%)\n", 
-              i, var_explained_corrected[i]*100, cumsum_var_corrected[i]*100))
-}
-
-cat("\nPC1 i PC2 wyjaśniają razem:", round(cumsum_var_corrected[2]*100, 1), "% wariancji\n\n")
-
-# Przygotowanie danych do wizualizacji
-pca_data_corrected <- data.frame(
-  PC1 = pca_result_corrected$x[, 1],
-  PC2 = pca_result_corrected$x[, 2],
-  PC3 = pca_result_corrected$x[, 3],
-  SampleID = rownames(protein_data_corrected),
-  PAM50 = metadata_sorted$PAM50,
-  BatchID = metadata_sorted$BatchID,
-  stringsAsFactors = FALSE
-)
-
-```
-
-## 4.2 Wizualizacja PCA - Po korekcji, kolorowana wg Batch ID
-
-```{r pca_post_correction_batch, fig.width=12, fig.height=8}
-
-cat("=== WIZUALIZACJA PCA PO KOREKCJI - WG BATCH ID ===\n\n")
-
-cat("Jeśli batch effect został usunięty, próbki z różnych batch ID\n")
-cat("powinny być losowo rozrzucone (nie powinny się grupować wg laboratorium)\n\n")
-
-ggplot(pca_data_corrected, aes(x = PC1, y = PC2, color = BatchID)) +
-  geom_point(size = 3, alpha = 0.7) +
-  labs(
-    title = "PCA PO KOREKCJI - Próbki kolorowane wg Batch ID",
-    subtitle = paste("Po korekcji: PC1 wyjaśnia", round(var_explained_corrected[1]*100, 1), 
-                     "% wariancji | PC2 wyjaśnia", round(var_explained_corrected[2]*100, 1), "%"),
-    x = paste0("PC1 (", round(var_explained_corrected[1]*100, 1), "%)"),
-    y = paste0("PC2 (", round(var_explained_corrected[2]*100, 1), "%)"),
-    color = "Batch ID"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_line(color = "gray95")
-  )
-
-ggsave("06_pca_after_batch_correction.png", width = 12, height = 8, dpi = 300)
-
-cat("✓ Wykres zapisany: 06_pca_after_batch_correction.png\n\n")
-
-```
-
-## 4.3 Wizualizacja PCA - Po korekcji, kolorowana wg PAM50
-
-```{r pca_post_correction_pam50, fig.width=12, fig.height=8}
-
-cat("=== WIZUALIZACJA PCA PO KOREKCJI - WG PAM50 ===\n\n")
-
-cat("Ważne: Separacja PAM50 powinna pozostać również po korekcji batch effect\n\n")
-
-ggplot(pca_data_corrected, aes(x = PC1, y = PC2, color = PAM50)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_manual(values = pam50_colors) +
-  labs(
-    title = "PCA PO KOREKCJI - Próbki kolorowane wg PAM50",
-    subtitle = "Separacja PAM50 powinna być zachowana po korekcji",
-    x = paste0("PC1 (", round(var_explained_corrected[1]*100, 1), "%)"),
-    y = paste0("PC2 (", round(var_explained_corrected[2]*100, 1), "%)"),
-    color = "PAM50"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_line(color = "gray95")
-  )
-
-ggsave("07_pca_after_pam50_colored.png", width = 12, height = 8, dpi = 300)
-
-cat("✓ Wykres zapisany: 07_pca_after_pam50_colored.png\n\n")
-
-```
-
----
-
-# 5. PORÓWNANIE PRZED I PO KOREKCJI
-
-## 5.1 Porównanie skupienia wg Batch ID
-
-```{r batch_comparison}
-
-cat("\n=== PORÓWNANIE BATCH EFFECT: PRZED I PO KOREKCJI ===\n\n")
-
-# Centroids PRZED
-centroids_before <- pca_data %>%
-  group_by(BatchID) %>%
-  summarize(
-    mean_PC1_before = mean(PC1),
-    mean_PC2_before = mean(PC2),
-    .groups = "drop"
-  )
-
-# Centroids PO
-centroids_after <- pca_data_corrected %>%
-  group_by(BatchID) %>%
-  summarize(
-    mean_PC1_after = mean(PC1),
-    mean_PC2_after = mean(PC2),
-    .groups = "drop"
-  )
-
-# Połączenie
-centroids_comparison <- merge(centroids_before, centroids_after, by = "BatchID")
-
-cat("Porównanie położenia centroidów batch ID:\n\n")
-print(centroids_comparison)
-
-# Obliczenie wariancji między batch ID
-var_between_batch_before <- var(centroids_before$mean_PC1_before) + 
-                            var(centroids_before$mean_PC2_before)
-var_between_batch_after <- var(centroids_after$mean_PC1_after) + 
-                           var(centroids_after$mean_PC2_after)
-
-cat("\nWariancja między batch ID:\n")
-cat(sprintf("  PRZED korekcją: %.4f\n", var_between_batch_before))
-cat(sprintf("  PO korekcji:    %.4f\n", var_between_batch_after))
-cat(sprintf("  Redukcja:       %.1f%%\n", 
-            (1 - var_between_batch_after/var_between_batch_before)*100))
-
-cat("\n")
-
-```
-
-## 5.2 Wnioski z analizy Batch Effect
-
-```{r wnioski_batch}
-
-cat("\n=== WNIOSKI Z ANALIZY BATCH EFFECT ===\n\n")
-
-if(var_between_batch_after < var_between_batch_before * 0.5) {
-  cat(" BATCH EFFECT ZOSTAŁ POMYŚLNIE USUNIĘTY\n\n")
-  cat("Obserwacje:\n")
-  cat("- Wariancja między batch ID zmniejszyła się znacząco\n")
-  cat("- Próbki z różnych laboratoriów są teraz lepiej przemieszane\n")
-  cat("- Separacja PAM50 została zachowana (zob. wykresy)\n")
-} else if(var_between_batch_after < var_between_batch_before * 0.8) {
-  cat("~ CZĘŚCIOWA KOREKTA BATCH EFFECT\n\n")
-  cat("Obserwacje:\n")
-  cat("- Batch effect zmniejszył się, ale nie w pełni\n")
-  cat("- Możliwe że pierwotny batch effect był mały\n")
-  cat("- Separacja PAM50 została zachowana\n")
-} else {
-  cat("⚠ BATCH EFFECT POZOSTAJE ZNACZĄCY\n\n")
-  cat("Obserwacje:\n")
-  cat("- Korekta miała mały efekt\n")
-  cat("- Batch effect może być bardzo silny lub biologiczny\n")
-  cat("- Rekomendacja: sprawdzić inne źródła wariancji\n")
-}
-
-cat("\nSeparacja PAM50 przed i po korekcji:\n")
-cat("- Powinna pozostać wyraźna i biologicznie interpretowalna\n")
-cat("- To potwierdza że korekta usunęła techniczny batch effect, a nie biologię\n")
-
-cat("\n")
-
-```
-
----
-
-# 6. PODSUMOWANIE ANALIZY PCA I BATCH EFFECT
-
-```{r podsumowanie_pca}
-
-cat("\n")
-cat(strrep("=", 80), "\n")
-cat("PODSUMOWANIE ANALIZY PCA I BATCH EFFECT")
-cat(strrep("=", 80), "\n\n")
-
-cat(" **WYKONANE KROKI:**\n\n")
-cat("1. ✓ Ekstrakcja Batch ID z ID pacjenta (TCGA-XX-YYZZ → XX)\n")
-cat("2. ✓ PCA na danych PRZED korektą + wizualizacja wg Batch ID\n")
-cat("3. ✓ Ocena Batch Effect (skupienie próbek wg laboratorium)\n")
-cat("4. ✓ Korekta Batch Effect (regresja liniowa z zachowaniem PAM50)\n")
-cat("5. ✓ PCA na danych PO korekcji + wizualizacja wg Batch ID\n")
-cat("6. ✓ Porównanie przed i po (zmiana w wariancji między batch)\n\n")
-
-cat(" **WYGENEROWANE WYKRESY:**\n\n")
-cat("- 04_pca_before_batch_correction.png: PCA PRZED, kolorowana wg Batch ID\n")
-cat("- 05_pca_before_pam50_colored.png: PCA PRZED, kolorowana wg PAM50\n")
-cat("- 06_pca_after_batch_correction.png: PCA PO, kolorowana wg Batch ID\n")
-cat("- 07_pca_after_pam50_colored.png: PCA PO, kolorowana wg PAM50\n\n")
-
-cat(" **WYGENEROWANE DANE:**\n\n")
-cat("- OUTPUT_protein_expression_corrected.csv: Dane po korekcji batch effect\n\n")
-
-cat(" **INTERPRETACJA WYNIKÓW:**\n\n")
-cat("- Jeśli w wykresy 04 i 05 próbki grupują się wg Batch ID → BATCH EFFECT\n")
-cat("- Jeśli w wykresy 06 i 07 próbki NIE grupują się wg Batch ID → korekta zadziałała\n")
-cat("- Jeśli w wykresy 07 PAM50 zostały separowane → korekta nie usunęła biologii\n\n")
-
-cat("**Metoda korekcji:**\n")
-cat("- Regresja liniowa z zachowaniem biologicznych efektów (PAM50)\n")
-
-cat(strrep("=", 80), "\n\n")
-
-```
+### Interpretacja Analizy Głównych Składowych (PCA) i ocena jakości danych
+
+Przeprowadzona analiza PCA (Principal Component Analysis) pozwoliła na
+redukcję wymiarowości wielowymiarowych danych proteomicznych do dwóch
+głównych składowych (PC1 i PC2), wyjaśniających łącznie **37.6%**
+całkowitej zmienności w zbiorze danych. Poniżej przedstawiono
+interpretację wyników w kontekście weryfikacji biologicznej oraz
+technicznej:
+
+**1. Weryfikacja Biologiczna (Wykres Lewy)** Na wykresie kolorowanym wg
+podtypów PAM50 obserwujemy wyraźną strukturę klastrowania, co
+potwierdza, że **zmienność biologiczna dominuje nad szumem
+technicznym**. \* **Separacja podtypu Bazalnego:** Pierwsza składowa
+(PC1, 23.3% wariancji) najsilniej różnicuje podtyp Basal-like (kolor
+czerwony) od podtypów Luminalnych. Jest to zgodne z oczekiwaniami, gdyż
+nowotwory te wykazują fundamentalnie odmienny profil proteomiczny (brak
+receptorów, wysoka niestabilność genomowa), co opisano w pracy
+*"Comprehensive comparison of molecular portraits..."* (PMC5001206). \*
+**Super-klaster Luminalny:** Podtypy Luminal A (niebieski) i Luminal B
+(fioletowy) wykazują znaczne nakładanie się w przestrzeni PCA. Jest to
+zjawisko oczekiwane w danych RPPA, ponieważ oba podtypy dzielą ekspresję
+kluczowych receptorów (ER/PR), a różnice dotyczą głównie markerów
+proliferacji, które mogą mieć mniejszą wagę w globalnej wariancji niż
+status receptorowy.
+
+**2. Kontrola Efektu Serii / Batch Effect (Wykres Prawy)** Wykres prawy
+przedstawia próbki kolorowane według kodu TSS (Tissue Source Site -
+laboratorium pobierające). **Brak widocznych artefaktów:** Zgodnie z
+metodologią detekcji efektu serii opisaną w literaturze (Zhang et al.,
+Akbani et al.), poszukujemy tzw. "izolowanych wysp" lub geometrycznych
+klastrów specyficznych dla jednego ośrodka[. Na załączonym wykresie
+obserwujemy równomierne wymieszanie próbek (tzw. "hairball pattern"),
+gdzie punkty z różnych serii (kolorów) nakładają się na siebie.
+**Dominacja biologii:** Brak wyraźnej separacji próbek według Batch ID
+(przy jednoczesnej silnej separacji według PAM50) świadczy o tym, że
+wariancja techniczna wynikająca z różnic w protokołach pobierania tkanek
+jest pomijalna w stosunku do wariancji biologicznej.
+
+**Wnioski końcowe:** Zgodnie z wytycznymi *"Assessment of batch effects
+in TCGA gene expression data"* oraz brakiem wizualnych przesłanek o
+występowaniu systematycznego błędu serii, **dane uznaje się za
+technicznie poprawne**. Nie stwierdzono konieczności stosowania
+algorytmów korekcyjnych (np. ComBat), które przy braku silnego efektu
+serii mogłyby wprowadzić sztuczne zniekształcenia i usunąć istotny
+sygnał biologiczny (zjawisko *over-correction*).
+
+**Literatura referencyjna dla metodologii:** *PCA-Plus: Enhanced
+principal component analysis with illustrative applications to batch
+effects...* (PubMed: 38260566) *Assessment of batch effects in TCGA gene
+expression data* (Zhang et al., MD Anderson)
