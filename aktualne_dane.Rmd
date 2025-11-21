@@ -19,6 +19,12 @@ editor_options:
 # install.packages("RColorBrewer")
 # install.packages("janitor")
 # install.packages("readr")
+# install.packages("ggrepel")
+# install.packages("reshape2")
+# install.packages("kableExtra")
+# if (!require("BiocManager", quietly = TRUE))
+  #install.packages("BiocManager")
+# BiocManager::install("limma")
 ```
 
 ```{r ladowanie_bibliotek}
@@ -35,6 +41,11 @@ library(RColorBrewer)
 library(ggplot2)
 library(janitor)
 library(readr)
+library(limma)
+library(ggrepel)
+library(reshape2)
+library(kableExtra)
+library(tibble)
 ```
 
 **DATA WRANGLING**
@@ -1609,17 +1620,329 @@ Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA.
 
 ## BIAŁKA
 
+# Analiza różnicowa ekspresji białek (Differential Protein Expression Analysis)
+
+## Cel i uzasadnienie badawcze
+
+Celem niniejszego etapu jest identyfikacja białek, których poziomy
+ekspresji różnicują poszczególne podtypy molekularne raka piersi.
+Analiza koncentruje się na porównaniu agresywnego podtypu
+**Basal-like**, podtypu **HER2-enriched** oraz **Luminal B** względem
+grupy referencyjnej, którą stanowi podtyp **Luminal A**
+(charakteryzujący się najlepszym rokowaniem).
+
+Zidentyfikowanie różnic na poziomie proteomicznym pozwoli na wskazanie
+aktywnych szlaków sygnałowych, co stanowi uzupełnienie klasyfikacji
+opartej na ekspresji genów (PAM50) opisanej przez **The Cancer Genome
+Atlas Network (2012)**.
+
+## Metodyka
+
+Analizę przeprowadzono na danych białkowych typu RPPA (Reverse Phase
+Protein Array, Level 3). Do wyznaczenia białek różnicujących
+(Differentially Expressed Proteins, DEPs) wykorzystano pakiet **limma**
+(Linear Models for Microarray Data) w środowisku R (**Ritchie i wsp.,
+2015**).
+
+Mimo że metoda ta została pierwotnie opracowana dla mikromacierzy DNA,
+zastosowanie estymacji Bayesowskiej (Empirical Bayes) pozwala na
+stabilne szacowanie błędów standardowych również w proteomice
+ilościowej, co zwiększa moc testów statystycznych przy ograniczonej
+liczbie prób (**Kammers i wsp., 2015**).
+
+Zastosowano model liniowy uwzględniający wiek pacjentki jako zmienną
+zakłócającą (covariate), zgodnie ze wzorem:
+$$Ekspresja \sim 0 + Podtyp + Wiek$$
+
+Jako kryteria istotności statystycznej i biologicznej przyjęto: \*
+Skorygowana wartość p (FDR - Benjamini-Hochberg) \< 0.05 \* Bezwzględna
+wartość logarytmu krotności zmiany (\|logFC\|) \> 0.5
+
+## Ocena Rozkładu Danych (Data QC)
+
+Przed dopasowaniem modelu zweryfikowano rozkład danych wejściowych.
+Metodyka *limma* zakłada, że dane posiadają rozkład zbliżony do
+normalnego (skala logarytmiczna).
+
+```{r protein_dist_check, message=FALSE, warning=FALSE, fig.height=4, fig.width=8}
+
+# Wybieram tylko kolumny numeryczne, usuwając metadane, miRNA i Z-score.
+protein_data_raw <- df_clean %>%
+  select(where(is.numeric)) %>%
+  select(-matches("_z$")) %>%                 # Usuń przetworzone Z-score
+  select(-starts_with("hsa_")) %>%            # Usuń miRNA
+  select(-matches("id|age|days|year|stage|included|index|node|metastasis|grade")) # Usuń metadane
+
+# SPRAWDZENIE ROZKŁADU
+# Wizualizacja gęstości dla losowej próbki 6 białek
+set.seed(2025) # Powtarzalność
+sample_proteins <- sample(names(protein_data_raw), 6)
+melted_prot <- melt(protein_data_raw %>% select(all_of(sample_proteins)))
+
+p_dist <- ggplot(melted_prot, aes(x = value, fill = variable)) +
+  geom_density(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "Ryc. 3.1: Rozkład gęstości wybranych białek (Dane RPPA)",
+       x = "Poziom ekspresji białka",
+       y = "Gęstość") +
+  theme(legend.position = "bottom")
+
+print(p_dist)
+
+# Sprawdzenie zakresu globalnego
+cat("Globalne Minimum:", min(protein_data_raw, na.rm=TRUE), "\n")
+cat("Globalne Maksimum:", max(protein_data_raw, na.rm=TRUE), "\n")
+```
+
+Analiza wygenerowanego wykresu gęstości jednoznacznie potwierdza
+założenia dotyczące rozkładu danych. Krzywe gęstości dla losowo
+wybranych białek wykazują rozkład zbliżony do normalnego (symetryczny),
+a wartości mieszczą się w wąskim zakresie (ok. -4 do +6).
+
+Jest to charakterystyka typowa dla danych zlogarytmowanych
+(log2-transformed) i znormalizowanych (Level 3 RPPA). Brak widocznej
+skośności oraz niskie wartości liczbowe wskazują, że nie jest wymagana
+dodatkowa transformacja logarytmiczna. Zastosowanie modelu liniowego
+(limma) bezpośrednio na tych danych jest metodologicznie poprawne.
+
+## Modelowanie Różnicowe (Limma)
+
+Zdefiniowano macierz projektu (Design Matrix) oraz trzy kluczowe
+kontrasty badawcze:
+
+1.  Basal vs. Luminal A: Poszukiwanie markerów agresywności typu
+    bazalnego.
+
+2.  HER2 vs. Luminal A: Weryfikacja nadekspresji w amplikonie HER2.
+
+3.  Luminal B vs. Luminal A: Analiza różnic w proliferacji wewnątrz
+    grupy luminalnej.
+
+```{r limma_execution, message=FALSE}
+# Tworzymy obiekt roboczy, wybierając konkretne kolumny z df_clean
+# Używamy `all_of` lub nazw w cudzysłowach, żeby R poradził sobie ze znakami specjalnymi
+limma_data <- df_clean %>%
+  select(
+    Subtype = `BRCA_Subtype_PAM50`,               # Nazwa kolumny z podtypem
+    Age = `age_at_initial_pathologic_diagnosis`,  # Nazwa kolumny z wiekiem
+    everything()
+  ) %>%
+  filter(Subtype != "Normal") # Usunięcie tkanki normalnej, skupiamy się na raku
+
+# SELEKCJA BIAŁEK
+# Wybieramy tylko numeryczne, wyrzucamy metadane i miRNA
+protein_data_final <- limma_data %>%
+  select(where(is.numeric)) %>%
+  # Usuwamy kolumny kliniczne/techniczne (po słowach kluczowych)
+  select(-matches("ID|Age|days|year|stage|vital|status|index|included|patient|tumor|cohort")) %>%
+  # Usuwamy miRNA (zaczynają się od hsa-)
+  select(-starts_with("hsa")) %>%
+  # Usuwamy ewentualne Z-score (jeśli są)
+  select(-matches("_z$|_Z$"))
+
+# MODELOWANIE (LIMMA)
+# Transpozycja: Wiersze=Białka, Kolumny=Pacjenci
+exprs_matrix <- t(as.matrix(protein_data_final))
+
+# Metadane dla modelu
+clinical_meta <- limma_data %>%
+  select(Subtype, Age) %>%
+  mutate(Subtype = factor(Subtype, levels = c("LumA", "LumB", "Her2", "Basal")))
+
+# Sprawdzenie wymiarów (Musi być TRUE)
+if(ncol(exprs_matrix) != nrow(clinical_meta)) stop("Błąd wymiarów macierzy!")
+
+# Macierz projektu
+design <- model.matrix(~ 0 + Subtype + Age, data = clinical_meta)
+colnames(design) <- gsub("Subtype", "", colnames(design)) # Czyszczenie nazw
+
+# Dopasowanie modelu
+fit <- lmFit(exprs_matrix, design)
+
+# KONTRASTY
+# Definiujemy porównania
+contrasts_matrix <- makeContrasts(
+  Basal_vs_LumA = Basal - LumA,
+  Her2_vs_LumA  = Her2 - LumA,
+  LumB_vs_LumA  = LumB - LumA,
+  levels = design
+)
+
+# Obliczenia statystyczne
+fit2 <- contrasts.fit(fit, contrasts_matrix)
+fit2 <- eBayes(fit2)
+
+results_summary <- decideTests(fit2, method = "global", adjust.method = "BH", p.value = 0.05)
+
+summary_matrix <- t(summary(results_summary))
+
+# Konwersja do ramki danych dla kable
+summary_table_wide <- as.data.frame(summary_matrix)
+
+# Wyświetlenie tabeli
+kbl(summary_table_wide, caption = "Tabela 3.1. Liczba białek różnicujących w badanych kontrastach (FDR < 0.05).") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  # Dodajemy pogrubienie dla kolumn z istotnymi zmianami (Down i Up)
+  column_spec(1, color = "blue", bold = TRUE) %>%   # Kolumna Down
+  column_spec(3, color = "red", bold = TRUE) %>%    # Kolumna Up
+  # Szary kolor dla braku zmian (NotSig - kolumna 2)
+  column_spec(2, color = "grey") %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#2c3e50")
+
+```
+
+Wstępna analiza wyników zestawiona w Tabeli XY wykazuje wyraźną
+hierarchię odrębności molekularnej badanych podtypów, co potwierdza
+poprawność przyjętych grup badawczych:
+
+Największą liczbe zmian odnotowano w kontraście Basal-like vs. Luminal A
+(łącznie 45 białek, w tym 27 obniżonych i 18 podwyższonych). Jest to
+wynik oczekiwany, ponieważ rak bazalny (często TNBC) stanowi biologiczne
+przeciwieństwo łagodnego, hormonozależnego raka Luminal A. Przewaga
+białek o obniżonej ekspresji ("Down") sugeruje utratę cech luminalnych
+(np. receptorów hormonalnych) w podtypie bazalnym.
+
+Najmniejszą liczbę zmian zaobserwowano w kontraście Luminal B vs.
+Luminal A (łącznie 29 białek). Wynika to z faktu, że oba podtypy należą
+do tej samej rodziny nowotworów hormonozależnych (ER+), a różnią się
+głównie aktywnością szlaków proliferacyjnych, co generuje węższy zestaw
+białek różnicujących.
+
+Kontrast HER2-enriched vs. Luminal A uplasował się pośrodku (38 zmian),
+co odzwierciedla odrębną biologię napędzaną amplifikacją genu ERBB2,
+przy jednoczesnym częściowym zachowaniu cech nabłonkowych.
+
+Uzyskany rozkład liczbowy zmian (Basal \> HER2 \> LumB) jest zgodny z
+dystansem molekularnym opisywanym w literaturze (TCGA Network, 2012) i
+stanowi podstawę do szczegółowej identyfikacji biomarkerów w kolejnym
+kroku.
+
+## Wizualizacja Wyników (Volcano Plots)
+
+W celu identyfikacji konkretnych białek odpowiedzialnych za obserwowane
+różnice, sporządzono wykresy wulkaniczne (Volcano Plots). Oś X
+reprezentuje siłę zmiany (log2 Fold Change), natomiast oś Y istotność
+statystyczną (-log10 FDR).
+
+```{r volcano_plots, fig.height=14, fig.width=10, warning=FALSE, message=FALSE}
+# Funkcja pomocnicza do rysowania wykresów
+draw_volcano <- function(fit_obj, coef_name, title_text) {
+  
+  # Pobranie wyników z modelu limma
+  res <- topTable(fit_obj, coef = coef_name, number = Inf) %>%
+    rownames_to_column("Protein")
+  
+  # Kategoryzacja: Up / Down / Not Sig
+  # Używamy progów: FDR < 0.05 oraz |logFC| > 0.5
+  res <- res %>%
+    mutate(Category = case_when(
+      adj.P.Val < 0.05 & logFC > 0.5 ~ "Up",
+      adj.P.Val < 0.05 & logFC < -0.5 ~ "Down",
+      TRUE ~ "Not Sig"
+    ))
+  
+  # Wybór etykiet do podpisania na wykresie
+  # Wybieramy Top 12 najbardziej istotnych (najmniejsze p-value) z grup Up/Down
+  top_labels <- res %>%
+    filter(Category != "Not Sig") %>%
+    arrange(adj.P.Val) %>%
+    head(12) 
+  
+  # Generowanie wykresu
+  p <- ggplot(res, aes(x = logFC, y = -log10(adj.P.Val), color = Category)) +
+    geom_point(alpha = 0.6, size = 1.5) +
+    
+    # Kolory: Niebieski (Spadek), Szary (Brak zmian), Czerwony (Wzrost)
+    scale_color_manual(values = c("Down" = "#377EB8", "Not Sig" = "grey90", "Up" = "#E41A1C")) +
+    
+    # Linie progowe
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black", alpha=0.3) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", alpha=0.3) +
+    
+    # Inteligentne podpisy (ggrepel)
+    geom_text_repel(data = top_labels, aes(label = Protein), 
+                    size = 3.5, 
+                    max.overlaps = 20, 
+                    box.padding = 0.5, 
+                    force = 5,     # Siła odpychania etykiet
+                    color = "black", 
+                    fontface = "bold") +
+    
+    # Opisy osi i tytuł
+    labs(title = title_text,
+         subtitle = paste("Significant: Up =", sum(res$Category=="Up"), "| Down =", sum(res$Category=="Down")),
+         x = "log2 Fold Change",
+         y = "-log10 Adjusted P-value") +
+    
+    theme_minimal() +
+    theme(legend.position = "none", 
+          plot.title = element_text(face="bold", size=12),
+          axis.title = element_text(size=10))
+  
+  return(p)
+}
+
+# Generowanie wykresów dla trzech kontrastów
+p1 <- draw_volcano(fit2, "Basal_vs_LumA", "A. Basal-like vs. Luminal A")
+p2 <- draw_volcano(fit2, "Her2_vs_LumA",  "B. HER2-enriched vs. Luminal A")
+p3 <- draw_volcano(fit2, "LumB_vs_LumA",  "C. Luminal B vs. Luminal A")
+
+# Złożenie wykresów w jeden panel
+p1 / p2 / p3
+```
+
+## Opis wyników proteomicznych
+
+Jakościowa analiza wykresów wulkanicznych (dodać nr rysunku) pozwala na
+zinterpretowanie różnic ilościowych odnotowanych w Tabeli 3.1 i
+przypisanie im konkretnego znaczenia biologicznego. Obserwowane profile
+białkowe wykazują wysoką zgodność z kanoniczną taksonomią molekularną
+raka piersi (**Perou i wsp., 2000; TCGA Network, 2012**).
+
+**1. Fenotyp "Triple-Negative" i Proliferacja w podtypie Basal-like
+(Wykres A)** Analiza kontrastu Basal vs. Luminal A (Ryc. 3.5A)
+potwierdza drastyczną przebudowę aparatu komórkowego. \* **Utrata cech
+luminalnych:** Najsilniej obniżonymi białkami (Down) są **ERALPHA**
+(Receptor Estrogenowy), **PR** (Receptor Progesteronowy) oraz **GATA3**
+(kluczowy czynnik transkrypcyjny komórek luminalnych). Potwierdza to, że
+badane guzy Basal-like należą w większości do grupy potrójnie ujemnych
+(TNBC). \* **Niekontrolowana proliferacja:** Po stronie nadekspresji
+(Up) dominują kluczowe sterowniki cyklu komórkowego: **CYCLINB1**
+(Cyklina B1) oraz **FOXM1**. Ich obecność tłumaczy wysoką agresywność
+kliniczną tego podtypu i koreluje z wysokim indeksem mitotycznym
+(Ki-67). \* **Marker inwazyjności:** Widoczna nadekspresja
+**ANNEXIN-A1** jest charakterystyczna dla podtypu bazalnego i wiąże się
+z procesem przejścia nabłonkowo-mezenchymalnego (EMT), co sprzyja
+przerzutowaniu (**Swahely i wsp., 2020**).
+
+**2. Amplikon 17q12 w podtypie HER2-enriched (Wykres B)** Wykres 3.5B
+stanowi "biologiczną kontrolę jakości" całej analizy. \* **Dominacja
+HER2:** Najbardziej istotnym statystycznie białkiem o podwyższonej
+ekspresji jest **HER2** (ERBB2) oraz jego aktywna, ufosforylowana forma
+**HER2_pY1248**. \* **Koekspresja GRB7:** Obok HER2, obserwujemy silną
+nadekspresję białka **GRB7**. Jest to zgodne z literaturą, ponieważ gen
+*GRB7* znajduje się w bezpośrednim sąsiedztwie genu *ERBB2* na
+chromosomie 17q12 i często ulega współ-amplifikacji (**Saito i wsp.,
+2012**).
+
+**3. Proliferacyjna natura podtypu Luminal B (Wykres C)** Porównanie
+Luminal B vs. Luminal A (Ryc. 3.5C) wyjaśnia, dlaczego ten podtyp ma
+gorsze rokowanie, mimo że jest ER-pozytywny. \* **Tożsame tło, inna
+dynamika:** W przeciwieństwie do podtypu Basal, tutaj nie obserwujemy
+całkowitego zaniku receptorów (choć ERALPHA i BCL2 są lekko obniżone).
+\* **Napęd komórkowy:** Kluczową różnicą jest nadekspresja cyklin
+(**CYCLINB1**, **CYCLINE1**). Potwierdza to definicję kliniczną podtypu
+Luminal B jako "Luminal A z wysoką proliferacją" (często definiowaną
+przez marker Ki-67 \> 14% w histopatologii) (**Cheang i wsp., 2009**).
+
+**Podsumowanie etapu:** Zidentyfikowane sygnatury białkowe (utrata ER/PR
+w Basal, nadekspresja HER2/GRB7 w HER2+, wysokie cykliny w LumB)
+jednoznacznie walidują poprawność danych. Stanowi to solidną podstawę do
+analizy przeżycia, sugerując, że to właśnie te białka (zwłaszcza markery
+proliferacji i receptory) będą kluczowymi determinantami czasu przeżycia
+pacjentek.
+
+
 ## MIRNA
 
 ## INTEGRACJA
-
-
-
-
-
-
-
-
-
-
-
