@@ -1521,6 +1521,8 @@ contrasts_matrix <- makeContrasts(
 fit2 <- contrasts.fit(fit, contrasts_matrix)
 fit2 <- eBayes(fit2)
 
+results_summary <- decideTests(fit2, method = "global", adjust.method = "BH", p.value = 0.05)
+
 summary_matrix <- t(summary(results_summary))
 
 # Konwersja do ramki danych dla kable
