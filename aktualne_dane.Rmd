@@ -35,6 +35,9 @@ library(RColorBrewer)
 library(ggplot2)
 library(janitor)
 library(readr)
+library(limma)
+
+library(ggrepel)
 ```
 
 **DATA WRANGLING**
@@ -1610,6 +1613,164 @@ Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA.
 ## BIAŁKA
 
 ## MIRNA
+
+```{r}
+mirna_features <- c(
+  'hsa_mir_17',
+  'hsa_mir_206',
+  'hsa_mir_210',
+  'hsa_mir_100',
+  'hsa_mir_130a',
+  'hsa_mir_27b',
+  'hsa_let_7f_1',
+  'hsa_let_7f_2',
+  'hsa_mir_20a',
+  'hsa_mir_34a',
+  'hsa_mir_25',
+  'hsa_mir_21',
+  'hsa_mir_23b',
+  'hsa_mir_29a',
+  'hsa_mir_181d',
+  'hsa_mir_203a',
+  'hsa_mir_181c',
+  'hsa_mir_155',
+  'hsa_mir_205',
+  'hsa_mir_10a',
+  'hsa_let_7b',
+  'hsa_mir_15a',
+  'hsa_mir_134',
+  'hsa_mir_200c'
+)
+
+valid_mirna <- mirna_features[mirna_features %in% colnames(final_data)]
+expr_matrix <- t(final_data[, valid_mirna])  # wiersze = cechy, kolumny = pacjenci
+
+group_list <- factor(recode(final_data[[pam50_col]], 
+                            "Basal-like" = "Basal", 
+                            "Luminal A" = "LumA", 
+                            "Luminal B" = "LumB",
+                            "HER2-enriched" = "Her2"),
+                     levels = c("Basal","LumA","LumB","Her2"))
+
+# --- POPRAWKA: CZYSTSZE NAZWY KOLUMN ---
+design <- model.matrix(~0 + group_list + age_mean_years, data = final_data)
+colnames(design) <- c(levels(group_list), "Age") 
+```
+
+
+```{r}
+# ------------------------------------------------------------------------------
+# KROK 3: Dopasowanie modelu limma
+# ------------------------------------------------------------------------------
+fit <- lmFit(expr_matrix, design)
+# ------------------------------------------------------------------------------
+# KROK 4: Definicja kontrastów
+# ------------------------------------------------------------------------------
+contrast_matrix <- makeContrasts(
+  Basal_vs_LumA = Basal - LumA,
+  Her2_vs_LumA  = Her2 - LumA,
+  LumB_vs_LumA  = LumB - LumA,
+  levels = design
+
+)
+fit2 <- contrasts.fit(fit, contrast_matrix)
+fit2 <- eBayes(fit2)
+```
+
+
+```{r}
+# ------------------------------------------------------------------------------
+# KROK 5: Funkcja do generowania volcano plotów
+# ------------------------------------------------------------------------------
+
+generate_volcano <- function(fit_obj, contrast_name, title_text) {
+  results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
+  results$miRNA <- rownames(results)
+  # Kryteria: FDR < 0.05 i |logFC| > 0.5
+
+  results$Significance <- "Not Sig"
+  results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
+  results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
+
+  # Volcano plot
+
+  p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = miRNA)) +
+
+    geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
+
+    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
+
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
+
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+
+    geom_text_repel(data = subset(results, Significance != "Not Sig"), 
+
+                    max.overlaps = 50, box.padding = 0.3, size = 3) +
+
+    labs(
+
+      title = paste("Volcano Plot:", title_text),
+
+      subtitle = paste("Kontrast:", contrast_name),
+
+      x = "log2 Fold Change (Różnica)",
+
+      y = "-log10(FDR) (Istotność)"
+
+    ) +
+
+    theme_minimal()
+
+  
+
+  ggsave(paste0("Iza_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
+
+  print(p)
+
+}
+```
+
+
+```{r}
+# ------------------------------------------------------------------------------
+# KROK 6: Uruchomienie analizy dla każdego kontrastu
+# ------------------------------------------------------------------------------
+
+generate_volcano(fit2, "Basal_vs_LumA", "Agresywność (Basal vs LumA)")
+
+generate_volcano(fit2, "Her2_vs_LumA", "Specyfika HER2 (Her2 vs LumA)")
+
+generate_volcano(fit2, "LumB_vs_LumA", "Proliferacja (LumB vs LumA)")
+```
+
+### LumB vs LumA
+
+Analiza różnicowa potwierdza odmienną biologię obu podtypów, wskazując na bardziej agresywny profil molekularny Luminal B. W podtypie tym zidentyfikowano istotną nadekspresję **miR-210** oraz **miR-17** (FDR < 0.05). Obecność **miR-210** wiąże się z odpowiedzią na hipoksję i adaptacją stresową, natomiast **miR-17** (członek klastra miR-17~92) promuje proliferację komórkową. Z kolei Luminal A charakteryzuje się wyższym poziomem miRNA o potencjale supresorowym, w tym **miR-100**, **miR-205** i **miR-181d**. Ich obecność koreluje z bardziej zróżnicowanym fenotypem, hamowaniem ścieżek wzrostowych oraz stabilnością genomową, co odzwierciedla łagodniejszy przebieg kliniczny LumA.
+
+### HER2 vs LumA
+
+Porównanie profilu ekspresji ujawniło przewagę onkomiR-ów w podtypie HER2, co jest zgodne z jego agresywną charakterystyką. Najsilniejszy sygnał nadekspresji w HER2 wykazują **miR-210** (kluczowy marker hipoksji) oraz **miR-155** i **miR-203a**, regulujące odpowiednio odpowiedź immunologiczną i procesy inwazyjne (EMT). W opozycji do tego, podtyp LumA wykazuje zachowaną, wyższą ekspresję uznanych supresorów nowotworowych, takich jak **let-7b**, **miR-100** oraz **miR-181d**. Obniżenie poziomu rodziny let-7 w guzach HER2 sugeruje utratę kontroli nad proliferacją, podczas gdy profil LumA wskazuje na utrzymanie mechanizmów homeostatycznych.
+
+### Bazalny vs LumA
+
+Analiza wykazała wysoce odrębny i agresywny profil molekularny podtypu Basal/TNBC. Dominującą cechą jest silna nadekspresja onkomiR-ów z rodziny **miR-17~92** (w szczególności **hsa-miR-17** i **hsa-miR-20a**), powiązanych ze szlakami MYC-zależnymi i szybką proliferacją. Istotnie podwyższone są również poziomy **hsa-miR-210** (mediator hipoksji) oraz immunomodulującego **hsa-miR-155**. Z kolei fenotyp bazalny charakteryzuje się znaczącym obniżeniem ekspresji **hsa-miR-10a** (log2FC < –1) oraz **miR-206**. Redukcja tych cząsteczek, pełniących funkcje regulatorowe i różnicujące, potwierdza deregulację procesów dojrzewania komórkowego charakterystyczną dla tego podtypu.
+
+#### Bibliografia
+
+1. Blenkiron C, Goldstein LD, Thorne NP, et al. MicroRNA expression profiling of human breast cancer identifies new markers of tumor subtype. *Genome Biol*. 2007;8(10):R214. doi:10.1186/gb-2007-8-10-r214
+2. Iorio MV, Ferracin M, Liu CG, et al. MicroRNA gene expression deregulation in human breast cancer. *Cancer Res*. 2005;65(16):7065-7070. doi:10.1158/0008-5472.CAN-05-1783
+3. Camps C, Buffa FM, Colella S, et al. hsa-miR-210 is induced by hypoxia and is an independent prognostic factor in breast cancer. *Clin Cancer Res*. 2008;14(5):1340-1348. doi:10.1158/1078-0432.CCR-07-1755
+4. Volinia S, Calin GA, Liu CG, et al. A microRNA expression signature of human solid tumors defines cancer gene targets. *Proc Natl Acad Sci U S A*. 2006;103(7):2257-2261. doi:10.1073/pnas.0510565103
+5. Mattiske S, Suetani RJ, Neilsen PM, Callen DF. The oncogenic role of miR-155 in breast cancer. *Cancer Epidemiol Biomarkers Prev*. 2012;21(8):1236-1243. doi:10.1158/1055-9965.EPI-12-0173
+6. Petrelli A, Perra A, Schernhuber K, et al. miRNA-100 inhibits human breast cancer cell proliferation, invasion and migration/metastasis. *Oncotarget*. 2012;3(3):317. doi:10.18632/oncotarget.473
+
+* **Podział na podtypy (LumA vs LumB vs Basal):** Blenkiron et al. (2007).
+* **miR-210 (Hipoksja/Agresywność):** Camps et al. (2008) lub Blenkiron et al. (2007).
+* **miR-17~92 (Proliferacja/Basal):** Volinia et al. (2006).
+* **miR-155 (HER2/Immunologia):** Mattiske et al. (2012).
+* **miR-100 (Supresor w LumA):** Petrelli et al. (2012).
+
 
 ## INTEGRACJA
 
