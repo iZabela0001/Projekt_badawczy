@@ -1618,11 +1618,13 @@ Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA.
 
 ## RNA
 
+### Analiza różnicowa ekspresji RNA
+
 ```{r}
 
 # Lista genów RNA
 rna_features <- c(
-    'esr1',
+   'esr1',
    'pgr',
    'erbb2',
    'egfr_rna',
@@ -1740,6 +1742,45 @@ generate_volcano_rna(fit_rna, "Her2_vs_LumA",  "RNA: Her2 vs LumA")
 generate_volcano_rna(fit_rna, "LumB_vs_LumA",  "RNA: LumB vs LumA")
 
 ```
+
+## Basal vs LumA
+
+Analiza różnicowej ekspresji RNA pomiędzy podtypami **Basal-like** i **Luminal A** ujawnia głęboką molekularną dywergencję, odzwierciedlającą fundamentalne różnice w biologii nowotworu. Wykres wulkaniczny dla kontrastu **Basal_vs_LumA** wskazuje na silną nadekspresję genów związanych z proliferacją, deregulacją cyklu komórkowego oraz szlakami EMT w podtypie **Basal-like**.
+
+W strefie wysokiej istotności statystycznej `(–log10 FDR > 1.3, log2FC > 0.5)` znajdują się geny takie jak **myc**, **mki67**, **snai1**, **egfr_rna**, **cd24**, **brca2**. Ich funkcje obejmują kontrolę mitozy, replikacji DNA, segregacji chromosomów oraz przejście przez fazę G2/M, co jednoznacznie wskazuje na intensyfikację proliferacji i niestabilność genomową.
+
+Z kolei po stronie genów obniżonych w Basal-like `(log2FC < –0.5)` widoczne są klasyczne markery luminalne i hormonozależne: **foxa1**, **esr1**, **gata3**, **ar**, **pgr**, **bcl2_rna**, **krt18**, **krt19** czy **muc1**. Ich redukcja potwierdza utratę fenotypu zróżnicowanego nabłonkowo oraz przełączenie na szlaki wzrostowe niezależne od receptorów hormonalnych.
+
+Zestawienie tych dwóch profili molekularnych ukazuje **Basal-like** jako podtyp o wysokim potencjale proliferacyjnym, inwazyjnym i opornym na klasyczne terapie hormonalne, w przeciwieństwie do  **Luminal A**, który zachowuje cechy różnicowania i homeostazy.
+
+## HER2 vs LumA
+
+Różnicowa analiza ekspresji RNA pomiędzy podtypami **HER2** i **Luminal A** ujawnia istotne zmiany w profilu transkrypcyjnym, które odzwierciedlają odmienne mechanizmy regulacji proliferacji, różnicowania oraz odpowiedzi terapeutycznej. Wykres wulkaniczny dla kontrastu **HER2** vs **LumA** ukazuje wyraźną dystrybucję genów o istotnie zmienionej ekspresji — z jednej strony geny nadekspresjonowane w **HER2** `(log2FC > 0.5, FDR < 0.05)`, z drugiej zaś geny obniżone względem **Luminal** `(log2FC < –0.5)`. Taka separacja wskazuje na molekularną odrębność podtypów i może mieć bezpośrednie przełożenie na ich fenotyp kliniczny oraz podatność na leczenie.
+
+Podtyp **HER2** wykazuje istotną nadekspresję genów związanych z sygnalizacją receptorową i proliferacją, w tym **erbb2**, **epcam**, **cd24** oraz **brca1** i **brca2**. Nadekspresja **erbb2** potwierdza aktywację szlaków wzrostowych niezależnych od hormonów, takich jak PI3K–AKT i MAPK, typowych dla fenotypu HER2+. Obecność **epcam** i **cd24** wskazuje na zachowanie cech nabłonkowych i progenitorowych, co może sprzyjać inwazyjności i plastyczności komórek nowotworowych. Z kolei podwyższona ekspresja **brca1** i **brca2** może świadczyć o aktywacji mechanizmów naprawy DNA, choć ich funkcjonalność może być zaburzona w kontekście stresu genomowego.
+
+W przeciwieństwie do tego, podtyp **Luminal A** charakteryzuje się wyższą ekspresją genów związanych z hormonozależnością i różnicowaniem, takich jak **esr1**, **pgr**, **bcl2_rna**, **gata3**, **tgfbr2**, **egfr_rna** oraz **cd44**. Obniżenie ich poziomu w **HER2** może wskazywać na utratę kontroli hormonalnej oraz przełączenie na alternatywne szlaki wzrostowe. Szczególnie istotna jest redukcja **esr1**, która koreluje z ograniczoną skutecznością klasycznej hormonoterapii w tym podtypie.
+
+Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność **HER2** względem **Luminal A**. Geny takie jak **erbb2**, **cd24**, **epcam**, **esr1** i **pgr** mogą stanowić potencjalne biomarkery prognostyczne lub terapeutyczne, szczególnie w kontekście klasyfikacji molekularnej, stratyfikacji pacjentek oraz personalizacji leczenia.
+
+## LumB vs LumA
+
+Różnicowa analiza ekspresji RNA pomiędzy podtypami **Luminal B** i **Luminal A** ujawnia wyraźne przesunięcia w profilu molekularnym, wskazujące na odmienne mechanizmy biologiczne i potencjalne różnice kliniczne. Wykres wulkaniczny dla kontrastu **LumB** vs **LumA** pokazuje istotne zmiany w ekspresji genów, z wyraźną separacją pomiędzy genami nadekspresjonowanymi w LumB `(log2FC > 0.5, FDR < 0.05)` a tymi obniżonymi względem LumA `(log2FC < –0.5)`.
+
+Podtyp **Luminal B** wykazuje istotną nadekspresję genów związanych z proliferacją i naprawą DNA, w tym **mk67**, **brca1**, **brca2** oraz **cdh1**. 
+Wzrost poziomu **mki67** wskazuje na intensyfikację cyklu komórkowego, natomiast obecność **brca1/2** może świadczyć o aktywacji mechanizmów homologicznej rekombinacji. **Cdh1**, kodujący E-kadherynę, może pełnić rolę w zachowaniu adhezji komórkowej i struktury nabłonkowej, co w kontekście **LumB** może mieć znaczenie dla inwazyjności guza.
+
+Z kolei **Luminal A** charakteryzuje się wyższą ekspresją genów związanych z różnicowaniem i stabilnością fenotypu luminalnego, takich jak **krt14**, **krt17**, **muc1**, **tgfbr2**, **egfr_rna**, **cd44** oraz **pgr**. Obniżenie ich poziomu w **LumB** może świadczyć o częściowej utracie cech hormonozależnych oraz przełączeniu na alternatywne szlaki wzrostowe, co koreluje z bardziej agresywnym przebiegiem klinicznym.
+
+Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność **LumB** względem **LumA**. Geny takie jak **mki67**, **brca1**, **brca2**, **cdh1**, **krt14** czy **tgfbr2** mogą stanowić potencjalne biomarkery prognostyczne lub terapeutyczne, szczególnie w kontekście klasyfikacji molekularnej i personalizacji leczenia.
+
+##Bibliografia
+1. Perou CM, Sørlie T, Eisen MB, et al. *Molecular portraits of human breast tumours*. Nature. 2000; 406(6797):747–52.
+2. Cancer Genome Atlas Network. *Comprehensive molecular portraits of human breast tumours*. Nature. 2012; 490(7418):61–70.
+3. Prat A, Parker JS, Fan C, et al. *Concordance among gene-expression-based predictors for breast cancer*. N Engl J Med. 2010 ;363(2):131–40.
+4. Zhao SG, Chen WS, Das R, et al. *Clinical and genomic implications of luminal and basal subtypes across carcinomas*. Clin Cancer Res. 2019; 25(8):2450–7.
+5. Netanely D, Avraham A, Ben-Baruch A, et al. *Expression and methylation patterns partition luminal-A breast tumors into distinct prognostic subgroups*. Breast Cancer Res. 2016; 18:74.
+
 
 ## BIAŁKA
 
