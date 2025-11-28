@@ -24,6 +24,7 @@ editor_options:
 # install.packages("kableExtra")
 # if (!require("BiocManager", quietly = TRUE))
   #install.packages("BiocManager")
+#BiocManager::install(version = "3.19")
 # BiocManager::install("limma")
 ```
 
@@ -1617,9 +1618,128 @@ Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA.
 
 ## RNA
 
+```{r}
+
+# Lista genów RNA
+rna_features <- c(
+    'esr1',
+   'pgr',
+   'erbb2',
+   'egfr_rna',
+   'krt5',
+   'krt14',
+   'krt17',
+   'foxa1',
+   'gata3',
+   'bcl2_rna',
+   'cdh1',
+   'vim',
+   'cldn3',
+   'cldn4',
+   'cldn7',
+   'mki67',
+   'ccnd1',
+   'myc',
+   'tp53',
+   'pik3ca',
+   'akt1',
+   'brca1',
+   'brca2',
+   'ar',
+   'fgfr1',
+   'krt18',
+   'krt19',
+   'muc1',
+   'epcam',
+   'snai1',
+   'snai2',
+   'zeb1',
+   'zeb2',
+   'twist1',
+   'tgfbr2',
+   'cd24',
+   'cd44'
+)
 
 
+valid_rna <- rna_features[rna_features %in% colnames(final_data)]
+expr_matrix_rna <- t(final_data[, valid_rna])  # wiersze = geny, kolumny = pacjenci
 
+group_list_rna <- factor(recode(final_data[[pam50_col]], 
+                            "Basal-like" = "Basal", 
+                            "Luminal A" = "LumA", 
+                            "Luminal B" = "LumB",
+                            "HER2-enriched" = "Her2"),
+                     levels = c("Basal","LumA","LumB","Her2"))
+
+ # Stworzenie macierzy modelu 
+design <- model.matrix(~0 + group_list_rna + age_mean_years, data = final_data)
+colnames(design) <- c(levels(group_list_rna), "Age")
+
+```
+
+
+```{r}
+
+# Dopasowanie modelu limma
+fit_rna <- lmFit(expr_matrix_rna, design)
+
+# Definicja kontrastów (Basal vs LumA, Her2 vs LumA, LumB vs LumA) 
+contrast_matrix_rna <- makeContrasts(
+  Basal_vs_LumA = Basal - LumA,
+  Her2_vs_LumA  = Her2 - LumA,
+  LumB_vs_LumA  = LumB - LumA,
+  levels = design
+
+)
+
+fit_rna <- contrasts.fit(fit_rna, contrast_matrix_rna)
+fit_rna <- eBayes(fit_rna)
+```
+
+```{r}
+
+# Funkcja do generowania volcano plotów dla RNA
+
+generate_volcano_rna <- function(fit_obj, contrast_name, title_text) {
+  results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
+  results$RNA <- rownames(results)   # <- zmiana: zamiast miRNA mamy Gene
+  
+  # Kryteria: FDR < 0.05 i |logFC| > 0.5
+  results$Significance <- "Not Sig"
+  results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
+  results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
+
+  # Volcano plot
+  p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = RNA)) +
+    geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
+    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+    geom_text_repel(data = subset(results, Significance != "Not Sig"), 
+                    max.overlaps = 50, box.padding = 0.3, size = 3) +
+    labs(
+      title = paste("Volcano Plot:", title_text),
+      subtitle = paste("Kontrast:", contrast_name),
+      x = "log2 Fold Change (Różnica)",
+      y = "-log10(FDR) (Istotność)"
+    ) +
+    theme_minimal()
+
+  ggsave(paste0("RNA_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
+  print(p)
+}
+
+
+```
+
+```{r}
+
+generate_volcano_rna(fit_rna, "Basal_vs_LumA", "RNA: Basal vs LumA")
+generate_volcano_rna(fit_rna, "Her2_vs_LumA",  "RNA: Her2 vs LumA")
+generate_volcano_rna(fit_rna, "LumB_vs_LumA",  "RNA: LumB vs LumA")
+
+```
 
 ## BIAŁKA
 
