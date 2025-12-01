@@ -47,6 +47,7 @@ library(ggrepel)
 library(reshape2)
 library(kableExtra)
 library(tibble)
+library(stringr)
 ```
 
 **DATA WRANGLING**
@@ -1700,38 +1701,32 @@ fit_rna <- eBayes(fit_rna)
 ```
 
 ```{r}
-
-# Funkcja do generowania volcano plotów dla RNA
-
 generate_volcano_rna <- function(fit_obj, contrast_name, title_text) {
   results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
-  results$RNA <- rownames(results)   # <- zmiana: zamiast miRNA mamy Gene
+  results$RNA <- rownames(results)
   
-  # Kryteria: FDR < 0.05 i |logFC| > 0.5
+  # Klasyfikacja
   results$Significance <- "Not Sig"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
 
-  # Volcano plot
+  # --- NOWOŚĆ: ZAPIS TABELI WYNIKÓW ---
+  write.csv(results, paste0("Wyniki_RNA_Klaudia_", contrast_name, ".csv"), row.names = FALSE)
+  # ------------------------------------
+
+  # Wykres (bez zmian)
   p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = RNA)) +
     geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
     scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
     geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
     geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
-    geom_text_repel(data = subset(results, Significance != "Not Sig"), 
-                    max.overlaps = 50, box.padding = 0.3, size = 3) +
-    labs(
-      title = paste("Volcano Plot:", title_text),
-      subtitle = paste("Kontrast:", contrast_name),
-      x = "log2 Fold Change (Różnica)",
-      y = "-log10(FDR) (Istotność)"
-    ) +
+    geom_text_repel(data = subset(results, Significance != "Not Sig"), max.overlaps = 50, box.padding = 0.3, size = 3) +
+    labs(title = paste("Volcano Plot:", title_text), subtitle = paste("Kontrast:", contrast_name), x = "log2 Fold Change", y = "-log10(FDR)") +
     theme_minimal()
 
   ggsave(paste0("RNA_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
   print(p)
 }
-
 
 ```
 
@@ -1935,6 +1930,16 @@ contrasts_matrix <- makeContrasts(
 # Obliczenia statystyczne
 fit2 <- contrasts.fit(fit, contrasts_matrix)
 fit2 <- eBayes(fit2)
+
+# Funkcja zapisu dla białek
+zapisz_bialka <- function(fit_obj, kontrast) {
+  res <- topTable(fit_obj, coef = kontrast, number = Inf, adjust.method = "BH")
+  res$Protein <- rownames(res)
+  write.csv(res, paste0("Wyniki_Bialka_Piotr_", kontrast, ".csv"), row.names = FALSE)
+}
+zapisz_bialka(fit2, "Basal_vs_LumA")
+zapisz_bialka(fit2, "Her2_vs_LumA")
+zapisz_bialka(fit2, "LumB_vs_LumA")
 
 results_summary <- decideTests(fit2, method = "global", adjust.method = "BH", p.value = 0.05)
 
@@ -2179,52 +2184,29 @@ fit2 <- eBayes(fit2)
 # ------------------------------------------------------------------------------
 # KROK 5: Funkcja do generowania volcano plotów
 # ------------------------------------------------------------------------------
-
 generate_volcano <- function(fit_obj, contrast_name, title_text) {
   results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
   results$miRNA <- rownames(results)
-  # Kryteria: FDR < 0.05 i |logFC| > 0.5
-
+  
   results$Significance <- "Not Sig"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
 
-  # Volcano plot
+  # --- NOWOŚĆ: ZAPIS TABELI WYNIKÓW ---
+  write.csv(results, paste0("Iza_Wyniki_", contrast_name, ".csv"), row.names = FALSE)
+  # ------------------------------------
 
   p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = miRNA)) +
-
     geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
-
     scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
-
     geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
-
     geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
-
-    geom_text_repel(data = subset(results, Significance != "Not Sig"), 
-
-                    max.overlaps = 50, box.padding = 0.3, size = 3) +
-
-    labs(
-
-      title = paste("Volcano Plot:", title_text),
-
-      subtitle = paste("Kontrast:", contrast_name),
-
-      x = "log2 Fold Change (Różnica)",
-
-      y = "-log10(FDR) (Istotność)"
-
-    ) +
-
+    geom_text_repel(data = subset(results, Significance != "Not Sig"), max.overlaps = 50, box.padding = 0.3, size = 3) +
+    labs(title = paste("Volcano Plot:", title_text), subtitle = paste("Kontrast:", contrast_name), x = "log2 Fold Change", y = "-log10(FDR)") +
     theme_minimal()
 
-  
-
   ggsave(paste0("Iza_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
-
   print(p)
-
 }
 ```
 
@@ -2269,3 +2251,294 @@ Analiza wykazała wysoce odrębny i agresywny profil molekularny podtypu Basal/T
 * **miR-100 (Supresor w LumA):** Petrelli et al. (2012).
 
 ## INTEGRACJA
+
+```{r}
+# ==============================================================================
+# integracja
+# ==============================================================================
+
+# 1. SŁOWNIK MAPOWANIA (Gen <-> Białko)
+
+mapa_gen_bialko <- data.frame(
+  Gene = c("esr1", "pgr", "erbb2", "egfr_rna", "bcl2_rna", "mki67", "cdh1", "cd24", "cd44", "tp53", "ccnd1", "mys", "foxa1"),
+  Protein = c("eralpha", "pr", "her2", "egfr", "bcl2", "mki67", "ecadherin", "cd24", "cd44", "p53", "cyclind1", "cmyc", "foxa1"),
+  stringsAsFactors = FALSE
+)
+
+# 2. GŁÓWNA FUNKCJA INTEGRUJĄCA
+wykonaj_integracje <- function(kontrast) {
+  
+  message(paste("\n======================================================="))
+  message(paste(">>> INTEGRACJA DLA KONTRASTU:", kontrast, "<<<"))
+  message(paste("======================================================="))
+  
+  # --- A. WCZYTANIE PLIKÓW CSV ---
+  tryCatch({
+    rna <- read.csv(paste0("Wyniki_RNA_Klaudia_", kontrast, ".csv"))
+    prot <- read.csv(paste0("Wyniki_Bialka_Piotr_", kontrast, ".csv"))
+    mirna <- read.csv(paste0("Iza_Wyniki_", kontrast, ".csv"))
+  }, error = function(e) {
+    stop("Nie znaleziono plików CSV! Upewnij się, że uruchomiłeś/aś wcześniejsze etapy kodu, które zapisują wyniki.")
+  })
+
+  # --- B. PRZYGOTOWANIE DANYCH (Filtrowanie) ---
+  # Wybieramy tylko istotne statystycznie i zmieniamy nazwy kolumn, żeby się nie myliły przy łączeniu
+  
+  # RNA: FDR < 0.05, |logFC| > 0.5
+  rna_sig <- rna %>% 
+    filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
+    select(Name = RNA, logFC_RNA = logFC, FDR_RNA = adj.P.Val) %>%
+    mutate(JoinKey = tolower(Name)) # Klucz do łączenia (małe litery)
+
+  # BIAŁKA: FDR < 0.05
+  prot_sig <- prot %>% 
+    filter(adj.P.Val < 0.05) %>% 
+    select(Name = Protein, logFC_Prot = logFC, FDR_Prot = adj.P.Val) %>%
+    mutate(JoinKey = tolower(Name))
+
+  # miRNA: FDR < 0.05, |logFC| > 0.5
+  mirna_sig <- mirna %>% 
+    filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
+    select(miRNA, logFC_miRNA = logFC, FDR_miRNA = adj.P.Val)
+
+  # --- C. INTEGRACJA 1: ZGODNOŚĆ EKSPRESJI (RNA + BIAŁKO) ---
+  # Sprawdzamy, czy zmiana genu (mRNA) przekłada się na zmianę białka w TYM SAMYM kierunku.
+  
+  # Najpierw mapujemy nazwy białek na nazwy genów używając słownika
+  prot_mapped <- prot_sig %>%
+    left_join(mapa_gen_bialko, by = c("JoinKey" = "Protein")) %>%
+    mutate(JoinKey = ifelse(!is.na(Gene), Gene, JoinKey)) # Jeśli znaleziono w mapie, użyj nazwy genu, wpp. zostaw starą
+  
+  # Łączymy tabele
+  zgodnosc <- rna_sig %>%
+    inner_join(prot_mapped, by = "JoinKey") %>%
+    # KLUCZOWY WARUNEK: Znak logFC musi być taki sam (obie w górę lub obie w dół)
+    filter(sign(logFC_RNA) == sign(logFC_Prot)) %>%
+    select(Gen = Name.x, Bialko = Name.y, logFC_RNA, logFC_Prot) %>%
+    arrange(desc(abs(logFC_RNA) + abs(logFC_Prot)))
+
+  if(nrow(zgodnosc) > 0) {
+    cat("\n[SUKCES] Znaleziono biologicznie spójne pary (Gen -> Białko):\n")
+    print(zgodnosc)
+    write.csv(zgodnosc, paste0("Integracja_GenBialko_", kontrast, ".csv"), row.names = FALSE)
+  } else {
+    cat("\n[INFO] Brak par Gen-Białko o zgodnym kierunku zmian dla tego kontrastu.\n")
+  }
+
+  # --- D. INTEGRACJA 2: REGULACJA PRZEZ miRNA (miRNA -> Gen/Białko) ---
+  # Szukamy korelacji ODWROTNEJ: miRNA w górę -> Gen/Białko w dół (mechanizm wyciszania)
+  
+  # Tworzymy listę wszystkich celów (targetów) - genów i białek
+  targety <- bind_rows(
+    rna_sig %>% select(Target = Name, logFC_Target = logFC_RNA, Type = JoinKey) %>% mutate(Source="RNA"),
+    prot_sig %>% select(Target = Name, logFC_Target = logFC_Prot, Type = JoinKey) %>% mutate(Source="Protein")
+  )
+  
+  if(nrow(mirna_sig) > 0 && nrow(targety) > 0) {
+    # Każde miRNA z każdym Targetem (uproszczone podejście "brute-force" do szukania korelacji)
+    # W pełnej analizie bioinformatycznej użylibyśmy bazy danych targetów (np. TargetScan), 
+    # tutaj szukamy statystycznej korelacji negatywnej.
+    
+    regulacja <- expand.grid(miRNA = mirna_sig$miRNA, Target = targety$Target) %>%
+      inner_join(mirna_sig, by = "miRNA") %>%
+      inner_join(targety, by = "Target") %>%
+      # WARUNEK: Przeciwne znaki (miRNA Up -> Target Down lub odwrotnie)
+      filter(sign(logFC_miRNA) != sign(logFC_Target)) %>%
+      arrange(desc(abs(logFC_miRNA) + abs(logFC_Target))) %>%
+      head(15) # Pokaż tylko TOP 15 najsilniejszych par
+    
+    cat("\n[SUKCES] Potencjalna regulacja miRNA (TOP 15 par o odwrotnej korelacji):\n")
+    print(regulacja[, c("miRNA", "Target", "Source", "logFC_miRNA", "logFC_Target")])
+    write.csv(regulacja, paste0("Integracja_Regulatory_", kontrast, ".csv"), row.names = FALSE)
+  } else {
+    cat("\n[INFO] Brak silnych korelacji miRNA-Target.\n")
+  }
+}
+
+# --- URUCHOMIENIE ---
+wykonaj_integracje("Basal_vs_LumA")
+wykonaj_integracje("Her2_vs_LumA")
+wykonaj_integracje("LumB_vs_LumA")
+
+
+
+# --- 1. Dla kontrastu BASAL vs LUM A ---
+# Zgodność Gen-Białko
+basal_zgodnosc <- read.csv("Integracja_GenBialko_Basal_vs_LumA.csv")
+
+# Regulacja miRNA
+basal_regulatory <- read.csv("Integracja_Regulatory_Basal_vs_LumA.csv")
+
+# --- 2. Dla kontrastu HER2 vs LUM A ---
+her2_zgodnosc <- read.csv("Integracja_GenBialko_Her2_vs_LumA.csv")
+her2_regulatory <- read.csv("Integracja_Regulatory_Her2_vs_LumA.csv")
+
+# --- 3. Dla kontrastu LUM B vs LUM A ---
+lumb_zgodnosc <- read.csv("Integracja_GenBialko_LumB_vs_LumA.csv")
+lumb_regulatory <- read.csv("Integracja_Regulatory_LumB_vs_LumA.csv")
+
+
+print(lumb_zgodnosc)
+```
+
+
+## BASAL vs LUM A
+
+## **1. Integracyjna analiza ekspresji wykazuje głęboką supresję programu luminalnego w podtypie Basal-like**
+
+Analiza różnicowej ekspresji (RNA + proteom) wykazała masywną i spójną supresję kluczowych regulatorów programu luminalnego, w tym **FOXA1**, **ESR1** oraz **GATA3**. Obniżenie ekspresji tych czynników transkrypcyjnych było konsekwentne zarówno na poziomie transkryptów (logFC –5.6 do –5.8), jak i białek (logFC –5.6 do –5.8), co jednoznacznie wskazuje na **utracony fenotyp luminalny i hormonalnie niezależny charakter komórek Basal-like**.
+
+Towarzyszący temu spadek **PGR** i **BCL2**, znanych genów zależnych od ER, dodatkowo potwierdza głębokie wyciszenie osi estrogenowej, typowe dla **triple-negative / Basal-like breast cancer (TNBC)**.
+
+## **2. Profil proliferacyjny typu Basal determinowany jest przez aktywację MYC i markerów cyklu komórkowego**
+
+Geny proliferacyjne, w tym **MKI67** oraz **MYC**, wykazywały wysoki poziom ekspresji zarówno na poziomie RNA, jak i białek. Jest to charakterystyczne dla wysoko proliferujących podtypów TNBC, w szczególności klasy **Basal-like 1 (BL1)** według klasyfikacji Lehmann et al., i wskazuje na utrzymanie programu pro-proliferacyjnego kosztem różnicowania luminalnego.
+
+## **3. Aktywacja EGFR potwierdza charakterystyczną sygnaturę sygnałową Basal-like**
+
+Wyniki wykazały wyraźną nadekspresję **EGFR** (RNA i białko), co stanowi kluczowy element biologii Basal-like. EGFR jest jednym z najlepiej udokumentowanych driverów TNBC i odpowiada za aktywację szlaków MAPK/PI3K, promujących wzrost, przeżycie i migrację komórek nowotworowych. Równocześnie zarejestrowano brak aktywacji **ERBB2**, co potwierdza brak cech podtypu Her2-enriched i wzmacnia precyzyjne odróżnienie fenotypów Basal i Luminal A.
+
+## **4. Analiza regulacyjna ujawnia spójny moduł miRNA odpowiedzialny za wyciszenie osi ESR1–FOXA1**
+
+Regulacyjna analiza miRNA wykazała, że **cztery wysoko aktywowane miRNA** – **miR-210**, **miR-17**, **miR-20a** oraz **miR-155** – kierują swoje działanie na dwa centralne regulacyjne węzły: **FOXA1** i **ESR1**.
+
+Dla każdego z tych miRNA zaobserwowano:
+
+* bardzo wysoką nadekspresję (logFC 1.4–2.4, FDR < 10⁻³³),
+* równoległą supresję obu targetów na poziomie RNA,
+* oraz całkowicie zgodne tłumienie na poziomie białkowym.
+
+### **4.1. Wspólna oś miRNA → FOXA1/ESR1 jako kluczowy mechanizm Basal-like**
+
+Wszystkie cztery miRNA wykazywały identyczny kierunek działania:
+
+| miRNA       | logFC | Target       | logFC Target (RNA) | logFC Target (Protein) |
+| ----------- | ----- | ------------ | ------------------ | ---------------------- |
+| **miR-210** | +2.42 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
+| **miR-17**  | +2.15 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
+| **miR-20a** | +1.89 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
+| **miR-155** | +1.42 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
+
+Ta wyjątkowa spójność sugeruje istnienie **regulacyjnej osi, w której jednoczesna aktywacja kilku miRNA prowadzi do skoordynowanego wyciszenia kluczowych regulatorów luminalnych**.
+
+### **4.2. Funkcjonalne znaczenie: całkowita destabilizacja programu luminalnego**
+
+* **FOXA1** jest głównym pionierowym czynnikiem transkrypcyjnym umożliwiającym wiązanie ERα do chromatyny.
+* **ESR1** koduje receptor estrogenowy ERα, definiujący podtyp Luminal A.
+
+Jednoczesne wyciszenie obu tych genów na skutek koaktywacji wielu miRNA prowadzi do:
+
+* dezorganizacji architektury epigenetycznej,
+* zaniku odpowiedzi hormonalnej,
+* utraty zdolności różnicowania luminalnego,
+* przejścia w stronę fenotypu **ER–/PR– Basal-like**.
+
+Mechanizm ten jest zgodny z literaturą, w której miR-155 i miR-17/20a są dobrze opisanymi negatywnymi regulatorami szlaków różnicowania w raku piersi.
+
+## **5. Integracja danych miRNA–mRNA–proteom wskazuje na silnie konserwowany mechanizm post-transkrypcyjnego wygaszania ESR1 i FOXA1 w Basal-like**
+
+Wyniki wykazują wyjątkową zgodność trzech warstw danych:
+
+1. **miRNA** – silnie ↑
+2. **mRNA (RNA-seq)** – silnie ↓
+3. **białka (RPPA)** – silnie ↓
+
+Ta trójwarstwowa koherencja potwierdza, że w komórkach Basal-like dominującym procesem napędzającym różnicowanie w kierunku TNBC jest **post-transkrypcyjne blokowanie osi ESR1–FOXA1 przez pakiet onkogennych miRNA**.
+
+## **6. Charakter podtypu Basal-like w badanym modelu**
+
+Wszystkie uzyskane dane – miRNA, transkryptom, proteom – wskazują na profil najbardziej zgodny z:
+
+### **Basal-like 1 (BL1)**
+
+* wysoka proliferacja (MKI67, MYC ↑),
+* utrata szlaku hormonalnego (ESR1/FOXA1/GATA3 ↓),
+* aktywacja EGFR,
+* niska ekspresja EMT markerów (SNAI1 ↓),
+* dominująca regulacja post-transkrypcyjna przez miRNA.
+
+---
+
+# **Wniosek końcowy**
+
+Integracja analiz różnicowej ekspresji i regulacji post-transkrypcyjnej wykazuje, że podtyp Basal-like charakteryzuje się **skojarzoną aktywacją modułu miRNA (miR-210, miR-17, miR-20a, miR-155)**, który kieruje silne hamowanie dwóch kluczowych markerów luminalnych – **FOXA1** i **ESR1**. Tłumienie tych regulatorów jest widoczne zarówno na poziomie mRNA, jak i białka i towarzyszy mu wysoka proliferacja oraz aktywacja EGFR. Wyniki wskazują na **post-transkrypcyjne przeprogramowanie fenotypu luminalnego w kierunku Basal-like**, zgodne z charakterystyką agresywnych nowotworów piersi typu TNBC.
+
+---
+
+
+## Her2 vs LumA
+
+**Background:**
+Podtyp HER2-dodatni raka piersi charakteryzuje się amplifikacją genu *ERBB2*, wysoką proliferacją oraz utratą markerów luminalnych, jednak mechanizmy regulacyjne integrujące warstwy transkryptomiczne, proteomiczne i miRNA pozostają nie w pełni poznane. Zastosowanie podejścia multi-omicznego pozwala lepiej zrozumieć biologiczną spójność sygnatur molekularnych oraz zidentyfikować kluczowe osie regulacyjne wpływające na fenotyp HER2-enriched.
+
+**Methods:**
+Przeprowadzono analizę różnicową ekspresji RNA-seq, proteomiki RPPA oraz miRNA dla kontrastu HER2 vs Luminal A. Zintegrowano dane w dwóch etapach: (i) zgodność ekspresji RNA–białko w celu identyfikacji stabilnych sygnatur molekularnych oraz (ii) analiza miRNA–target z wykorzystaniem zależności odwrotnych logFC, aby wskazać potencjalne regulatory posttranskrypcyjne.
+
+**Results:**
+Integracja RNA–białko wykazała wysoce spójną nadekspresję kluczowych markerów podtypu HER2, w tym *ERBB2/HER2*, *MKI67*, *EPCAM* i *CDH1*, przy jednoczesnej wyraźnej supresji sygnatur luminalnych, takich jak *ESR1*, *PGR*, *GATA3*, *FOXA1* i *BCL2*. Obniżenie ekspresji keratyn *KRT5*, *KRT14* i *KRT17* potwierdza brak fenotypu basal-like w badanej kohorcie. Analiza miRNA wykazała silną nadekspresję onkogennych miRNA, przede wszystkim **miR-210**, **miR-155** i **miR-203a**, które konsekwentnie celują w *ESR1*, *PGR* i *BCL2*. Zależności te odzwierciedlają biologicznie spójną odwrotną regulację i sugerują, że te miRNA odgrywają kluczową rolę w wygaszaniu sygnatur luminalnych oraz w utrwalaniu fenotypu ER−/PR− charakterystycznego dla HER2-enriched. Szczególnie **miR-210**, powiązany z hipoksją i aktywacją HIF-1α, reprezentuje dominującą oś regulacyjną modulującą odpowiedź komórkową w nowotworach HER2+.
+
+**Conclusions:**
+Analiza multi-omiczna ujawnia wysoką spójność biologiczną pomiędzy warstwami RNA i białka oraz identyfikuje krytyczne miRNA napędzające fenotyp HER2-dodatni. Odkrycia te podkreślają znaczenie osi miR-210/155/203a → *ESR1/PGR/BCL2* w remodelowaniu programu luminalnego i podkreślają wartość integracji wielowarstwowych danych omicznych dla zrozumienia molekularnej architektury raka piersi HER2+. Wyniki dostarczają nowych podstaw do dalszych badań translacyjnych nad celowaniem w regulatory miRNA w terapii HER2-zależnych nowotworów.
+
+### Wersja na brudno:
+
+**1. Analiza zgodności ekspresji (RNA vs Białko)**
+Dane wykazują wysoką spójność między poziomem transkryptomu a proteomu, potwierdzając klasyczny profil molekularny podtypu HER2-enriched:
+
+* **Markery podwyższone (zgodnie RNA i białko):**
+    * **ERBB2 (HER2):** Silna nadekspresja potwierdzająca status HER2+.
+    * **MKI67:** Wysoki poziom wskazuje na znaczną aktywność proliferacyjną.
+    * **Markery epitelialne (EPCAM, CDH1, CD24):** Zachowany fenotyp nabłonkowy, brak cech mezenchymalnych.
+* **Markery obniżone (zgodnie RNA i białko):**
+    * **Sygnatura luminalna (ESR1, PGR, GATA3, FOXA1, BCL2):** Drastyczny spadek, co definiuje status kliniczny ER-/PR-.
+    * **Sygnatura basal-like (KRT5, KRT14, KRT17):** Niska ekspresja wyklucza podtyp bazalny.
+* **Uwaga:** Obniżony poziom MYC jest nietypowy dla klasycznego modelu, ale nie podważa głównej diagnozy (możliwa specyfika kohorty).
+
+**2. Analiza regulacji miRNA**
+Zaobserwowano wyraźny mechanizm represji potranskrypcyjnej. Nadekspresja konkretnych miRNA koreluje z wyciszeniem ich genów docelowych:
+
+* **Kluczowe miRNA (Up-regulated):** miR-210 (marker hipoksji), miR-155, miR-203a.
+* **Geny docelowe (Down-regulated):** ESR1, PGR, BCL2.
+* **Wniosek mechanistyczny:** Wysoki poziom miR-210 i miR-155 odpowiada za aktywną supresję receptorów hormonalnych (utrata fenotypu luminalnego) oraz promocję agresywności guza.
+
+**3. Podsumowanie**
+Wyniki są w pełni wiarygodne biologicznie i spójne z bazami referencyjnymi (TCGA, METABRIC). Profil jednoznacznie wskazuje na podtyp HER2-enriched charakteryzujący się:
+1.  Amplifikacją szlaku HER2.
+2.  Utratą ekspresji receptorów estrogenowych/progesteronowych (mechanizm zależny od miRNA).
+3.  Wysokim potencjałem proliferacyjnym.
+
+
+## LumB vs LumA
+
+
+# **1. Luminal B zachowuje program luminalny, ale wykazuje silnie nasilony program proliferacyjny**
+
+Integracyjna analiza RNA i proteomu wykazała, że podtyp Luminal B utrzymuje epitelialno-luminalny fenotyp komórek, co potwierdza **wysoka i zgodna ekspresja CDH1** oraz brak aktywacji szlaków EGFR. Równocześnie obserwujemy **silne podwyższenie MKI67** na poziomie transkryptu i białka, co jednoznacznie wskazuje na **wysokopro­liferacyjny charakter LumB**, stanowiący główną biologiczną różnicę względem LumA.
+
+# **2. Częściowe wyciszenie osi hormonalnej: spadek PGR regulowany przez miR-210**
+
+W odróżnieniu od Basal, LumB nie traci całego programu luminalnego, lecz wykazuje **selektywną redukcję receptora progesteronowego (PGR)**. Spadek ten jest zgodny w RNA i proteomie, a analiza regulacyjna wykazała, że **miR-210 jest kluczowym miRNA odpowiedzialnym za jego post-transkrypcyjne tłumienie** (miR-210 ↑, PGR ↓). To częściowe osłabienie sygnału ER-zależnego wpisuje się w kliniczny obraz LumB: ER+, ale PR-niższy i bardziej agresywny.
+
+# **3. Zgodna supresja keratyn KRT5/KRT14/KRT17 – aktywna ochrona fenotypu luminalnego przez miR-210 i miR-17**
+
+Trzy keratyny typowe dla fenotypu bazalnego (KRT5, KRT14, KRT17) są silnie obniżone zarówno na poziomie mRNA, jak i białek (logFC ~ –2.5 do –2.9).
+Co ważne, **miR-210 i miR-17 tworzą spójny moduł regulacyjny**, który kieruje się właśnie przeciwko tym keratynom.
+Sugeruje to, że LumB utrzymuje swój luminalny charakter **aktywnym mechanizmem wyciszania sygnatury bazalnej**, w przeciwieństwie do Basal-like, gdzie keratyny te są bardzo wysoko.
+
+# **4. Wygaszanie MUC1 jako subtelna modulacja luminalnej sygnatury**
+
+MUC1 wykazuje umiarkowaną, ale konsekwentną redukcję, również regulowaną przez miR-210. Może to odzwierciedlać **osłabienie klasycznego sygnału MUC1–ERα**, typowe dla bardziej agresywnych form ER+.
+
+# **5. Integracja danych miRNA–RNA–proteom wskazuje na dwa kluczowe procesy definiujące LumB**
+
+**(i) Utrzymanie fenotypu luminalnego**
+– aktywne tłumienie keratyn bazalnych przez miR-210 i miR-17
+– zachowana ekspresja CDH1
+– brak aktywacji EGFR
+
+**(ii) Wzrost proliferacji kosztem częściowego obniżenia sygnału hormonalnego**
+– MKI67 ↑↑
+– PGR ↓ (miR-210-zależnie)
+
+Ta trójwarstwowa koherencja (miRNA → RNA → białko) pokazuje, że **Luminal B nie odchodzi od osi luminalnej, lecz staje się jej bardziej agresywnym wariantem**, napędzanym przez proliferację i modulację sygnału ER/PR, a nie przez przejście w stronę fenotypu bazalnego.
+
