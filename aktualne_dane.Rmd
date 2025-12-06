@@ -48,6 +48,8 @@ library(reshape2)
 library(kableExtra)
 library(tibble)
 library(stringr)
+library(survival)
+library(survminer)
 ```
 
 **DATA WRANGLING**
@@ -73,14 +75,16 @@ df_clean <- df %>%
   distinct(ID.1, .keep_all = TRUE)
 cat("Liczba wierszy PO deduplikacji:", nrow(df_clean), "\n")
 
+
+
 # Usunięcie zbędnych kolumn (duplikaty ID oraz 100% puste)
 df_clean <- df_clean %>%
-  select(                          # Duplikat ID
-    -cases.submitter_id,             # Duplikat ID
-    -patient,                        # Duplikat ID
-    -cases.case_id,                  # Inny, zbędny identyfikator
-    -Tumor_Grade,                    # 100% pusty
-    -tobacco_smoking_history         # 100% pusty
+  dplyr::select(                     # <--- ZMIANA: dodano "dplyr::"
+    -cases.submitter_id,             
+    -patient,                        
+    -cases.case_id,                  
+    -Tumor_Grade,                    
+    -tobacco_smoking_history         
   )
 
 # Czyszczenie "brudnych" kolumn (konwersja '--' na NA) ---
@@ -139,7 +143,7 @@ glimpse(df_clean)
 
 # Wybieramy tylko kolumny z danymi numerycznymi (od ERALPHA do CD24)
 df_features <- df_clean %>%
-  select(ERALPHA:CD24) # Używamy nazw do zaznaczenia zakresu
+  dplyr::select(ERALPHA:CD24) # Używamy nazw do zaznaczenia zakresu
 
 nzv_metrics <- nearZeroVar(df_features, saveMetrics = TRUE)
 
@@ -461,7 +465,7 @@ merged_data_cleaned$demographic_ethnicity <- factor(
 #demographic_days_to_death & cases_days_to_lost_to_followup <- NA
 
 merged_data_cleaned <- merged_data_cleaned %>%
-  select(-demographic_days_to_death, -cases_days_to_lost_to_followup)
+  dplyr::select(-demographic_days_to_death, -cases_days_to_lost_to_followup)
 
 
 #treatments_treatment_outcome 
@@ -551,7 +555,7 @@ merged_data_cleaned$age_z <- as.numeric(scale(merged_data_cleaned$age_mean_years
 hist(merged_data_cleaned$age_mean_years, col = "lightblue", main = "Średni wiek w latach", xlab = "Lata")
 
 merged_data_cleaned <- merged_data_cleaned %>%
-  select(-age_from_days, -age_at_initial_pathologic_diagnosis, -demographic_age_at_index)
+  dplyr::select(-age_from_days, -age_at_initial_pathologic_diagnosis, -demographic_age_at_index)
 
 
 ggplot(merged_data_cleaned, aes(x = age_mean_years)) +
@@ -1827,16 +1831,16 @@ normalnego (skala logarytmiczna).
 
 # Wybieram tylko kolumny numeryczne, usuwając metadane, miRNA i Z-score.
 protein_data_raw <- df_clean %>%
-  select(where(is.numeric)) %>%
-  select(-matches("_z$")) %>%                 # Usuń przetworzone Z-score
-  select(-starts_with("hsa_")) %>%            # Usuń miRNA
-  select(-matches("id|age|days|year|stage|included|index|node|metastasis|grade")) # Usuń metadane
+  dplyr::select(where(is.numeric)) %>%
+  dplyr::select(-matches("_z$")) %>%                 # Usuń przetworzone Z-score
+  dplyr::select(-starts_with("hsa_")) %>%            # Usuń miRNA
+  dplyr::select(-matches("id|age|days|year|stage|included|index|node|metastasis|grade")) # Usuń metadane
 
 # SPRAWDZENIE ROZKŁADU
 # Wizualizacja gęstości dla losowej próbki 6 białek
 set.seed(2025) # Powtarzalność
 sample_proteins <- sample(names(protein_data_raw), 6)
-melted_prot <- melt(protein_data_raw %>% select(all_of(sample_proteins)))
+melted_prot <- melt(protein_data_raw %>% dplyr::select(all_of(sample_proteins)))
 
 p_dist <- ggplot(melted_prot, aes(x = value, fill = variable)) +
   geom_density(alpha = 0.4) +
@@ -1881,7 +1885,7 @@ kontrasty badawcze:
 # Tworzymy obiekt roboczy, wybierając konkretne kolumny z df_clean
 # Używamy `all_of` lub nazw w cudzysłowach, żeby R poradził sobie ze znakami specjalnymi
 limma_data <- df_clean %>%
-  select(
+  dplyr::select(
     Subtype = `BRCA_Subtype_PAM50`,               # Nazwa kolumny z podtypem
     Age = `age_at_initial_pathologic_diagnosis`,  # Nazwa kolumny z wiekiem
     everything()
@@ -1891,13 +1895,13 @@ limma_data <- df_clean %>%
 # SELEKCJA BIAŁEK
 # Wybieramy tylko numeryczne, wyrzucamy metadane i miRNA
 protein_data_final <- limma_data %>%
-  select(where(is.numeric)) %>%
+  dplyr::select(where(is.numeric)) %>%
   # Usuwamy kolumny kliniczne/techniczne (po słowach kluczowych)
-  select(-matches("ID|Age|days|year|stage|vital|status|index|included|patient|tumor|cohort")) %>%
+  dplyr::select(-matches("ID|Age|days|year|stage|vital|status|index|included|patient|tumor|cohort")) %>%
   # Usuwamy miRNA (zaczynają się od hsa-)
-  select(-starts_with("hsa")) %>%
+  dplyr::select(-starts_with("hsa")) %>%
   # Usuwamy ewentualne Z-score (jeśli są)
-  select(-matches("_z$|_Z$"))
+  dplyr::select(-matches("_z$|_Z$"))
 
 # MODELOWANIE (LIMMA)
 # Transpozycja: Wiersze=Białka, Kolumny=Pacjenci
@@ -1905,7 +1909,7 @@ exprs_matrix <- t(as.matrix(protein_data_final))
 
 # Metadane dla modelu
 clinical_meta <- limma_data %>%
-  select(Subtype, Age) %>%
+  dplyr::select(Subtype, Age) %>%
   mutate(Subtype = factor(Subtype, levels = c("LumA", "LumB", "Her2", "Basal")))
 
 # Sprawdzenie wymiarów (Musi być TRUE)
@@ -2287,19 +2291,19 @@ wykonaj_integracje <- function(kontrast) {
   # RNA: FDR < 0.05, |logFC| > 0.5
   rna_sig <- rna %>% 
     filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
-    select(Name = RNA, logFC_RNA = logFC, FDR_RNA = adj.P.Val) %>%
+    dplyr::select(Name = RNA, logFC_RNA = logFC, FDR_RNA = adj.P.Val) %>%
     mutate(JoinKey = tolower(Name)) # Klucz do łączenia (małe litery)
 
   # BIAŁKA: FDR < 0.05
   prot_sig <- prot %>% 
     filter(adj.P.Val < 0.05) %>% 
-    select(Name = Protein, logFC_Prot = logFC, FDR_Prot = adj.P.Val) %>%
+    dplyr::select(Name = Protein, logFC_Prot = logFC, FDR_Prot = adj.P.Val) %>%
     mutate(JoinKey = tolower(Name))
 
   # miRNA: FDR < 0.05, |logFC| > 0.5
   mirna_sig <- mirna %>% 
     filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
-    select(miRNA, logFC_miRNA = logFC, FDR_miRNA = adj.P.Val)
+    dplyr::select(miRNA, logFC_miRNA = logFC, FDR_miRNA = adj.P.Val)
 
   # --- C. INTEGRACJA 1: ZGODNOŚĆ EKSPRESJI (RNA + BIAŁKO) ---
   # Sprawdzamy, czy zmiana genu (mRNA) przekłada się na zmianę białka w TYM SAMYM kierunku.
@@ -2314,7 +2318,7 @@ wykonaj_integracje <- function(kontrast) {
     inner_join(prot_mapped, by = "JoinKey") %>%
     # KLUCZOWY WARUNEK: Znak logFC musi być taki sam (obie w górę lub obie w dół)
     filter(sign(logFC_RNA) == sign(logFC_Prot)) %>%
-    select(Gen = Name.x, Bialko = Name.y, logFC_RNA, logFC_Prot) %>%
+    dplyr::select(Gen = Name.x, Bialko = Name.y, logFC_RNA, logFC_Prot) %>%
     arrange(desc(abs(logFC_RNA) + abs(logFC_Prot)))
 
   if(nrow(zgodnosc) > 0) {
@@ -2330,8 +2334,8 @@ wykonaj_integracje <- function(kontrast) {
   
   # Tworzymy listę wszystkich celów (targetów) - genów i białek
   targety <- bind_rows(
-    rna_sig %>% select(Target = Name, logFC_Target = logFC_RNA, Type = JoinKey) %>% mutate(Source="RNA"),
-    prot_sig %>% select(Target = Name, logFC_Target = logFC_Prot, Type = JoinKey) %>% mutate(Source="Protein")
+    rna_sig %>% dplyr::select(Target = Name, logFC_Target = logFC_RNA, Type = JoinKey) %>% mutate(Source="RNA"),
+    prot_sig %>% dplyr::select(Target = Name, logFC_Target = logFC_Prot, Type = JoinKey) %>% mutate(Source="Protein")
   )
   
   if(nrow(mirna_sig) > 0 && nrow(targety) > 0) {
@@ -2541,4 +2545,1368 @@ MUC1 wykazuje umiarkowaną, ale konsekwentną redukcję, również regulowaną p
 – PGR ↓ (miR-210-zależnie)
 
 Ta trójwarstwowa koherencja (miRNA → RNA → białko) pokazuje, że **Luminal B nie odchodzi od osi luminalnej, lecz staje się jej bardziej agresywnym wariantem**, napędzanym przez proliferację i modulację sygnału ER/PR, a nie przez przejście w stronę fenotypu bazalnego.
+
+# Etap 4
+
+
+## Podział zbioru danych na podtypy
+
+```{r}
+
+lumA_data <- subset(final_data, brca_subtype_pam50 == "LumA") 
+lumB_data <- subset(final_data, brca_subtype_pam50 == "LumB") 
+HER2_data <- subset(final_data, brca_subtype_pam50 == "Her2") 
+basal_data <- subset(final_data, brca_subtype_pam50 == "Basal") 
+
+```
+
+
+
+
+
+## Wizualizacje
+
+
+
+```{r}
+
+# ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------
+
+plot_km_survival <- function(data, marker_col, title_suffix = "") {
+  mediana <- median(data[[marker_col]], na.rm = TRUE)
+  data_km <- data %>%
+
+    mutate(Expression_Group = ifelse(.data[[marker_col]] > mediana, "HIGH", "LOW"))
+  fit <- survfit(Surv(time_to_event, event) ~ Expression_Group, data = data_km)
+
+  ggsurvplot(
+    fit,
+    data = data_km,
+    pval = TRUE,             # Pokaż p-value (Log-Rank)
+    conf.int = TRUE,         # Pokaż przedziały ufności
+    risk.table = TRUE,       # Tabela ryzyka pod wykresem
+    palette = c("red", "blue"),
+    title = paste("Kaplan-Meier:", marker_col, title_suffix),
+    xlab = "Czas (dni)",
+    ylab = "Prawdopodobieństwo przeżycia",
+    legend.title = "Ekspresja",
+    legend.labs = c("HIGH", "LOW")
+
+  )
+
+}
+# ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ -------------------------------
+
+```
+
+
+
+```{r}
+
+# --- 1. CAŁA KOHORTA ---
+print(plot_km_survival(final_data, "hsa_mir_210_z", "- Cała populacja"))
+print(plot_km_survival(final_data, "hsa_mir_17_z", "- Cała populacja"))
+
+# --- 2. WEWNĄTRZ PODTYPÓW  ---
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------mir-210
+
+
+par(mfrow = c(2, 2))  # 2 wiersze, 2 kolumny
+
+plot_km_survival(lumA_data, "hsa_mir_210_z", "- Luminal A")
+plot_km_survival(lumB_data, "hsa_mir_210_z", "- Luminal B")
+plot_km_survival(basal_data, "hsa_mir_210_z", "- Basal-like")
+plot_km_survival(HER2_data, "hsa_mir_210_z", "- HER2")
+
+##----------------------------------------------------------------------#------------------------------------------------------------------------mir-17
+
+print(plot_km_survival(lumA_data, "hsa_mir_17_z", "- Luminal A"))
+
+# Analiza dla miR-17 wewnątrz podtypu "Luminal B"
+print(plot_km_survival(lumB_data, "hsa_mir_17_z", "- Luminal B"))
+
+# Analiza dla miR-17 wewnątrz "Basal-like"
+print(plot_km_survival(basal_data, "hsa_mir_17_z", "- Basal-like"))
+
+# Analiza dla miR-170 wewnątrz "HER2-enriched"
+print(plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2"))
+```
+
+
+
+
+
+## Modele
+
+### Ogólne
+
+```{r}
+# 1. MODEL BAZOWY (Kliniczny)
+# Punkt odniesienia: Wiek + Stadium + Podtyp
+cox_base <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50, 
+                  data = final_data)
+
+cat("\n--- MODEL BAZOWY ---\n")
+print(summary(cox_base))
+
+
+# 2. MODEL TESTOWY C1 (Hipoksja)
+# Baza + hsa-mir-210
+cox_mir210 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50+hsa_mir_210_z, 
+                    data = final_data)
+
+cat("\n--- MODEL C1: miR-210 ---\n")
+print(summary(cox_mir210))
+
+
+# 3. MODEL TESTOWY C2 (Proliferacja)
+# Baza + hsa-mir-17
+cox_mir17 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + hsa_mir_17_z, 
+                   data = final_data)
+
+cat("\n--- MODEL C2: miR-17 ---\n")
+print(summary(cox_mir17))
+```
+
+W **modelu bazowym**, uwzględniającym wiek pacjenta, stadium choroby oraz podtyp PAM50, najważniejszymi predyktorami przeżycia okazują się **wiek oraz stadium nowotworu**. Każdy dodatkowy rok życia zwiększa ryzyko zgonu o około 5%, a pacjenci ze stadium II i III mają odpowiednio około 2- i 4-krotnie wyższe ryzyko w porównaniu ze stadium I. Podtyp molekularny PAM50 w tym modelu nie jest istotnym prognostycznie czynnikiem, choć w biologicznej interpretacji pozostaje istotny dla charakterystyki guza. Model bazowy dobrze rozróżnia pacjentów o różnych poziomach ryzyka, co potwierdza wartość współczynnika zgodności (Concordance = 0.743).
+
+Włączenie **miR-210** do modelu (model C1) nie zmienia istotnie wyników w całej kohorcie. Współczynnik hazardu dla miR-210 sugeruje pewien efekt ochronny – wyższa ekspresja może wiązać się z niższym ryzykiem – jednak efekt ten nie jest statystycznie istotny (p = 0.29). Pozostałe zmienne kliniczne zachowują swoje znaczenie, a zdolność predykcyjna modelu nie ulega praktycznej poprawie (Concordance = 0.744).
+
+Podobnie, w modelu C2 z **miR-17**, kierunek efektu wskazuje, że wyższa ekspresja może zwiększać ryzyko zgonu, ale efekt również nie jest istotny statystycznie (HR ≈ 1.12, p = 0.40). Zdolność predykcyjna modelu pozostaje zbliżona do modelu bazowego (Concordance = 0.742).
+
+Podsumowując, w analizie całej kohorty najbardziej prognostycznymi zmiennymi pozostają **wiek i stadium choroby**, natomiast pojedyncze miRNA (miR-210 i miR-17) oraz podtypy PAM50 nie dodają istotnej informacji prognostycznej. Wyniki te uzasadniają zastosowanie podejścia LASSO Cox w celu zbudowania **sygnatury miRNA**, w której łączny efekt kilku markerów może ujawnić silniejsze predykcyjne właściwości, niewidoczne przy analizie pojedynczych miRNA.
+
+
+
+### Z podziałem na podtypy
+
+#### HSA_MIR_210_Z
+
+```{r}
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_A
+
+cat("\n--- WYNIK DLA LUMINAL A (miR-210) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
+                      data = lumA_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_B
+
+cat("\n--- WYNIK DLA LUMINAL B (miR-210) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
+                      data = lumB_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------HER2
+
+cat("\n--- WYNIK DLA HER2 (miR-210) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
+                      data = HER2_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------BASAL
+
+cat("\n--- WYNIK DLA BASAL (miR-210) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
+                      data = basal_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------
+
+```
+
+
+W **podtypie Luminal A**, wiek pozostaje istotnym czynnikiem prognostycznym – każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,5% (HR = 1.055, p < 0.001). Natomiast ekspresja **miR-210** nie wykazuje istotnego wpływu na przeżycie (HR = 0.93, p = 0.66). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.788), co sugeruje, że w tym podtypie głównym determinantem jest wiek pacjenta, a miR-210 nie wnosi dodatkowej informacji prognostycznej.
+
+W **podtypie Luminal B**, zarówno wiek (HR = 1.027, p = 0.12), jak i miR-210 (HR = 0.76, p = 0.26) nie osiągają istotności statystycznej. Model w tym przypadku ma słabszą zdolność rozróżniania pacjentów (Concordance = 0.606), co może wynikać z mniejszej liczebności kohorty i ograniczonej liczby zdarzeń. Ekspresja miR-210 kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
+
+W **podtypie HER2**, wiek ponownie wykazuje znaczenie prognostyczne (HR = 1.072, p = 0.008), natomiast wpływ miR-210 jest nieistotny (HR = 0.71, p = 0.38). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.726), co wskazuje, że w tym podtypie również głównymi determinantami pozostają czynniki kliniczne, a miR-210 nie dodaje znaczącej informacji.
+
+W **podtypie Basal-like**, ani wiek (HR = 1.018, p = 0.33), ani miR-210 (HR = 1.045, p = 0.90) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia dobrze pacjentów pod względem ryzyka (Concordance = 0.564). Wyniki te sugerują, że w podtypie Basal-like inne czynniki molekularne lub kliniczne mogą odgrywać kluczową rolę w predykcji przeżycia, a miR-210 nie jest użytecznym markerem prognostycznym.
+
+
+
+
+#### HSA_MIR_17_Z
+
+```{r}
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_A
+
+cat("\n--- WYNIK DLA LUMINAL A (miR-17) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
+                      data = lumA_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_B
+
+cat("\n--- WYNIK DLA LUMINAL B (miR-17) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
+                      data = lumB_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------HER2
+
+cat("\n--- WYNIK DLA HER2 (miR-17) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
+                      data = HER2_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------BASAL
+
+cat("\n--- WYNIK DLA BASAL (miR-17) ---\n")
+print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
+                      data = basal_data)))
+
+#-----------------------------------------------------------------------#-----------------------------------------------------------------------
+
+```
+
+W **podtypie Luminal A**, zarówno wiek, jak i ekspresja **miR-17** mają znaczenie prognostyczne. Każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,9% (HR = 1.059, p < 0.001). Ekspresja miR-17 istotnie zwiększa ryzyko – pacjenci z wyższą ekspresją mają o około 66% większe ryzyko zgonu (HR = 1.665, p = 0.048). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.772), co sugeruje, że miR-17 może być wartościowym markerem prognostycznym w tym podtypie.
+
+W **podtypie Luminal B**, ani wiek (HR = 1.028, p = 0.12), ani miR-17 (HR = 0.78, p = 0.39) nie wykazują istotności statystycznej. Model ma słabszą zdolność predykcyjną (Concordance = 0.589), co może wynikać z mniejszej liczby pacjentów i ograniczonej liczby zdarzeń. Ekspresja miR-17 w tym podtypie kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
+
+W **podtypie HER2**, wiek pozostaje istotnym predyktorem przeżycia (HR = 1.079, p = 0.003), natomiast wpływ miR-17 jest nieistotny (HR = 0.76, p = 0.56). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.731). Wyniki sugerują, że w podtypie HER2 główną rolę w prognostyce odgrywają czynniki kliniczne, a miR-17 nie dostarcza dodatkowej informacji.
+
+W **podtypie Basal-like**, ani wiek (HR = 1.020, p = 0.30), ani miR-17 (HR = 1.18, p = 0.52) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia pacjentów pod względem ryzyka (Concordance = 0.564). Podobnie jak w przypadku miR-210, w tym podtypie czynniki molekularne lub kliniczne inne niż badany miR-17 mogą mieć kluczowe znaczenie dla prognostyki.
+
+
+
+
+## Model Sygnatury miRNA (LASSO Cox) – "Super-Biomarker"
+
+```{r}
+# ==============================================================================
+# ETAP 4 (EXPERT): MODEL SYGNATURY miRNA (LASSO COX)
+
+# ==============================================================================
+
+# 1. Instalacja pakietu glmnet (do LASSO)
+if (!require("glmnet", quietly = TRUE)) install.packages("glmnet")
+library(glmnet)
+library(survival)
+library(survminer)
+library(dplyr)
+
+# ------------------------------------------------------------------------------
+# KROK 1: Przygotowanie Danych
+# ------------------------------------------------------------------------------
+
+
+# Formatowanie czasu
+final_data$time_to_event <- as.numeric(final_data$time_to_event)
+final_data$event <- as.numeric(final_data$event)
+
+# Lista Twoich miRNA (Kandydaci do sygnatury)
+# Wrzucamy całą pulę 24 markerów - niech algorytm wybierze najlepsze!
+mirna_candidates <- c("hsa_mir_210","hsa_mir_17","hsa_mir_20a","hsa_mir_155","hsa_mir_203a")
+
+# Filtrujemy tylko dostępne kolumny
+valid_mirna <- mirna_candidates[mirna_candidates %in% colnames(final_data)]
+
+# Wybieramy dane do modelu (Tylko kompletne wiersze!)
+# glmnet nie lubi NA
+data_model <- final_data %>%
+  dplyr::select(time_to_event, event, all_of(valid_mirna)) %>%
+  filter(!is.na(time_to_event) & time_to_event > 0 & !is.na(event)) %>%
+  na.omit()
+
+cat("Liczba pacjentów do budowy sygnatury:", nrow(data_model), "\n")
+
+# ------------------------------------------------------------------------------
+# KROK 2: Przygotowanie Macierzy (Wymóg glmnet)
+# ------------------------------------------------------------------------------
+# X = Macierz predyktorów (miRNA)
+x <- as.matrix(data_model[, valid_mirna])
+
+# Y = Obiekt przeżycia (Czas + Status)
+y <- Surv(data_model$time_to_event, data_model$event)
+
+# ------------------------------------------------------------------------------
+# KROK 3: Uruchomienie LASSO (Cross-Validation)
+# ------------------------------------------------------------------------------
+set.seed(123) # Dla powtarzalności wyników
+
+cat("\n>>> Trenowanie modelu LASSO (szukanie optymalnego lambda)... \n")
+# alpha = 1 oznacza LASSO (0 to Ridge)
+cv_fit <- cv.glmnet(x, y, family = "cox", alpha = 1)
+
+# Wykres błędu (pokazuje jak zmienia się błąd wraz z liczbą zmiennych)
+plot(cv_fit)
+title("Wybór liczby markerów (LASSO Cross-Validation)", line = 3)
+
+# Najlepsza lambda (parametr kary)
+best_lambda <- cv_fit$lambda.min
+cat("Optymalna lambda:", best_lambda, "\n")
+
+# ------------------------------------------------------------------------------
+# KROK 4: Ekstrakcja Sygnatury ("Iza Score")
+# ------------------------------------------------------------------------------
+# Wyciągamy współczynniki dla optymalnej lambdy
+coefs <- coef(cv_fit, s = "lambda.min")
+active_index <- which(coefs != 0)
+active_coefficients <- coefs[active_index]
+active_names <- rownames(coefs)[active_index]
+
+# Tworzymy ładną tabelkę z wzorem
+signature_table <- data.frame(
+  miRNA = active_names,
+  Waga_Coef = round(active_coefficients, 4)
+)
+
+cat("\n>>> TWOJA SYGNATURA (Wybrane miRNA i ich wagi): <<<\n")
+print(signature_table)
+
+# Jeśli tabela jest pusta, spróbuj 'lambda.1se' (bardziej restrykcyjna) lub sprawdź dane.
+if(nrow(signature_table) == 0) warning("LASSO wyzerowało wszystkie zmienne! Spróbuj poluzować kryteria.")
+
+# ------------------------------------------------------------------------------
+# KROK 5: Obliczenie Risk Score dla każdego pacjenta
+# ------------------------------------------------------------------------------
+# Wzór: Score = Coef1 * miRNA1 + Coef2 * miRNA2 ...
+risk_scores <- predict(cv_fit, newx = x, s = "lambda.min", type = "link")
+data_model$RiskScore <- as.vector(risk_scores)
+
+# Podział na grupy RYZYKA (High vs Low Risk) wg mediany Score
+mediana_score <- median(data_model$RiskScore)
+data_model$RiskGroup <- ifelse(data_model$RiskScore > mediana_score, "High Risk", "Low Risk")
+
+cat("\nMediana Risk Score:", round(mediana_score, 3), "\n")
+summary(data_model$RiskScore)
+# ------------------------------------------------------------------------------
+# KROK 6: Walidacja Sygnatury (Kaplan-Meier)
+# ------------------------------------------------------------------------------
+fit_km <- survfit(Surv(time_to_event, event) ~ RiskGroup, data = data_model)
+
+p <- ggsurvplot(
+  fit_km,
+  data = data_model,
+  pval = TRUE,
+  risk.table = TRUE,
+  palette = c("red", "blue"), # Red=High Risk, Blue=Low Risk
+  title = "Skuteczność Sygnatury miRNA ",
+  xlab = "Czas (Dni)",
+  legend.labs = c("High Risk", "Low Risk"),
+  ggtheme = theme_minimal()
+)
+
+print(p)
+#ggsave("KM_Signature_LASSO.png", print(p), width = 8, height = 6)
+
+# ------------------------------------------------------------------------------
+# KROK 7: Ile razy lepsza jest sygnatura? (Cox)
+# ------------------------------------------------------------------------------
+cox_sig <- coxph(Surv(time_to_event, event) ~ RiskGroup, data = data_model)
+cat("\n--- Wynik Coxa dla Grupy Ryzyka ---\n")
+print(summary(cox_sig))
+
+```
+
+| miRNA       | Współczynnik (Coef) | HR (exp(Coef)) | 95% CI HR     |
+| ----------- | ------------------- | -------------- | ------------- |
+| hsa_mir_210 | -0.0584             | 0.943          | 0.890 – 0.998 |
+| hsa_mir_17  | 0.4410              | 1.555          | 1.002 – 2.416 |
+| hsa_mir_20a | -0.2353             | 0.791          | 0.602 – 1.038 |
+| hsa_mir_155 | -0.2179             | 0.804          | 0.613 – 1.056 |
+
+
+Analiza LASSO-Cox przeprowadzona w celu wyłonienia prognostycznej sygnatury miRNA pozwoliła zidentyfikować cztery miRNA o istotnym znaczeniu: **hsa_mir_210** (współczynnik = −0.0584), **hsa_mir_17** (0.4410), **hsa_mir_20a** (−0.2353) oraz **hsa_mir_155** (−0.2179). Wartości współczynników zostały użyte do obliczenia indywidualnego **Risk Score** dla każdego pacjenta. W badanej kohorcie (n = 782) Risk Score mieścił się w zakresie od −1.19 do 0.88, z medianą −0.115, co pozwoliło podzielić pacjentów na grupy **High Risk** i **Low Risk** względem mediany.
+
+Analiza przeżycia z użyciem modelu Cox wykazała istotną różnicę między grupami ryzyka: pacjenci w grupie Low Risk mieli znacząco niższe ryzyko zdarzenia w porównaniu do High Risk (**HR = 0.61, 95% CI: 0.41–0.92, p = 0.018**). Wynik ten sugeruje, że opracowana sygnatura miRNA jest niezależnym czynnikiem prognostycznym. C-statystyka modelu wyniosła 0.557, co wskazuje na umiarkowaną zdolność dyskryminacyjną sygnatury.
+
+Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_17**) jak i ujemnych (np. **hsa_mir_210, hsa_mir_20a, hsa_mir_155**) sugeruje, że sygnatura odzwierciedla złożoną regulację molekularną istotną dla przeżycia pacjentów. Sygnatura ta może stanowić podstawę do dalszych badań funkcjonalnych oraz potencjalnie pomóc w identyfikacji pacjentów, którzy mogliby korzystać z bardziej intensywnej terapii lub monitoringu.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TESTY SPRAWDZAJĄCE POPRAWNOSC DANYCH
+
+```{r}
+# Szybki test biologiczny
+# library(ggplot2)
+# 
+# # Test 1: Czy Luminal A ma wysoki estrogen?
+# ggplot(final_data, aes(x = brca_subtype_pam50, y = esr1, fill = brca_subtype_pam50)) +
+#   geom_boxplot() +
+#   labs(title = "TEST 1: Czy ESR1 (Gen) pasuje do podtypów?", subtitle = "Oczekiwanie: Luminal A/B wysoko, Basal nisko") +
+#   theme_minimal()
+# 
+# # Test 2: Czy HER2 ma wysoki HER2?
+# ggplot(final_data, aes(x = brca_subtype_pam50, y = erbb2, fill = brca_subtype_pam50)) +
+#   geom_boxplot() +
+#   labs(title = "TEST 2: Czy ERBB2 (Gen) pasuje do podtypów?", subtitle = "Oczekiwanie: HER2-enriched najwyżej") +
+#   theme_minimal()
+```
+
+
+```{r}
+# TEST 4: Czy stadium zaawansowania (Stage) działa zgodnie z medycyną?
+# library(survival)
+# library(survminer)
+# library(dplyr)
+# 
+# # 1. Przygotowanie kolejności stadiów (żeby na legendzie było po kolei)
+# # Zakładam, że w danych masz "Stage_I", "Stage_II" itd. lub "I", "II".
+# # Sprawdź unique(final_data$pathologic_stage) i dostosuj poziomy!
+# 
+# # Przykład dla formatu z Twojego pliku ("Stage_I", "Stage_II"...)
+# final_data$Stage_Factor <- factor(final_data$pathologic_stage, 
+#                                   levels = c("I", "II", "III"))
+# 
+# # Usuwamy "Unknown" do tego wykresu
+# data_stage <- final_data %>% filter(!is.na(Stage_Factor))
+# 
+# # 2. Wykres KM
+# fit_stage <- survfit(Surv(time_to_event, event) ~ Stage_Factor, data = data_stage)
+# 
+# ggsurvplot(fit_stage, data = data_stage,
+#            title = "TEST 4: Czy wyższe stadium = szybszy zgon?",
+#            pval = TRUE,
+#            risk.table = TRUE,
+#            palette = "jco", # Ładna paleta kolorów
+#            legend.title = "Stadium",
+#            xlab = "Czas (Dni)"
+# )
+```
+
+
+```{r}
+# TEST 5: Czy wiek zgadza się z biologią?
+# library(ggplot2)
+# 
+# ggplot(final_data, aes(x = brca_subtype_pam50, y = age_mean_years, fill = brca_subtype_pam50)) +
+#   geom_boxplot() +
+#   labs(title = "TEST 5: Rozkład wieku w podtypach", 
+#        subtitle = "Oczekiwanie: Basal-like powinien mieć niższą medianę wieku niż Luminal",
+#        y = "Wiek (Lata)", x = "Podtyp") +
+#   theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
 
