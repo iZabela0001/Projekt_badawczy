@@ -643,8 +643,6 @@ final_data[[pam50_col]] <- factor(final_data[[pam50_col]])
 
 # ETAP 2
 
-
-
 ## Etap2 mi-RNA
 
 ```{r markerymiRNA_etap2}
@@ -1379,14 +1377,11 @@ principal component analysis with illustrative applications to batch
 effects...* (PubMed: 38260566) *Assessment of batch effects in TCGA gene
 expression data* (Zhang et al., MD Anderson)
 
-
 ```{r}
 ####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 ```
 
-
 ## Etap 2 - RNA
-
 
 ```{r markeryRNA_etap2}
 
@@ -1442,7 +1437,6 @@ rna_markers_exist <- rna_markers[rna_markers %in% colnames(final_data)]
 
 # Macierz do heatmapy (RNA x pacjenci)
 
-
 ```{r macierzRNA_etap2}
 matric_rna_only_rna <- final_data[, rna_markers]
 ```
@@ -1492,53 +1486,95 @@ rna_heatmapa <- pheatmap(
 print(rna_heatmapa)
 ```
 
-**Analiza porównawcza profili ekspresji RNA: wizualizacja heatmapy a dane literaturowe**
+**Analiza porównawcza profili ekspresji RNA: wizualizacja heatmapy a
+dane literaturowe**
 
 ### 1. Podtyp Basal (Zielony pasek na górze heatmapy)
 
-* *Keratyny bazalne (*KRT5, KRT14, KRT17):**
-    * *Heatmapa:* Widać intensywny *czerwony blok* (wysoka ekspresja) w kolumnach odpowiadających podtypowi Basal, podczas gdy w innych podtypach są one niebieskie (niska ekspresja).
-    *Zgodność z artykułem :* Podtyp Basal charakteryzuje się wysoką ekspresją markerów bazalnych, w tym KRT5, KRT14 i KRT17, oraz niską ekspresją markerów luminalnych.
-* *Receptory hormonalne (*ESR1, PGR, AR, FOXA1):**
-    * *Heatmapa:* W sekcji Basal te geny są *ciemnoniebieskie*, co oznacza bardzo niską ekspresję lub jej brak.
-    *  *Zgodność z artykułem :* Heatmapa wyraźnie stwierdza, że ekspresja ESR1, PGR, AR oraz FOXA1 jest najniższa w podtypie Basal    .
-* *Proliferacja (*MKI67):**
-    * *Heatmapa:* Widać przewagę kolorów żółtych/pomarańczowych (wysoka/średnia ekspresja), co odróżnia ten podtyp od Luminal A.
-    *  *Zgodność z artykułem :* Potwierdza, że podtyp Basal wykazuje wysoką ekspresję genów cyklu komórkowego, w tym MKI67.
-* *EGFR:*
-    * *Heatmapa:* Gen egfr_rna wykazuje wyższą ekspresję (żółty/jasnoniebieski) w grupie Basal w porównaniu do głębokiego błękitu w grupach Luminalnych.
-    *  *Zgodność z artykułem :* Wskazuje na wysoką ekspresję EGFR w podtypie Basal (choć zaznacza, że jest ona jeszcze wyższa w nowym podtypie HER2-low, który tu jest ukryty w innych grupach).
+-   *Keratyny bazalne (*KRT5, KRT14, KRT17):\*\*
+    -   *Heatmapa:* Widać intensywny *czerwony blok* (wysoka ekspresja)
+        w kolumnach odpowiadających podtypowi Basal, podczas gdy w
+        innych podtypach są one niebieskie (niska ekspresja). *Zgodność
+        z artykułem :* Podtyp Basal charakteryzuje się wysoką ekspresją
+        markerów bazalnych, w tym KRT5, KRT14 i KRT17, oraz niską
+        ekspresją markerów luminalnych.
+-   *Receptory hormonalne (*ESR1, PGR, AR, FOXA1):\*\*
+    -   *Heatmapa:* W sekcji Basal te geny są *ciemnoniebieskie*, co
+        oznacza bardzo niską ekspresję lub jej brak.
+    -   *Zgodność z artykułem :* Heatmapa wyraźnie stwierdza, że
+        ekspresja ESR1, PGR, AR oraz FOXA1 jest najniższa w podtypie
+        Basal .
+-   *Proliferacja (*MKI67):\*\*
+    -   *Heatmapa:* Widać przewagę kolorów żółtych/pomarańczowych
+        (wysoka/średnia ekspresja), co odróżnia ten podtyp od Luminal A.
+    -   *Zgodność z artykułem :* Potwierdza, że podtyp Basal wykazuje
+        wysoką ekspresję genów cyklu komórkowego, w tym MKI67.
+-   *EGFR:*
+    -   *Heatmapa:* Gen egfr_rna wykazuje wyższą ekspresję
+        (żółty/jasnoniebieski) w grupie Basal w porównaniu do głębokiego
+        błękitu w grupach Luminalnych.
+    -   *Zgodność z artykułem :* Wskazuje na wysoką ekspresję EGFR w
+        podtypie Basal (choć zaznacza, że jest ona jeszcze wyższa w
+        nowym podtypie HER2-low, który tu jest ukryty w innych grupach).
 
 ### 2. Podtyp HER2 (Różowy pasek)
-Tutaj również widać silną korelację, zwłaszcza w przypadku genu definiującego tę grupę.
 
-* *ERBB2 (HER2):*
-    * *Heatmapa:* Można tutaj zauważyć bardzo wyraźny, *czerwony prostokąt* przy genie erbb2 tylko w tej grupie. Jest to najbardziej charakterystyczna cecha tej części wykresu.
-    *  *Zgodność z artykułem :* Podtyp HER2-high (odpowiednik PAM50 HER2-enriched) wykazuje najwyższą ekspresję ERBB2.
-* *Receptory hormonalne:*
-    * *Heatmapa:* Ekspresja esr1 i pgr jest tu przeważnie niska (niebieska), choć wyższa niż w Basal.
-    *  *Zgodność z artykułem :*Podtyp ten ma zazwyczaj niższą ekspresję receptorów hormonalnych niż podtypy Luminalne.
+Tutaj również widać silną korelację, zwłaszcza w przypadku genu
+definiującego tę grupę.
+
+-   *ERBB2 (HER2):*
+    -   *Heatmapa:* Można tutaj zauważyć bardzo wyraźny, *czerwony
+        prostokąt* przy genie erbb2 tylko w tej grupie. Jest to
+        najbardziej charakterystyczna cecha tej części wykresu.
+    -   *Zgodność z artykułem :* Podtyp HER2-high (odpowiednik PAM50
+        HER2-enriched) wykazuje najwyższą ekspresję ERBB2.
+-   *Receptory hormonalne:*
+    -   *Heatmapa:* Ekspresja esr1 i pgr jest tu przeważnie niska
+        (niebieska), choć wyższa niż w Basal.
+    -   *Zgodność z artykułem :*Podtyp ten ma zazwyczaj niższą ekspresję
+        receptorów hormonalnych niż podtypy Luminalne.
 
 ### 3. Różnicowanie Luminal A (Turkusowy) vs Luminal B (Fioletowy)
-To jest najbardziej subtelna, ale kluczowa część analizy, gdzie heatmapa świetnie ilustruje niuanse opisane w artykule.
 
-* *Receptory hormonalne i czynniki transkrypcyjne (*GATA3, FOXA1, ESR1):**
-    * *Heatmapa:* Obie grupy (LumA i LumB) mają *bardzo intensywny czerwony kolor* dla tych genów.
-    *  *Zgodność z artykułem :* Potwierdza to, opisując wysoką ekspresję GATA3, FOXA1 i ESR1 w obu podtypach luminalnych  .
-* *Kluczowa różnica: Proliferacja (*MKI67):**
-    * *Heatmapa:* Zwróć uwagę na rząd mki67. W grupie *LumA (Turkus)* jest on przeważnie *niebieski/jasnożółty* (niska ekspresja). W grupie *LumB (Fiolet)* staje się wyraźnie bardziej *żółty/pomarańczowy* (wyższa ekspresja).
-    * *Zgodność z artykułem :* Jest to zgodne z główną tezą artykułu, Wyższa ekspresja genów cyklu komórkowego w LumB jest cechą różnicującą.
-* *Receptor Progesteronowy (*PGR):**
-    * *Heatmapa:* W LumA (Turkus) pgr jest często *czerwony/pomarańczowy* (wysoki). W LumB (Fiolet) widać więcej *niebieskich/jasnych* prążków (niższa ekspresja).
-    *  *Zgodność z artykułem :* "PGR expression was higher in subtype LumA and showed a bimodal distribution in subtype LumB" (Ekspresja PGR była wyższa w podtypie LumA).
+To jest najbardziej subtelna, ale kluczowa część analizy, gdzie heatmapa
+świetnie ilustruje niuanse opisane w artykule.
 
-* *BCL2 (*bcl2_rna):**
-    * *Heatmapa:* Wysoka ekspresja (czerwony) w LumA i LumB, niska w Basal i HER2.
-    * *Zgodność z artykułem:* Zgodnie z artykułem  wymienia BCL2 na liście genów różnicujących, typowo kojarzonych z fenotypem luminalnym i lepszym rokowaniem, co widać na heatmapie.
-    
-* *AR (Receptor Androgenowy):*
-    * *Heatmapa:* Widać nadekspresję w grupach Luminalnych (współwystępowanie z ER), ale też pewną aktywność w HER2. W Basal jest niebieski (brak).
-    *  *Zgodność z artykułem :* Potwierdza, że AR jest współeksprymowany z ER w rakach HR+. Co ważne, Zgodność z artykułem  sugeruje, że AR jest wysoki w nowym podtypie HER2-low, którego tu wprost nie widzimy, ale jego brak w typowym Basal na heatmapie jest zgodny z danymi.
+-   *Receptory hormonalne i czynniki transkrypcyjne (*GATA3, FOXA1,
+    ESR1):\*\*
+    -   *Heatmapa:* Obie grupy (LumA i LumB) mają *bardzo intensywny
+        czerwony kolor* dla tych genów.
+    -   *Zgodność z artykułem :* Potwierdza to, opisując wysoką
+        ekspresję GATA3, FOXA1 i ESR1 w obu podtypach luminalnych .
+-   *Kluczowa różnica: Proliferacja (*MKI67):\*\*
+    -   *Heatmapa:* Zwróć uwagę na rząd mki67. W grupie *LumA (Turkus)*
+        jest on przeważnie *niebieski/jasnożółty* (niska ekspresja). W
+        grupie *LumB (Fiolet)* staje się wyraźnie bardziej
+        *żółty/pomarańczowy* (wyższa ekspresja).
+    -   *Zgodność z artykułem :* Jest to zgodne z główną tezą artykułu,
+        Wyższa ekspresja genów cyklu komórkowego w LumB jest cechą
+        różnicującą.
+-   *Receptor Progesteronowy (*PGR):\*\*
+    -   *Heatmapa:* W LumA (Turkus) pgr jest często
+        *czerwony/pomarańczowy* (wysoki). W LumB (Fiolet) widać więcej
+        *niebieskich/jasnych* prążków (niższa ekspresja).
+    -   *Zgodność z artykułem :* "PGR expression was higher in subtype
+        LumA and showed a bimodal distribution in subtype LumB"
+        (Ekspresja PGR była wyższa w podtypie LumA).
+-   *BCL2 (*bcl2_rna):\*\*
+    -   *Heatmapa:* Wysoka ekspresja (czerwony) w LumA i LumB, niska w
+        Basal i HER2.
+    -   *Zgodność z artykułem:* Zgodnie z artykułem wymienia BCL2 na
+        liście genów różnicujących, typowo kojarzonych z fenotypem
+        luminalnym i lepszym rokowaniem, co widać na heatmapie.
+-   *AR (Receptor Androgenowy):*
+    -   *Heatmapa:* Widać nadekspresję w grupach Luminalnych
+        (współwystępowanie z ER), ale też pewną aktywność w HER2. W
+        Basal jest niebieski (brak).
+    -   *Zgodność z artykułem :* Potwierdza, że AR jest
+        współeksprymowany z ER w rakach HR+. Co ważne, Zgodność z
+        artykułem sugeruje, że AR jest wysoki w nowym podtypie HER2-low,
+        którego tu wprost nie widzimy, ale jego brak w typowym Basal na
+        heatmapie jest zgodny z danymi.
 
 ### Podsumowanie
 
@@ -1549,8 +1585,9 @@ To jest najbardziej subtelna, ale kluczowa część analizy, gdzie heatmapa świ
 
 **Literatura:**
 
-*The Breast Cancer Classifier refines molecular breast cancer classification to delineate the HER2-low subtype*. Dostępne na: https://www.nature.com/articles/s41523-025-00723-0
-
+*The Breast Cancer Classifier refines molecular breast cancer
+classification to delineate the HER2-low subtype*. Dostępne na:
+<https://www.nature.com/articles/s41523-025-00723-0>
 
 ```{r}
 pca_result_RNA <- prcomp(matric_rna_only_rna, center = TRUE, scale. = FALSE)
@@ -1594,30 +1631,45 @@ plot_batch_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = Batch)
 print(plot_batch_rna)
 ```
 
-**Weryfikacja biologiczna klasyfikacji PAM50 na podstawie analizy PCA RNA**
+**Weryfikacja biologiczna klasyfikacji PAM50 na podstawie analizy PCA
+RNA**
 
-Dane RNA wykazują silną zgodność biologiczną. Próbki nie są rozmieszczone losowo — tworzą wyraźne grupy zgodne z podtypami raka piersi według klasyfikacji PAM50.
+Dane RNA wykazują silną zgodność biologiczną. Próbki nie są
+rozmieszczone losowo — tworzą wyraźne grupy zgodne z podtypami raka
+piersi według klasyfikacji PAM50.
 
 **1.Odseparowany podtyp Basal-like**:
 
-To najbardziej wyrazista cecha wykresu PCA. Próbki Basal tworzą zwarty, odrębny klaster w dolnej części wykresu. Jest to zgodne z wiedzą biologiczną — raki bazalne są molekularnie najbardziej odmienne od pozostałych podtypów. Ich separacja potwierdza trafność klasyfikacji.
+To najbardziej wyrazista cecha wykresu PCA. Próbki Basal tworzą zwarty,
+odrębny klaster w dolnej części wykresu. Jest to zgodne z wiedzą
+biologiczną — raki bazalne są molekularnie najbardziej odmienne od
+pozostałych podtypów. Ich separacja potwierdza trafność klasyfikacji.
 
 **2.Blok Luminalny A i B**:
 
-Próbki Luminal A i Luminal B grupują się razem w górnej części wykresu. To poprawne — oba podtypy wywodzą się z komórek luminalnych, są ER-dodatnie i genetycznie podobne, co skutkuje ich bliskim położeniem w PCA.
+Próbki Luminal A i Luminal B grupują się razem w górnej części wykresu.
+To poprawne — oba podtypy wywodzą się z komórek luminalnych, są
+ER-dodatnie i genetycznie podobne, co skutkuje ich bliskim położeniem w
+PCA.
 
 **3.HER2**:
 
-Próbki HER2 są bardziej rozproszone i zajmują strefę pośrednią między Luminalnymi a Basal. Taki rozkład jest typowy — podtyp HER2-enriched często wykazuje cechy przejściowe i większą heterogeniczność.
+Próbki HER2 są bardziej rozproszone i zajmują strefę pośrednią między
+Luminalnymi a Basal. Taki rozkład jest typowy — podtyp HER2-enriched
+często wykazuje cechy przejściowe i większą heterogeniczność.
 
-**KONTROLA BATCH EFFECT:**
-Wykres PCA wg ośrodków badawczych (kolory centrów) nie wykazuje żadnych niepokojących wzorców. Próbki są równomiernie rozproszone — nie tworzą odseparowanych klastrów zależnych od miejsca pozyskania materiału.
+**KONTROLA BATCH EFFECT:** Wykres PCA wg ośrodków badawczych (kolory
+centrów) nie wykazuje żadnych niepokojących wzorców. Próbki są
+równomiernie rozproszone — nie tworzą odseparowanych klastrów zależnych
+od miejsca pozyskania materiału.
 
 **PODSUMOWANIE:**
 
-Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w danych RNA. Próbki grupują się zgodnie z biologią podtypów PAM50, a nie według ośrodków badawczych. Dane zostały uznane za technicznie poprawne i zakwalifikowane do dalszej analizy różnicowej bez konieczności korekcji algorytmem ComBat.
-
-
+Analiza PCA potwierdza brak istotnego efektu partii (Batch Effect) w
+danych RNA. Próbki grupują się zgodnie z biologią podtypów PAM50, a nie
+według ośrodków badawczych. Dane zostały uznane za technicznie poprawne
+i zakwalifikowane do dalszej analizy różnicowej bez konieczności
+korekcji algorytmem ComBat.
 
 # ETAP 3
 
@@ -1685,7 +1737,6 @@ colnames(design) <- c(levels(group_list_rna), "Age")
 
 ```
 
-
 ```{r}
 
 # Dopasowanie modelu limma
@@ -1744,42 +1795,115 @@ generate_volcano_rna(fit_rna, "LumB_vs_LumA",  "RNA: LumB vs LumA")
 
 ## Basal vs LumA
 
-Analiza różnicowej ekspresji RNA pomiędzy podtypami **Basal-like** i **Luminal A** ujawnia głęboką molekularną dywergencję, odzwierciedlającą fundamentalne różnice w biologii nowotworu. Wykres wulkaniczny dla kontrastu **Basal_vs_LumA** wskazuje na silną nadekspresję genów związanych z proliferacją, deregulacją cyklu komórkowego oraz szlakami EMT w podtypie **Basal-like**.
+Analiza różnicowej ekspresji RNA pomiędzy podtypami **Basal-like** i
+**Luminal A** ujawnia głęboką molekularną dywergencję, odzwierciedlającą
+fundamentalne różnice w biologii nowotworu. Wykres wulkaniczny dla
+kontrastu **Basal_vs_LumA** wskazuje na silną nadekspresję genów
+związanych z proliferacją, deregulacją cyklu komórkowego oraz szlakami
+EMT w podtypie **Basal-like**.
 
-W strefie wysokiej istotności statystycznej `(–log10 FDR > 1.3, log2FC > 0.5)` znajdują się geny takie jak **myc**, **mki67**, **snai1**, **egfr_rna**, **cd24**, **brca2**. Ich funkcje obejmują kontrolę mitozy, replikacji DNA, segregacji chromosomów oraz przejście przez fazę G2/M, co jednoznacznie wskazuje na intensyfikację proliferacji i niestabilność genomową.
+W strefie wysokiej istotności statystycznej
+`(–log10 FDR > 1.3, log2FC > 0.5)` znajdują się geny takie jak **myc**,
+**mki67**, **snai1**, **egfr_rna**, **cd24**, **brca2**. Ich funkcje
+obejmują kontrolę mitozy, replikacji DNA, segregacji chromosomów oraz
+przejście przez fazę G2/M, co jednoznacznie wskazuje na intensyfikację
+proliferacji i niestabilność genomową.
 
-Z kolei po stronie genów obniżonych w Basal-like `(log2FC < –0.5)` widoczne są klasyczne markery luminalne i hormonozależne: **foxa1**, **esr1**, **gata3**, **ar**, **pgr**, **bcl2_rna**, **krt18**, **krt19** czy **muc1**. Ich redukcja potwierdza utratę fenotypu zróżnicowanego nabłonkowo oraz przełączenie na szlaki wzrostowe niezależne od receptorów hormonalnych.
+Z kolei po stronie genów obniżonych w Basal-like `(log2FC < –0.5)`
+widoczne są klasyczne markery luminalne i hormonozależne: **foxa1**,
+**esr1**, **gata3**, **ar**, **pgr**, **bcl2_rna**, **krt18**, **krt19**
+czy **muc1**. Ich redukcja potwierdza utratę fenotypu zróżnicowanego
+nabłonkowo oraz przełączenie na szlaki wzrostowe niezależne od
+receptorów hormonalnych.
 
-Zestawienie tych dwóch profili molekularnych ukazuje **Basal-like** jako podtyp o wysokim potencjale proliferacyjnym, inwazyjnym i opornym na klasyczne terapie hormonalne, w przeciwieństwie do  **Luminal A**, który zachowuje cechy różnicowania i homeostazy.
+Zestawienie tych dwóch profili molekularnych ukazuje **Basal-like** jako
+podtyp o wysokim potencjale proliferacyjnym, inwazyjnym i opornym na
+klasyczne terapie hormonalne, w przeciwieństwie do **Luminal A**, który
+zachowuje cechy różnicowania i homeostazy.
 
 ## HER2 vs LumA
 
-Różnicowa analiza ekspresji RNA pomiędzy podtypami **HER2** i **Luminal A** ujawnia istotne zmiany w profilu transkrypcyjnym, które odzwierciedlają odmienne mechanizmy regulacji proliferacji, różnicowania oraz odpowiedzi terapeutycznej. Wykres wulkaniczny dla kontrastu **HER2** vs **LumA** ukazuje wyraźną dystrybucję genów o istotnie zmienionej ekspresji — z jednej strony geny nadekspresjonowane w **HER2** `(log2FC > 0.5, FDR < 0.05)`, z drugiej zaś geny obniżone względem **Luminal** `(log2FC < –0.5)`. Taka separacja wskazuje na molekularną odrębność podtypów i może mieć bezpośrednie przełożenie na ich fenotyp kliniczny oraz podatność na leczenie.
+Różnicowa analiza ekspresji RNA pomiędzy podtypami **HER2** i **Luminal
+A** ujawnia istotne zmiany w profilu transkrypcyjnym, które
+odzwierciedlają odmienne mechanizmy regulacji proliferacji, różnicowania
+oraz odpowiedzi terapeutycznej. Wykres wulkaniczny dla kontrastu
+**HER2** vs **LumA** ukazuje wyraźną dystrybucję genów o istotnie
+zmienionej ekspresji — z jednej strony geny nadekspresjonowane w
+**HER2** `(log2FC > 0.5, FDR < 0.05)`, z drugiej zaś geny obniżone
+względem **Luminal** `(log2FC < –0.5)`. Taka separacja wskazuje na
+molekularną odrębność podtypów i może mieć bezpośrednie przełożenie na
+ich fenotyp kliniczny oraz podatność na leczenie.
 
-Podtyp **HER2** wykazuje istotną nadekspresję genów związanych z sygnalizacją receptorową i proliferacją, w tym **erbb2**, **epcam**, **cd24** oraz **brca1** i **brca2**. Nadekspresja **erbb2** potwierdza aktywację szlaków wzrostowych niezależnych od hormonów, takich jak PI3K–AKT i MAPK, typowych dla fenotypu HER2+. Obecność **epcam** i **cd24** wskazuje na zachowanie cech nabłonkowych i progenitorowych, co może sprzyjać inwazyjności i plastyczności komórek nowotworowych. Z kolei podwyższona ekspresja **brca1** i **brca2** może świadczyć o aktywacji mechanizmów naprawy DNA, choć ich funkcjonalność może być zaburzona w kontekście stresu genomowego.
+Podtyp **HER2** wykazuje istotną nadekspresję genów związanych z
+sygnalizacją receptorową i proliferacją, w tym **erbb2**, **epcam**,
+**cd24** oraz **brca1** i **brca2**. Nadekspresja **erbb2** potwierdza
+aktywację szlaków wzrostowych niezależnych od hormonów, takich jak
+PI3K–AKT i MAPK, typowych dla fenotypu HER2+. Obecność **epcam** i
+**cd24** wskazuje na zachowanie cech nabłonkowych i progenitorowych, co
+może sprzyjać inwazyjności i plastyczności komórek nowotworowych. Z
+kolei podwyższona ekspresja **brca1** i **brca2** może świadczyć o
+aktywacji mechanizmów naprawy DNA, choć ich funkcjonalność może być
+zaburzona w kontekście stresu genomowego.
 
-W przeciwieństwie do tego, podtyp **Luminal A** charakteryzuje się wyższą ekspresją genów związanych z hormonozależnością i różnicowaniem, takich jak **esr1**, **pgr**, **bcl2_rna**, **gata3**, **tgfbr2**, **egfr_rna** oraz **cd44**. Obniżenie ich poziomu w **HER2** może wskazywać na utratę kontroli hormonalnej oraz przełączenie na alternatywne szlaki wzrostowe. Szczególnie istotna jest redukcja **esr1**, która koreluje z ograniczoną skutecznością klasycznej hormonoterapii w tym podtypie.
+W przeciwieństwie do tego, podtyp **Luminal A** charakteryzuje się
+wyższą ekspresją genów związanych z hormonozależnością i różnicowaniem,
+takich jak **esr1**, **pgr**, **bcl2_rna**, **gata3**, **tgfbr2**,
+**egfr_rna** oraz **cd44**. Obniżenie ich poziomu w **HER2** może
+wskazywać na utratę kontroli hormonalnej oraz przełączenie na
+alternatywne szlaki wzrostowe. Szczególnie istotna jest redukcja
+**esr1**, która koreluje z ograniczoną skutecznością klasycznej
+hormonoterapii w tym podtypie.
 
-Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność **HER2** względem **Luminal A**. Geny takie jak **erbb2**, **cd24**, **epcam**, **esr1** i **pgr** mogą stanowić potencjalne biomarkery prognostyczne lub terapeutyczne, szczególnie w kontekście klasyfikacji molekularnej, stratyfikacji pacjentek oraz personalizacji leczenia.
+Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność
+**HER2** względem **Luminal A**. Geny takie jak **erbb2**, **cd24**,
+**epcam**, **esr1** i **pgr** mogą stanowić potencjalne biomarkery
+prognostyczne lub terapeutyczne, szczególnie w kontekście klasyfikacji
+molekularnej, stratyfikacji pacjentek oraz personalizacji leczenia.
 
 ## LumB vs LumA
 
-Różnicowa analiza ekspresji RNA pomiędzy podtypami **Luminal B** i **Luminal A** ujawnia wyraźne przesunięcia w profilu molekularnym, wskazujące na odmienne mechanizmy biologiczne i potencjalne różnice kliniczne. Wykres wulkaniczny dla kontrastu **LumB** vs **LumA** pokazuje istotne zmiany w ekspresji genów, z wyraźną separacją pomiędzy genami nadekspresjonowanymi w LumB `(log2FC > 0.5, FDR < 0.05)` a tymi obniżonymi względem LumA `(log2FC < –0.5)`.
+Różnicowa analiza ekspresji RNA pomiędzy podtypami **Luminal B** i
+**Luminal A** ujawnia wyraźne przesunięcia w profilu molekularnym,
+wskazujące na odmienne mechanizmy biologiczne i potencjalne różnice
+kliniczne. Wykres wulkaniczny dla kontrastu **LumB** vs **LumA**
+pokazuje istotne zmiany w ekspresji genów, z wyraźną separacją pomiędzy
+genami nadekspresjonowanymi w LumB `(log2FC > 0.5, FDR < 0.05)` a tymi
+obniżonymi względem LumA `(log2FC < –0.5)`.
 
-Podtyp **Luminal B** wykazuje istotną nadekspresję genów związanych z proliferacją i naprawą DNA, w tym **mk67**, **brca1**, **brca2** oraz **cdh1**. 
-Wzrost poziomu **mki67** wskazuje na intensyfikację cyklu komórkowego, natomiast obecność **brca1/2** może świadczyć o aktywacji mechanizmów homologicznej rekombinacji. **Cdh1**, kodujący E-kadherynę, może pełnić rolę w zachowaniu adhezji komórkowej i struktury nabłonkowej, co w kontekście **LumB** może mieć znaczenie dla inwazyjności guza.
+Podtyp **Luminal B** wykazuje istotną nadekspresję genów związanych z
+proliferacją i naprawą DNA, w tym **mk67**, **brca1**, **brca2** oraz
+**cdh1**. Wzrost poziomu **mki67** wskazuje na intensyfikację cyklu
+komórkowego, natomiast obecność **brca1/2** może świadczyć o aktywacji
+mechanizmów homologicznej rekombinacji. **Cdh1**, kodujący E-kadherynę,
+może pełnić rolę w zachowaniu adhezji komórkowej i struktury
+nabłonkowej, co w kontekście **LumB** może mieć znaczenie dla
+inwazyjności guza.
 
-Z kolei **Luminal A** charakteryzuje się wyższą ekspresją genów związanych z różnicowaniem i stabilnością fenotypu luminalnego, takich jak **krt14**, **krt17**, **muc1**, **tgfbr2**, **egfr_rna**, **cd44** oraz **pgr**. Obniżenie ich poziomu w **LumB** może świadczyć o częściowej utracie cech hormonozależnych oraz przełączeniu na alternatywne szlaki wzrostowe, co koreluje z bardziej agresywnym przebiegiem klinicznym.
+Z kolei **Luminal A** charakteryzuje się wyższą ekspresją genów
+związanych z różnicowaniem i stabilnością fenotypu luminalnego, takich
+jak **krt14**, **krt17**, **muc1**, **tgfbr2**, **egfr_rna**, **cd44**
+oraz **pgr**. Obniżenie ich poziomu w **LumB** może świadczyć o
+częściowej utracie cech hormonozależnych oraz przełączeniu na
+alternatywne szlaki wzrostowe, co koreluje z bardziej agresywnym
+przebiegiem klinicznym.
 
-Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność **LumB** względem **LumA**. Geny takie jak **mki67**, **brca1**, **brca2**, **cdh1**, **krt14** czy **tgfbr2** mogą stanowić potencjalne biomarkery prognostyczne lub terapeutyczne, szczególnie w kontekście klasyfikacji molekularnej i personalizacji leczenia.
+Obserwowane zmiany w ekspresji RNA potwierdzają molekularną odrębność
+**LumB** względem **LumA**. Geny takie jak **mki67**, **brca1**,
+**brca2**, **cdh1**, **krt14** czy **tgfbr2** mogą stanowić potencjalne
+biomarkery prognostyczne lub terapeutyczne, szczególnie w kontekście
+klasyfikacji molekularnej i personalizacji leczenia.
 
-##Bibliografia
-1. Perou CM, Sørlie T, Eisen MB, et al. *Molecular portraits of human breast tumours*. Nature. 2000; 406(6797):747–52.
-2. Cancer Genome Atlas Network. *Comprehensive molecular portraits of human breast tumours*. Nature. 2012; 490(7418):61–70.
-3. Prat A, Parker JS, Fan C, et al. *Concordance among gene-expression-based predictors for breast cancer*. N Engl J Med. 2010 ;363(2):131–40.
-4. Zhao SG, Chen WS, Das R, et al. *Clinical and genomic implications of luminal and basal subtypes across carcinomas*. Clin Cancer Res. 2019; 25(8):2450–7.
-5. Netanely D, Avraham A, Ben-Baruch A, et al. *Expression and methylation patterns partition luminal-A breast tumors into distinct prognostic subgroups*. Breast Cancer Res. 2016; 18:74.
-
+##Bibliografia 1. Perou CM, Sørlie T, Eisen MB, et al. *Molecular
+portraits of human breast tumours*. Nature. 2000; 406(6797):747–52. 2.
+Cancer Genome Atlas Network. *Comprehensive molecular portraits of human
+breast tumours*. Nature. 2012; 490(7418):61–70. 3. Prat A, Parker JS,
+Fan C, et al. *Concordance among gene-expression-based predictors for
+breast cancer*. N Engl J Med. 2010 ;363(2):131–40. 4. Zhao SG, Chen WS,
+Das R, et al. *Clinical and genomic implications of luminal and basal
+subtypes across carcinomas*. Clin Cancer Res. 2019; 25(8):2450–7. 5.
+Netanely D, Avraham A, Ben-Baruch A, et al. *Expression and methylation
+patterns partition luminal-A breast tumors into distinct prognostic
+subgroups*. Breast Cancer Res. 2016; 18:74.
 
 ## BIAŁKA
 
@@ -2115,9 +2239,6 @@ analizy przeżycia, sugerując, że to właśnie te białka (zwłaszcza markery
 proliferacji i receptory) będą kluczowymi determinantami czasu przeżycia
 pacjentek.
 
-
-
-
 ## MIRNA
 
 ```{r}
@@ -2163,7 +2284,6 @@ design <- model.matrix(~0 + group_list + age_mean_years, data = final_data)
 colnames(design) <- c(levels(group_list), "Age") 
 ```
 
-
 ```{r}
 # ------------------------------------------------------------------------------
 # KROK 3: Dopasowanie modelu limma
@@ -2182,7 +2302,6 @@ contrast_matrix <- makeContrasts(
 fit2 <- contrasts.fit(fit, contrast_matrix)
 fit2 <- eBayes(fit2)
 ```
-
 
 ```{r}
 # ------------------------------------------------------------------------------
@@ -2214,7 +2333,6 @@ generate_volcano <- function(fit_obj, contrast_name, title_text) {
 }
 ```
 
-
 ```{r}
 # ------------------------------------------------------------------------------
 # KROK 6: Uruchomienie analizy dla każdego kontrastu
@@ -2229,30 +2347,75 @@ generate_volcano(fit2, "LumB_vs_LumA", "Proliferacja (LumB vs LumA)")
 
 ### LumB vs LumA
 
-Analiza różnicowa potwierdza odmienną biologię obu podtypów, wskazując na bardziej agresywny profil molekularny Luminal B. W podtypie tym zidentyfikowano istotną nadekspresję **miR-210** oraz **miR-17** (FDR < 0.05). Obecność **miR-210** wiąże się z odpowiedzią na hipoksję i adaptacją stresową, natomiast **miR-17** (członek klastra miR-17~92) promuje proliferację komórkową. Z kolei Luminal A charakteryzuje się wyższym poziomem miRNA o potencjale supresorowym, w tym **miR-100**, **miR-205** i **miR-181d**. Ich obecność koreluje z bardziej zróżnicowanym fenotypem, hamowaniem ścieżek wzrostowych oraz stabilnością genomową, co odzwierciedla łagodniejszy przebieg kliniczny LumA.
+Analiza różnicowa potwierdza odmienną biologię obu podtypów, wskazując
+na bardziej agresywny profil molekularny Luminal B. W podtypie tym
+zidentyfikowano istotną nadekspresję **miR-210** oraz **miR-17** (FDR \<
+0.05). Obecność **miR-210** wiąże się z odpowiedzią na hipoksję i
+adaptacją stresową, natomiast **miR-17** (członek klastra miR-17\~92)
+promuje proliferację komórkową. Z kolei Luminal A charakteryzuje się
+wyższym poziomem miRNA o potencjale supresorowym, w tym **miR-100**,
+**miR-205** i **miR-181d**. Ich obecność koreluje z bardziej
+zróżnicowanym fenotypem, hamowaniem ścieżek wzrostowych oraz
+stabilnością genomową, co odzwierciedla łagodniejszy przebieg kliniczny
+LumA.
 
 ### HER2 vs LumA
 
-Porównanie profilu ekspresji ujawniło przewagę onkomiR-ów w podtypie HER2, co jest zgodne z jego agresywną charakterystyką. Najsilniejszy sygnał nadekspresji w HER2 wykazują **miR-210** (kluczowy marker hipoksji) oraz **miR-155** i **miR-203a**, regulujące odpowiednio odpowiedź immunologiczną i procesy inwazyjne (EMT). W opozycji do tego, podtyp LumA wykazuje zachowaną, wyższą ekspresję uznanych supresorów nowotworowych, takich jak **let-7b**, **miR-100** oraz **miR-181d**. Obniżenie poziomu rodziny let-7 w guzach HER2 sugeruje utratę kontroli nad proliferacją, podczas gdy profil LumA wskazuje na utrzymanie mechanizmów homeostatycznych.
+Porównanie profilu ekspresji ujawniło przewagę onkomiR-ów w podtypie
+HER2, co jest zgodne z jego agresywną charakterystyką. Najsilniejszy
+sygnał nadekspresji w HER2 wykazują **miR-210** (kluczowy marker
+hipoksji) oraz **miR-155** i **miR-203a**, regulujące odpowiednio
+odpowiedź immunologiczną i procesy inwazyjne (EMT). W opozycji do tego,
+podtyp LumA wykazuje zachowaną, wyższą ekspresję uznanych supresorów
+nowotworowych, takich jak **let-7b**, **miR-100** oraz **miR-181d**.
+Obniżenie poziomu rodziny let-7 w guzach HER2 sugeruje utratę kontroli
+nad proliferacją, podczas gdy profil LumA wskazuje na utrzymanie
+mechanizmów homeostatycznych.
 
 ### Bazalny vs LumA
 
-Analiza wykazała wysoce odrębny i agresywny profil molekularny podtypu Basal/TNBC. Dominującą cechą jest silna nadekspresja onkomiR-ów z rodziny **miR-17~92** (w szczególności **hsa-miR-17** i **hsa-miR-20a**), powiązanych ze szlakami MYC-zależnymi i szybką proliferacją. Istotnie podwyższone są również poziomy **hsa-miR-210** (mediator hipoksji) oraz immunomodulującego **hsa-miR-155**. Z kolei fenotyp bazalny charakteryzuje się znaczącym obniżeniem ekspresji **hsa-miR-10a** (log2FC < –1) oraz **miR-206**. Redukcja tych cząsteczek, pełniących funkcje regulatorowe i różnicujące, potwierdza deregulację procesów dojrzewania komórkowego charakterystyczną dla tego podtypu.
+Analiza wykazała wysoce odrębny i agresywny profil molekularny podtypu
+Basal/TNBC. Dominującą cechą jest silna nadekspresja onkomiR-ów z
+rodziny **miR-17\~92** (w szczególności **hsa-miR-17** i
+**hsa-miR-20a**), powiązanych ze szlakami MYC-zależnymi i szybką
+proliferacją. Istotnie podwyższone są również poziomy **hsa-miR-210**
+(mediator hipoksji) oraz immunomodulującego **hsa-miR-155**. Z kolei
+fenotyp bazalny charakteryzuje się znaczącym obniżeniem ekspresji
+**hsa-miR-10a** (log2FC \< –1) oraz **miR-206**. Redukcja tych
+cząsteczek, pełniących funkcje regulatorowe i różnicujące, potwierdza
+deregulację procesów dojrzewania komórkowego charakterystyczną dla tego
+podtypu.
 
 #### Bibliografia
 
-1. Blenkiron C, Goldstein LD, Thorne NP, et al. MicroRNA expression profiling of human breast cancer identifies new markers of tumor subtype. *Genome Biol*. 2007;8(10):R214. doi:10.1186/gb-2007-8-10-r214
-2. Iorio MV, Ferracin M, Liu CG, et al. MicroRNA gene expression deregulation in human breast cancer. *Cancer Res*. 2005;65(16):7065-7070. doi:10.1158/0008-5472.CAN-05-1783
-3. Camps C, Buffa FM, Colella S, et al. hsa-miR-210 is induced by hypoxia and is an independent prognostic factor in breast cancer. *Clin Cancer Res*. 2008;14(5):1340-1348. doi:10.1158/1078-0432.CCR-07-1755
-4. Volinia S, Calin GA, Liu CG, et al. A microRNA expression signature of human solid tumors defines cancer gene targets. *Proc Natl Acad Sci U S A*. 2006;103(7):2257-2261. doi:10.1073/pnas.0510565103
-5. Mattiske S, Suetani RJ, Neilsen PM, Callen DF. The oncogenic role of miR-155 in breast cancer. *Cancer Epidemiol Biomarkers Prev*. 2012;21(8):1236-1243. doi:10.1158/1055-9965.EPI-12-0173
-6. Petrelli A, Perra A, Schernhuber K, et al. miRNA-100 inhibits human breast cancer cell proliferation, invasion and migration/metastasis. *Oncotarget*. 2012;3(3):317. doi:10.18632/oncotarget.473
+1.  Blenkiron C, Goldstein LD, Thorne NP, et al. MicroRNA expression
+    profiling of human breast cancer identifies new markers of tumor
+    subtype. *Genome Biol*. 2007;8(10):R214.
+    <doi:10.1186/gb-2007-8-10-r214>
+2.  Iorio MV, Ferracin M, Liu CG, et al. MicroRNA gene expression
+    deregulation in human breast cancer. *Cancer Res*.
+    2005;65(16):7065-7070. <doi:10.1158/0008-5472.CAN-05-1783>
+3.  Camps C, Buffa FM, Colella S, et al. hsa-miR-210 is induced by
+    hypoxia and is an independent prognostic factor in breast cancer.
+    *Clin Cancer Res*. 2008;14(5):1340-1348.
+    <doi:10.1158/1078-0432.CCR-07-1755>
+4.  Volinia S, Calin GA, Liu CG, et al. A microRNA expression signature
+    of human solid tumors defines cancer gene targets. *Proc Natl Acad
+    Sci U S A*. 2006;103(7):2257-2261. <doi:10.1073/pnas.0510565103>
+5.  Mattiske S, Suetani RJ, Neilsen PM, Callen DF. The oncogenic role of
+    miR-155 in breast cancer. *Cancer Epidemiol Biomarkers Prev*.
+    2012;21(8):1236-1243. <doi:10.1158/1055-9965.EPI-12-0173>
+6.  Petrelli A, Perra A, Schernhuber K, et al. miRNA-100 inhibits human
+    breast cancer cell proliferation, invasion and migration/metastasis.
+    *Oncotarget*. 2012;3(3):317. <doi:10.18632/oncotarget.473>
 
-* **Podział na podtypy (LumA vs LumB vs Basal):** Blenkiron et al. (2007).
-* **miR-210 (Hipoksja/Agresywność):** Camps et al. (2008) lub Blenkiron et al. (2007).
-* **miR-17~92 (Proliferacja/Basal):** Volinia et al. (2006).
-* **miR-155 (HER2/Immunologia):** Mattiske et al. (2012).
-* **miR-100 (Supresor w LumA):** Petrelli et al. (2012).
+-   **Podział na podtypy (LumA vs LumB vs Basal):** Blenkiron et al.
+    (2007).
+-   **miR-210 (Hipoksja/Agresywność):** Camps et al. (2008) lub
+    Blenkiron et al. (2007).
+-   **miR-17\~92 (Proliferacja/Basal):** Volinia et al. (2006).
+-   **miR-155 (HER2/Immunologia):** Mattiske et al. (2012).
+-   **miR-100 (Supresor w LumA):** Petrelli et al. (2012).
 
 ## INTEGRACJA
 
@@ -2385,169 +2548,263 @@ lumb_regulatory <- read.csv("Integracja_Regulatory_LumB_vs_LumA.csv")
 print(lumb_zgodnosc)
 ```
 
-
 ## BASAL vs LUM A
 
 ## **1. Integracyjna analiza ekspresji wykazuje głęboką supresję programu luminalnego w podtypie Basal-like**
 
-Analiza różnicowej ekspresji (RNA + proteom) wykazała masywną i spójną supresję kluczowych regulatorów programu luminalnego, w tym **FOXA1**, **ESR1** oraz **GATA3**. Obniżenie ekspresji tych czynników transkrypcyjnych było konsekwentne zarówno na poziomie transkryptów (logFC –5.6 do –5.8), jak i białek (logFC –5.6 do –5.8), co jednoznacznie wskazuje na **utracony fenotyp luminalny i hormonalnie niezależny charakter komórek Basal-like**.
+Analiza różnicowej ekspresji (RNA + proteom) wykazała masywną i spójną
+supresję kluczowych regulatorów programu luminalnego, w tym **FOXA1**,
+**ESR1** oraz **GATA3**. Obniżenie ekspresji tych czynników
+transkrypcyjnych było konsekwentne zarówno na poziomie transkryptów
+(logFC –5.6 do –5.8), jak i białek (logFC –5.6 do –5.8), co
+jednoznacznie wskazuje na **utracony fenotyp luminalny i hormonalnie
+niezależny charakter komórek Basal-like**.
 
-Towarzyszący temu spadek **PGR** i **BCL2**, znanych genów zależnych od ER, dodatkowo potwierdza głębokie wyciszenie osi estrogenowej, typowe dla **triple-negative / Basal-like breast cancer (TNBC)**.
+Towarzyszący temu spadek **PGR** i **BCL2**, znanych genów zależnych od
+ER, dodatkowo potwierdza głębokie wyciszenie osi estrogenowej, typowe
+dla **triple-negative / Basal-like breast cancer (TNBC)**.
 
 ## **2. Profil proliferacyjny typu Basal determinowany jest przez aktywację MYC i markerów cyklu komórkowego**
 
-Geny proliferacyjne, w tym **MKI67** oraz **MYC**, wykazywały wysoki poziom ekspresji zarówno na poziomie RNA, jak i białek. Jest to charakterystyczne dla wysoko proliferujących podtypów TNBC, w szczególności klasy **Basal-like 1 (BL1)** według klasyfikacji Lehmann et al., i wskazuje na utrzymanie programu pro-proliferacyjnego kosztem różnicowania luminalnego.
+Geny proliferacyjne, w tym **MKI67** oraz **MYC**, wykazywały wysoki
+poziom ekspresji zarówno na poziomie RNA, jak i białek. Jest to
+charakterystyczne dla wysoko proliferujących podtypów TNBC, w
+szczególności klasy **Basal-like 1 (BL1)** według klasyfikacji Lehmann
+et al., i wskazuje na utrzymanie programu pro-proliferacyjnego kosztem
+różnicowania luminalnego.
 
 ## **3. Aktywacja EGFR potwierdza charakterystyczną sygnaturę sygnałową Basal-like**
 
-Wyniki wykazały wyraźną nadekspresję **EGFR** (RNA i białko), co stanowi kluczowy element biologii Basal-like. EGFR jest jednym z najlepiej udokumentowanych driverów TNBC i odpowiada za aktywację szlaków MAPK/PI3K, promujących wzrost, przeżycie i migrację komórek nowotworowych. Równocześnie zarejestrowano brak aktywacji **ERBB2**, co potwierdza brak cech podtypu Her2-enriched i wzmacnia precyzyjne odróżnienie fenotypów Basal i Luminal A.
+Wyniki wykazały wyraźną nadekspresję **EGFR** (RNA i białko), co stanowi
+kluczowy element biologii Basal-like. EGFR jest jednym z najlepiej
+udokumentowanych driverów TNBC i odpowiada za aktywację szlaków
+MAPK/PI3K, promujących wzrost, przeżycie i migrację komórek
+nowotworowych. Równocześnie zarejestrowano brak aktywacji **ERBB2**, co
+potwierdza brak cech podtypu Her2-enriched i wzmacnia precyzyjne
+odróżnienie fenotypów Basal i Luminal A.
 
 ## **4. Analiza regulacyjna ujawnia spójny moduł miRNA odpowiedzialny za wyciszenie osi ESR1–FOXA1**
 
-Regulacyjna analiza miRNA wykazała, że **cztery wysoko aktywowane miRNA** – **miR-210**, **miR-17**, **miR-20a** oraz **miR-155** – kierują swoje działanie na dwa centralne regulacyjne węzły: **FOXA1** i **ESR1**.
+Regulacyjna analiza miRNA wykazała, że **cztery wysoko aktywowane
+miRNA** – **miR-210**, **miR-17**, **miR-20a** oraz **miR-155** –
+kierują swoje działanie na dwa centralne regulacyjne węzły: **FOXA1** i
+**ESR1**.
 
 Dla każdego z tych miRNA zaobserwowano:
 
-* bardzo wysoką nadekspresję (logFC 1.4–2.4, FDR < 10⁻³³),
-* równoległą supresję obu targetów na poziomie RNA,
-* oraz całkowicie zgodne tłumienie na poziomie białkowym.
+-   bardzo wysoką nadekspresję (logFC 1.4–2.4, FDR \< 10⁻³³),
+-   równoległą supresję obu targetów na poziomie RNA,
+-   oraz całkowicie zgodne tłumienie na poziomie białkowym.
 
 ### **4.1. Wspólna oś miRNA → FOXA1/ESR1 jako kluczowy mechanizm Basal-like**
 
 Wszystkie cztery miRNA wykazywały identyczny kierunek działania:
 
 | miRNA       | logFC | Target       | logFC Target (RNA) | logFC Target (Protein) |
-| ----------- | ----- | ------------ | ------------------ | ---------------------- |
-| **miR-210** | +2.42 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
-| **miR-17**  | +2.15 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
-| **miR-20a** | +1.89 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
-| **miR-155** | +1.42 | FOXA1 / ESR1 | ~ –5.7             | ~ –5.6                 |
+|---------------|---------------|---------------|---------------|---------------|
+| **miR-210** | +2.42 | FOXA1 / ESR1 | \~ –5.7            | \~ –5.6                |
+| **miR-17**  | +2.15 | FOXA1 / ESR1 | \~ –5.7            | \~ –5.6                |
+| **miR-20a** | +1.89 | FOXA1 / ESR1 | \~ –5.7            | \~ –5.6                |
+| **miR-155** | +1.42 | FOXA1 / ESR1 | \~ –5.7            | \~ –5.6                |
 
-Ta wyjątkowa spójność sugeruje istnienie **regulacyjnej osi, w której jednoczesna aktywacja kilku miRNA prowadzi do skoordynowanego wyciszenia kluczowych regulatorów luminalnych**.
+Ta wyjątkowa spójność sugeruje istnienie **regulacyjnej osi, w której
+jednoczesna aktywacja kilku miRNA prowadzi do skoordynowanego wyciszenia
+kluczowych regulatorów luminalnych**.
 
 ### **4.2. Funkcjonalne znaczenie: całkowita destabilizacja programu luminalnego**
 
-* **FOXA1** jest głównym pionierowym czynnikiem transkrypcyjnym umożliwiającym wiązanie ERα do chromatyny.
-* **ESR1** koduje receptor estrogenowy ERα, definiujący podtyp Luminal A.
+-   **FOXA1** jest głównym pionierowym czynnikiem transkrypcyjnym
+    umożliwiającym wiązanie ERα do chromatyny.
+-   **ESR1** koduje receptor estrogenowy ERα, definiujący podtyp Luminal
+    A.  
 
-Jednoczesne wyciszenie obu tych genów na skutek koaktywacji wielu miRNA prowadzi do:
+Jednoczesne wyciszenie obu tych genów na skutek koaktywacji wielu miRNA
+prowadzi do:
 
-* dezorganizacji architektury epigenetycznej,
-* zaniku odpowiedzi hormonalnej,
-* utraty zdolności różnicowania luminalnego,
-* przejścia w stronę fenotypu **ER–/PR– Basal-like**.
+-   dezorganizacji architektury epigenetycznej,
+-   zaniku odpowiedzi hormonalnej,
+-   utraty zdolności różnicowania luminalnego,
+-   przejścia w stronę fenotypu **ER–/PR– Basal-like**.
 
-Mechanizm ten jest zgodny z literaturą, w której miR-155 i miR-17/20a są dobrze opisanymi negatywnymi regulatorami szlaków różnicowania w raku piersi.
+Mechanizm ten jest zgodny z literaturą, w której miR-155 i miR-17/20a są
+dobrze opisanymi negatywnymi regulatorami szlaków różnicowania w raku
+piersi.
 
 ## **5. Integracja danych miRNA–mRNA–proteom wskazuje na silnie konserwowany mechanizm post-transkrypcyjnego wygaszania ESR1 i FOXA1 w Basal-like**
 
 Wyniki wykazują wyjątkową zgodność trzech warstw danych:
 
-1. **miRNA** – silnie ↑
-2. **mRNA (RNA-seq)** – silnie ↓
-3. **białka (RPPA)** – silnie ↓
+1.  **miRNA** – silnie ↑
+2.  **mRNA (RNA-seq)** – silnie ↓
+3.  **białka (RPPA)** – silnie ↓
 
-Ta trójwarstwowa koherencja potwierdza, że w komórkach Basal-like dominującym procesem napędzającym różnicowanie w kierunku TNBC jest **post-transkrypcyjne blokowanie osi ESR1–FOXA1 przez pakiet onkogennych miRNA**.
+Ta trójwarstwowa koherencja potwierdza, że w komórkach Basal-like
+dominującym procesem napędzającym różnicowanie w kierunku TNBC jest
+**post-transkrypcyjne blokowanie osi ESR1–FOXA1 przez pakiet onkogennych
+miRNA**.
 
 ## **6. Charakter podtypu Basal-like w badanym modelu**
 
-Wszystkie uzyskane dane – miRNA, transkryptom, proteom – wskazują na profil najbardziej zgodny z:
+Wszystkie uzyskane dane – miRNA, transkryptom, proteom – wskazują na
+profil najbardziej zgodny z:
 
 ### **Basal-like 1 (BL1)**
 
-* wysoka proliferacja (MKI67, MYC ↑),
-* utrata szlaku hormonalnego (ESR1/FOXA1/GATA3 ↓),
-* aktywacja EGFR,
-* niska ekspresja EMT markerów (SNAI1 ↓),
-* dominująca regulacja post-transkrypcyjna przez miRNA.
+-   wysoka proliferacja (MKI67, MYC ↑),
+-   utrata szlaku hormonalnego (ESR1/FOXA1/GATA3 ↓),
+-   aktywacja EGFR,
+-   niska ekspresja EMT markerów (SNAI1 ↓),
+-   dominująca regulacja post-transkrypcyjna przez miRNA.
 
----
+------------------------------------------------------------------------
 
 # **Wniosek końcowy**
 
-Integracja analiz różnicowej ekspresji i regulacji post-transkrypcyjnej wykazuje, że podtyp Basal-like charakteryzuje się **skojarzoną aktywacją modułu miRNA (miR-210, miR-17, miR-20a, miR-155)**, który kieruje silne hamowanie dwóch kluczowych markerów luminalnych – **FOXA1** i **ESR1**. Tłumienie tych regulatorów jest widoczne zarówno na poziomie mRNA, jak i białka i towarzyszy mu wysoka proliferacja oraz aktywacja EGFR. Wyniki wskazują na **post-transkrypcyjne przeprogramowanie fenotypu luminalnego w kierunku Basal-like**, zgodne z charakterystyką agresywnych nowotworów piersi typu TNBC.
+Integracja analiz różnicowej ekspresji i regulacji post-transkrypcyjnej
+wykazuje, że podtyp Basal-like charakteryzuje się **skojarzoną aktywacją
+modułu miRNA (miR-210, miR-17, miR-20a, miR-155)**, który kieruje silne
+hamowanie dwóch kluczowych markerów luminalnych – **FOXA1** i **ESR1**.
+Tłumienie tych regulatorów jest widoczne zarówno na poziomie mRNA, jak i
+białka i towarzyszy mu wysoka proliferacja oraz aktywacja EGFR. Wyniki
+wskazują na **post-transkrypcyjne przeprogramowanie fenotypu luminalnego
+w kierunku Basal-like**, zgodne z charakterystyką agresywnych nowotworów
+piersi typu TNBC.
 
----
-
+------------------------------------------------------------------------
 
 ## Her2 vs LumA
 
-**Background:**
-Podtyp HER2-dodatni raka piersi charakteryzuje się amplifikacją genu *ERBB2*, wysoką proliferacją oraz utratą markerów luminalnych, jednak mechanizmy regulacyjne integrujące warstwy transkryptomiczne, proteomiczne i miRNA pozostają nie w pełni poznane. Zastosowanie podejścia multi-omicznego pozwala lepiej zrozumieć biologiczną spójność sygnatur molekularnych oraz zidentyfikować kluczowe osie regulacyjne wpływające na fenotyp HER2-enriched.
+**Background:** Podtyp HER2-dodatni raka piersi charakteryzuje się
+amplifikacją genu *ERBB2*, wysoką proliferacją oraz utratą markerów
+luminalnych, jednak mechanizmy regulacyjne integrujące warstwy
+transkryptomiczne, proteomiczne i miRNA pozostają nie w pełni poznane.
+Zastosowanie podejścia multi-omicznego pozwala lepiej zrozumieć
+biologiczną spójność sygnatur molekularnych oraz zidentyfikować kluczowe
+osie regulacyjne wpływające na fenotyp HER2-enriched.
 
-**Methods:**
-Przeprowadzono analizę różnicową ekspresji RNA-seq, proteomiki RPPA oraz miRNA dla kontrastu HER2 vs Luminal A. Zintegrowano dane w dwóch etapach: (i) zgodność ekspresji RNA–białko w celu identyfikacji stabilnych sygnatur molekularnych oraz (ii) analiza miRNA–target z wykorzystaniem zależności odwrotnych logFC, aby wskazać potencjalne regulatory posttranskrypcyjne.
+**Methods:** Przeprowadzono analizę różnicową ekspresji RNA-seq,
+proteomiki RPPA oraz miRNA dla kontrastu HER2 vs Luminal A. Zintegrowano
+dane w dwóch etapach: (i) zgodność ekspresji RNA–białko w celu
+identyfikacji stabilnych sygnatur molekularnych oraz (ii) analiza
+miRNA–target z wykorzystaniem zależności odwrotnych logFC, aby wskazać
+potencjalne regulatory posttranskrypcyjne.
 
-**Results:**
-Integracja RNA–białko wykazała wysoce spójną nadekspresję kluczowych markerów podtypu HER2, w tym *ERBB2/HER2*, *MKI67*, *EPCAM* i *CDH1*, przy jednoczesnej wyraźnej supresji sygnatur luminalnych, takich jak *ESR1*, *PGR*, *GATA3*, *FOXA1* i *BCL2*. Obniżenie ekspresji keratyn *KRT5*, *KRT14* i *KRT17* potwierdza brak fenotypu basal-like w badanej kohorcie. Analiza miRNA wykazała silną nadekspresję onkogennych miRNA, przede wszystkim **miR-210**, **miR-155** i **miR-203a**, które konsekwentnie celują w *ESR1*, *PGR* i *BCL2*. Zależności te odzwierciedlają biologicznie spójną odwrotną regulację i sugerują, że te miRNA odgrywają kluczową rolę w wygaszaniu sygnatur luminalnych oraz w utrwalaniu fenotypu ER−/PR− charakterystycznego dla HER2-enriched. Szczególnie **miR-210**, powiązany z hipoksją i aktywacją HIF-1α, reprezentuje dominującą oś regulacyjną modulującą odpowiedź komórkową w nowotworach HER2+.
+**Results:** Integracja RNA–białko wykazała wysoce spójną nadekspresję
+kluczowych markerów podtypu HER2, w tym *ERBB2/HER2*, *MKI67*, *EPCAM* i
+*CDH1*, przy jednoczesnej wyraźnej supresji sygnatur luminalnych, takich
+jak *ESR1*, *PGR*, *GATA3*, *FOXA1* i *BCL2*. Obniżenie ekspresji
+keratyn *KRT5*, *KRT14* i *KRT17* potwierdza brak fenotypu basal-like w
+badanej kohorcie. Analiza miRNA wykazała silną nadekspresję onkogennych
+miRNA, przede wszystkim **miR-210**, **miR-155** i **miR-203a**, które
+konsekwentnie celują w *ESR1*, *PGR* i *BCL2*. Zależności te
+odzwierciedlają biologicznie spójną odwrotną regulację i sugerują, że te
+miRNA odgrywają kluczową rolę w wygaszaniu sygnatur luminalnych oraz w
+utrwalaniu fenotypu ER−/PR− charakterystycznego dla HER2-enriched.
+Szczególnie **miR-210**, powiązany z hipoksją i aktywacją HIF-1α,
+reprezentuje dominującą oś regulacyjną modulującą odpowiedź komórkową w
+nowotworach HER2+.
 
-**Conclusions:**
-Analiza multi-omiczna ujawnia wysoką spójność biologiczną pomiędzy warstwami RNA i białka oraz identyfikuje krytyczne miRNA napędzające fenotyp HER2-dodatni. Odkrycia te podkreślają znaczenie osi miR-210/155/203a → *ESR1/PGR/BCL2* w remodelowaniu programu luminalnego i podkreślają wartość integracji wielowarstwowych danych omicznych dla zrozumienia molekularnej architektury raka piersi HER2+. Wyniki dostarczają nowych podstaw do dalszych badań translacyjnych nad celowaniem w regulatory miRNA w terapii HER2-zależnych nowotworów.
+**Conclusions:** Analiza multi-omiczna ujawnia wysoką spójność
+biologiczną pomiędzy warstwami RNA i białka oraz identyfikuje krytyczne
+miRNA napędzające fenotyp HER2-dodatni. Odkrycia te podkreślają
+znaczenie osi miR-210/155/203a → *ESR1/PGR/BCL2* w remodelowaniu
+programu luminalnego i podkreślają wartość integracji wielowarstwowych
+danych omicznych dla zrozumienia molekularnej architektury raka piersi
+HER2+. Wyniki dostarczają nowych podstaw do dalszych badań
+translacyjnych nad celowaniem w regulatory miRNA w terapii
+HER2-zależnych nowotworów.
 
 ### Wersja na brudno:
 
-**1. Analiza zgodności ekspresji (RNA vs Białko)**
-Dane wykazują wysoką spójność między poziomem transkryptomu a proteomu, potwierdzając klasyczny profil molekularny podtypu HER2-enriched:
+**1. Analiza zgodności ekspresji (RNA vs Białko)** Dane wykazują wysoką
+spójność między poziomem transkryptomu a proteomu, potwierdzając
+klasyczny profil molekularny podtypu HER2-enriched:
 
-* **Markery podwyższone (zgodnie RNA i białko):**
-    * **ERBB2 (HER2):** Silna nadekspresja potwierdzająca status HER2+.
-    * **MKI67:** Wysoki poziom wskazuje na znaczną aktywność proliferacyjną.
-    * **Markery epitelialne (EPCAM, CDH1, CD24):** Zachowany fenotyp nabłonkowy, brak cech mezenchymalnych.
-* **Markery obniżone (zgodnie RNA i białko):**
-    * **Sygnatura luminalna (ESR1, PGR, GATA3, FOXA1, BCL2):** Drastyczny spadek, co definiuje status kliniczny ER-/PR-.
-    * **Sygnatura basal-like (KRT5, KRT14, KRT17):** Niska ekspresja wyklucza podtyp bazalny.
-* **Uwaga:** Obniżony poziom MYC jest nietypowy dla klasycznego modelu, ale nie podważa głównej diagnozy (możliwa specyfika kohorty).
+-   **Markery podwyższone (zgodnie RNA i białko):**
+    -   **ERBB2 (HER2):** Silna nadekspresja potwierdzająca status
+        HER2+.
+    -   **MKI67:** Wysoki poziom wskazuje na znaczną aktywność
+        proliferacyjną.
+    -   **Markery epitelialne (EPCAM, CDH1, CD24):** Zachowany fenotyp
+        nabłonkowy, brak cech mezenchymalnych.
+-   **Markery obniżone (zgodnie RNA i białko):**
+    -   **Sygnatura luminalna (ESR1, PGR, GATA3, FOXA1, BCL2):**
+        Drastyczny spadek, co definiuje status kliniczny ER-/PR-.
+    -   **Sygnatura basal-like (KRT5, KRT14, KRT17):** Niska ekspresja
+        wyklucza podtyp bazalny.
+-   **Uwaga:** Obniżony poziom MYC jest nietypowy dla klasycznego
+    modelu, ale nie podważa głównej diagnozy (możliwa specyfika
+    kohorty).
 
-**2. Analiza regulacji miRNA**
-Zaobserwowano wyraźny mechanizm represji potranskrypcyjnej. Nadekspresja konkretnych miRNA koreluje z wyciszeniem ich genów docelowych:
+**2. Analiza regulacji miRNA** Zaobserwowano wyraźny mechanizm represji
+potranskrypcyjnej. Nadekspresja konkretnych miRNA koreluje z wyciszeniem
+ich genów docelowych:
 
-* **Kluczowe miRNA (Up-regulated):** miR-210 (marker hipoksji), miR-155, miR-203a.
-* **Geny docelowe (Down-regulated):** ESR1, PGR, BCL2.
-* **Wniosek mechanistyczny:** Wysoki poziom miR-210 i miR-155 odpowiada za aktywną supresję receptorów hormonalnych (utrata fenotypu luminalnego) oraz promocję agresywności guza.
+-   **Kluczowe miRNA (Up-regulated):** miR-210 (marker hipoksji),
+    miR-155, miR-203a.
+-   **Geny docelowe (Down-regulated):** ESR1, PGR, BCL2.
+-   **Wniosek mechanistyczny:** Wysoki poziom miR-210 i miR-155
+    odpowiada za aktywną supresję receptorów hormonalnych (utrata
+    fenotypu luminalnego) oraz promocję agresywności guza.
 
-**3. Podsumowanie**
-Wyniki są w pełni wiarygodne biologicznie i spójne z bazami referencyjnymi (TCGA, METABRIC). Profil jednoznacznie wskazuje na podtyp HER2-enriched charakteryzujący się:
-1.  Amplifikacją szlaku HER2.
-2.  Utratą ekspresji receptorów estrogenowych/progesteronowych (mechanizm zależny od miRNA).
-3.  Wysokim potencjałem proliferacyjnym.
-
+**3. Podsumowanie** Wyniki są w pełni wiarygodne biologicznie i spójne z
+bazami referencyjnymi (TCGA, METABRIC). Profil jednoznacznie wskazuje na
+podtyp HER2-enriched charakteryzujący się: 1. Amplifikacją szlaku HER2.
+2. Utratą ekspresji receptorów estrogenowych/progesteronowych (mechanizm
+zależny od miRNA). 3. Wysokim potencjałem proliferacyjnym.
 
 ## LumB vs LumA
 
-
 # **1. Luminal B zachowuje program luminalny, ale wykazuje silnie nasilony program proliferacyjny**
 
-Integracyjna analiza RNA i proteomu wykazała, że podtyp Luminal B utrzymuje epitelialno-luminalny fenotyp komórek, co potwierdza **wysoka i zgodna ekspresja CDH1** oraz brak aktywacji szlaków EGFR. Równocześnie obserwujemy **silne podwyższenie MKI67** na poziomie transkryptu i białka, co jednoznacznie wskazuje na **wysokopro­liferacyjny charakter LumB**, stanowiący główną biologiczną różnicę względem LumA.
+Integracyjna analiza RNA i proteomu wykazała, że podtyp Luminal B
+utrzymuje epitelialno-luminalny fenotyp komórek, co potwierdza **wysoka
+i zgodna ekspresja CDH1** oraz brak aktywacji szlaków EGFR. Równocześnie
+obserwujemy **silne podwyższenie MKI67** na poziomie transkryptu i
+białka, co jednoznacznie wskazuje na **wysokopro­liferacyjny charakter
+LumB**, stanowiący główną biologiczną różnicę względem LumA.
 
 # **2. Częściowe wyciszenie osi hormonalnej: spadek PGR regulowany przez miR-210**
 
-W odróżnieniu od Basal, LumB nie traci całego programu luminalnego, lecz wykazuje **selektywną redukcję receptora progesteronowego (PGR)**. Spadek ten jest zgodny w RNA i proteomie, a analiza regulacyjna wykazała, że **miR-210 jest kluczowym miRNA odpowiedzialnym za jego post-transkrypcyjne tłumienie** (miR-210 ↑, PGR ↓). To częściowe osłabienie sygnału ER-zależnego wpisuje się w kliniczny obraz LumB: ER+, ale PR-niższy i bardziej agresywny.
+W odróżnieniu od Basal, LumB nie traci całego programu luminalnego, lecz
+wykazuje **selektywną redukcję receptora progesteronowego (PGR)**.
+Spadek ten jest zgodny w RNA i proteomie, a analiza regulacyjna
+wykazała, że **miR-210 jest kluczowym miRNA odpowiedzialnym za jego
+post-transkrypcyjne tłumienie** (miR-210 ↑, PGR ↓). To częściowe
+osłabienie sygnału ER-zależnego wpisuje się w kliniczny obraz LumB: ER+,
+ale PR-niższy i bardziej agresywny.
 
 # **3. Zgodna supresja keratyn KRT5/KRT14/KRT17 – aktywna ochrona fenotypu luminalnego przez miR-210 i miR-17**
 
-Trzy keratyny typowe dla fenotypu bazalnego (KRT5, KRT14, KRT17) są silnie obniżone zarówno na poziomie mRNA, jak i białek (logFC ~ –2.5 do –2.9).
-Co ważne, **miR-210 i miR-17 tworzą spójny moduł regulacyjny**, który kieruje się właśnie przeciwko tym keratynom.
-Sugeruje to, że LumB utrzymuje swój luminalny charakter **aktywnym mechanizmem wyciszania sygnatury bazalnej**, w przeciwieństwie do Basal-like, gdzie keratyny te są bardzo wysoko.
+Trzy keratyny typowe dla fenotypu bazalnego (KRT5, KRT14, KRT17) są
+silnie obniżone zarówno na poziomie mRNA, jak i białek (logFC \~ –2.5 do
+–2.9). Co ważne, **miR-210 i miR-17 tworzą spójny moduł regulacyjny**,
+który kieruje się właśnie przeciwko tym keratynom. Sugeruje to, że LumB
+utrzymuje swój luminalny charakter **aktywnym mechanizmem wyciszania
+sygnatury bazalnej**, w przeciwieństwie do Basal-like, gdzie keratyny te
+są bardzo wysoko.
 
 # **4. Wygaszanie MUC1 jako subtelna modulacja luminalnej sygnatury**
 
-MUC1 wykazuje umiarkowaną, ale konsekwentną redukcję, również regulowaną przez miR-210. Może to odzwierciedlać **osłabienie klasycznego sygnału MUC1–ERα**, typowe dla bardziej agresywnych form ER+.
+MUC1 wykazuje umiarkowaną, ale konsekwentną redukcję, również regulowaną
+przez miR-210. Może to odzwierciedlać **osłabienie klasycznego sygnału
+MUC1–ERα**, typowe dla bardziej agresywnych form ER+.
 
 # **5. Integracja danych miRNA–RNA–proteom wskazuje na dwa kluczowe procesy definiujące LumB**
 
-**(i) Utrzymanie fenotypu luminalnego**
-– aktywne tłumienie keratyn bazalnych przez miR-210 i miR-17
-– zachowana ekspresja CDH1
-– brak aktywacji EGFR
+**(i) Utrzymanie fenotypu luminalnego** – aktywne tłumienie keratyn
+bazalnych przez miR-210 i miR-17 – zachowana ekspresja CDH1 – brak
+aktywacji EGFR
 
-**(ii) Wzrost proliferacji kosztem częściowego obniżenia sygnału hormonalnego**
-– MKI67 ↑↑
-– PGR ↓ (miR-210-zależnie)
+**(ii) Wzrost proliferacji kosztem częściowego obniżenia sygnału
+hormonalnego** – MKI67 ↑↑ – PGR ↓ (miR-210-zależnie)
 
-Ta trójwarstwowa koherencja (miRNA → RNA → białko) pokazuje, że **Luminal B nie odchodzi od osi luminalnej, lecz staje się jej bardziej agresywnym wariantem**, napędzanym przez proliferację i modulację sygnału ER/PR, a nie przez przejście w stronę fenotypu bazalnego.
+Ta trójwarstwowa koherencja (miRNA → RNA → białko) pokazuje, że
+**Luminal B nie odchodzi od osi luminalnej, lecz staje się jej bardziej
+agresywnym wariantem**, napędzanym przez proliferację i modulację
+sygnału ER/PR, a nie przez przejście w stronę fenotypu bazalnego.
 
 # Etap 4
-
 
 ## Podział zbioru danych na podtypy
 
@@ -2560,13 +2817,7 @@ basal_data <- subset(final_data, brca_subtype_pam50 == "Basal")
 
 ```
 
-
-
-
-
 ## Wizualizacje
-
-
 
 ```{r}
 
@@ -2598,8 +2849,6 @@ plot_km_survival <- function(data, marker_col, title_suffix = "") {
 # ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ -------------------------------
 
 ```
-
-
 
 ```{r}
 
@@ -2633,10 +2882,6 @@ print(plot_km_survival(basal_data, "hsa_mir_17_z", "- Basal-like"))
 print(plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2"))
 ```
 
-
-
-
-
 ## Modele
 
 ### Ogólne
@@ -2669,15 +2914,36 @@ cat("\n--- MODEL C2: miR-17 ---\n")
 print(summary(cox_mir17))
 ```
 
-W **modelu bazowym**, uwzględniającym wiek pacjenta, stadium choroby oraz podtyp PAM50, najważniejszymi predyktorami przeżycia okazują się **wiek oraz stadium nowotworu**. Każdy dodatkowy rok życia zwiększa ryzyko zgonu o około 5%, a pacjenci ze stadium II i III mają odpowiednio około 2- i 4-krotnie wyższe ryzyko w porównaniu ze stadium I. Podtyp molekularny PAM50 w tym modelu nie jest istotnym prognostycznie czynnikiem, choć w biologicznej interpretacji pozostaje istotny dla charakterystyki guza. Model bazowy dobrze rozróżnia pacjentów o różnych poziomach ryzyka, co potwierdza wartość współczynnika zgodności (Concordance = 0.743).
+W **modelu bazowym**, uwzględniającym wiek pacjenta, stadium choroby
+oraz podtyp PAM50, najważniejszymi predyktorami przeżycia okazują się
+**wiek oraz stadium nowotworu**. Każdy dodatkowy rok życia zwiększa
+ryzyko zgonu o około 5%, a pacjenci ze stadium II i III mają odpowiednio
+około 2- i 4-krotnie wyższe ryzyko w porównaniu ze stadium I. Podtyp
+molekularny PAM50 w tym modelu nie jest istotnym prognostycznie
+czynnikiem, choć w biologicznej interpretacji pozostaje istotny dla
+charakterystyki guza. Model bazowy dobrze rozróżnia pacjentów o różnych
+poziomach ryzyka, co potwierdza wartość współczynnika zgodności
+(Concordance = 0.743).
 
-Włączenie **miR-210** do modelu (model C1) nie zmienia istotnie wyników w całej kohorcie. Współczynnik hazardu dla miR-210 sugeruje pewien efekt ochronny – wyższa ekspresja może wiązać się z niższym ryzykiem – jednak efekt ten nie jest statystycznie istotny (p = 0.29). Pozostałe zmienne kliniczne zachowują swoje znaczenie, a zdolność predykcyjna modelu nie ulega praktycznej poprawie (Concordance = 0.744).
+Włączenie **miR-210** do modelu (model C1) nie zmienia istotnie wyników
+w całej kohorcie. Współczynnik hazardu dla miR-210 sugeruje pewien efekt
+ochronny – wyższa ekspresja może wiązać się z niższym ryzykiem – jednak
+efekt ten nie jest statystycznie istotny (p = 0.29). Pozostałe zmienne
+kliniczne zachowują swoje znaczenie, a zdolność predykcyjna modelu nie
+ulega praktycznej poprawie (Concordance = 0.744).
 
-Podobnie, w modelu C2 z **miR-17**, kierunek efektu wskazuje, że wyższa ekspresja może zwiększać ryzyko zgonu, ale efekt również nie jest istotny statystycznie (HR ≈ 1.12, p = 0.40). Zdolność predykcyjna modelu pozostaje zbliżona do modelu bazowego (Concordance = 0.742).
+Podobnie, w modelu C2 z **miR-17**, kierunek efektu wskazuje, że wyższa
+ekspresja może zwiększać ryzyko zgonu, ale efekt również nie jest
+istotny statystycznie (HR ≈ 1.12, p = 0.40). Zdolność predykcyjna modelu
+pozostaje zbliżona do modelu bazowego (Concordance = 0.742).
 
-Podsumowując, w analizie całej kohorty najbardziej prognostycznymi zmiennymi pozostają **wiek i stadium choroby**, natomiast pojedyncze miRNA (miR-210 i miR-17) oraz podtypy PAM50 nie dodają istotnej informacji prognostycznej. Wyniki te uzasadniają zastosowanie podejścia LASSO Cox w celu zbudowania **sygnatury miRNA**, w której łączny efekt kilku markerów może ujawnić silniejsze predykcyjne właściwości, niewidoczne przy analizie pojedynczych miRNA.
-
-
+Podsumowując, w analizie całej kohorty najbardziej prognostycznymi
+zmiennymi pozostają **wiek i stadium choroby**, natomiast pojedyncze
+miRNA (miR-210 i miR-17) oraz podtypy PAM50 nie dodają istotnej
+informacji prognostycznej. Wyniki te uzasadniają zastosowanie podejścia
+LASSO Cox w celu zbudowania **sygnatury miRNA**, w której łączny efekt
+kilku markerów może ujawnić silniejsze predykcyjne właściwości,
+niewidoczne przy analizie pojedynczych miRNA.
 
 ### Z podziałem na podtypy
 
@@ -2712,17 +2978,33 @@ print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z
 
 ```
 
+W **podtypie Luminal A**, wiek pozostaje istotnym czynnikiem
+prognostycznym – każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,5%
+(HR = 1.055, p \< 0.001). Natomiast ekspresja **miR-210** nie wykazuje
+istotnego wpływu na przeżycie (HR = 0.93, p = 0.66). Model dobrze
+rozróżnia pacjentów pod względem ryzyka (Concordance = 0.788), co
+sugeruje, że w tym podtypie głównym determinantem jest wiek pacjenta, a
+miR-210 nie wnosi dodatkowej informacji prognostycznej.
 
-W **podtypie Luminal A**, wiek pozostaje istotnym czynnikiem prognostycznym – każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,5% (HR = 1.055, p < 0.001). Natomiast ekspresja **miR-210** nie wykazuje istotnego wpływu na przeżycie (HR = 0.93, p = 0.66). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.788), co sugeruje, że w tym podtypie głównym determinantem jest wiek pacjenta, a miR-210 nie wnosi dodatkowej informacji prognostycznej.
+W **podtypie Luminal B**, zarówno wiek (HR = 1.027, p = 0.12), jak i
+miR-210 (HR = 0.76, p = 0.26) nie osiągają istotności statystycznej.
+Model w tym przypadku ma słabszą zdolność rozróżniania pacjentów
+(Concordance = 0.606), co może wynikać z mniejszej liczebności kohorty i
+ograniczonej liczby zdarzeń. Ekspresja miR-210 kierunkowo sugeruje efekt
+ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
 
-W **podtypie Luminal B**, zarówno wiek (HR = 1.027, p = 0.12), jak i miR-210 (HR = 0.76, p = 0.26) nie osiągają istotności statystycznej. Model w tym przypadku ma słabszą zdolność rozróżniania pacjentów (Concordance = 0.606), co może wynikać z mniejszej liczebności kohorty i ograniczonej liczby zdarzeń. Ekspresja miR-210 kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
+W **podtypie HER2**, wiek ponownie wykazuje znaczenie prognostyczne (HR
+= 1.072, p = 0.008), natomiast wpływ miR-210 jest nieistotny (HR = 0.71,
+p = 0.38). Model ma umiarkowaną zdolność predykcyjną (Concordance =
+0.726), co wskazuje, że w tym podtypie również głównymi determinantami
+pozostają czynniki kliniczne, a miR-210 nie dodaje znaczącej informacji.
 
-W **podtypie HER2**, wiek ponownie wykazuje znaczenie prognostyczne (HR = 1.072, p = 0.008), natomiast wpływ miR-210 jest nieistotny (HR = 0.71, p = 0.38). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.726), co wskazuje, że w tym podtypie również głównymi determinantami pozostają czynniki kliniczne, a miR-210 nie dodaje znaczącej informacji.
-
-W **podtypie Basal-like**, ani wiek (HR = 1.018, p = 0.33), ani miR-210 (HR = 1.045, p = 0.90) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia dobrze pacjentów pod względem ryzyka (Concordance = 0.564). Wyniki te sugerują, że w podtypie Basal-like inne czynniki molekularne lub kliniczne mogą odgrywać kluczową rolę w predykcji przeżycia, a miR-210 nie jest użytecznym markerem prognostycznym.
-
-
-
+W **podtypie Basal-like**, ani wiek (HR = 1.018, p = 0.33), ani miR-210
+(HR = 1.045, p = 0.90) nie są istotnymi predyktorami przeżycia. Model
+nie rozróżnia dobrze pacjentów pod względem ryzyka (Concordance =
+0.564). Wyniki te sugerują, że w podtypie Basal-like inne czynniki
+molekularne lub kliniczne mogą odgrywać kluczową rolę w predykcji
+przeżycia, a miR-210 nie jest użytecznym markerem prognostycznym.
 
 #### HSA_MIR_17_Z
 
@@ -2755,16 +3037,34 @@ print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z,
 
 ```
 
-W **podtypie Luminal A**, zarówno wiek, jak i ekspresja **miR-17** mają znaczenie prognostyczne. Każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,9% (HR = 1.059, p < 0.001). Ekspresja miR-17 istotnie zwiększa ryzyko – pacjenci z wyższą ekspresją mają o około 66% większe ryzyko zgonu (HR = 1.665, p = 0.048). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.772), co sugeruje, że miR-17 może być wartościowym markerem prognostycznym w tym podtypie.
+W **podtypie Luminal A**, zarówno wiek, jak i ekspresja **miR-17** mają
+znaczenie prognostyczne. Każdy dodatkowy rok zwiększa ryzyko zgonu o
+około 5,9% (HR = 1.059, p \< 0.001). Ekspresja miR-17 istotnie zwiększa
+ryzyko – pacjenci z wyższą ekspresją mają o około 66% większe ryzyko
+zgonu (HR = 1.665, p = 0.048). Model dobrze rozróżnia pacjentów pod
+względem ryzyka (Concordance = 0.772), co sugeruje, że miR-17 może być
+wartościowym markerem prognostycznym w tym podtypie.
 
-W **podtypie Luminal B**, ani wiek (HR = 1.028, p = 0.12), ani miR-17 (HR = 0.78, p = 0.39) nie wykazują istotności statystycznej. Model ma słabszą zdolność predykcyjną (Concordance = 0.589), co może wynikać z mniejszej liczby pacjentów i ograniczonej liczby zdarzeń. Ekspresja miR-17 w tym podtypie kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
+W **podtypie Luminal B**, ani wiek (HR = 1.028, p = 0.12), ani miR-17
+(HR = 0.78, p = 0.39) nie wykazują istotności statystycznej. Model ma
+słabszą zdolność predykcyjną (Concordance = 0.589), co może wynikać z
+mniejszej liczby pacjentów i ograniczonej liczby zdarzeń. Ekspresja
+miR-17 w tym podtypie kierunkowo sugeruje efekt ochronny, ale brak
+istotności uniemożliwia wnioski kliniczne.
 
-W **podtypie HER2**, wiek pozostaje istotnym predyktorem przeżycia (HR = 1.079, p = 0.003), natomiast wpływ miR-17 jest nieistotny (HR = 0.76, p = 0.56). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.731). Wyniki sugerują, że w podtypie HER2 główną rolę w prognostyce odgrywają czynniki kliniczne, a miR-17 nie dostarcza dodatkowej informacji.
+W **podtypie HER2**, wiek pozostaje istotnym predyktorem przeżycia (HR =
+1.079, p = 0.003), natomiast wpływ miR-17 jest nieistotny (HR = 0.76, p
+= 0.56). Model ma umiarkowaną zdolność predykcyjną (Concordance =
+0.731). Wyniki sugerują, że w podtypie HER2 główną rolę w prognostyce
+odgrywają czynniki kliniczne, a miR-17 nie dostarcza dodatkowej
+informacji.
 
-W **podtypie Basal-like**, ani wiek (HR = 1.020, p = 0.30), ani miR-17 (HR = 1.18, p = 0.52) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia pacjentów pod względem ryzyka (Concordance = 0.564). Podobnie jak w przypadku miR-210, w tym podtypie czynniki molekularne lub kliniczne inne niż badany miR-17 mogą mieć kluczowe znaczenie dla prognostyki.
-
-
-
+W **podtypie Basal-like**, ani wiek (HR = 1.020, p = 0.30), ani miR-17
+(HR = 1.18, p = 0.52) nie są istotnymi predyktorami przeżycia. Model nie
+rozróżnia pacjentów pod względem ryzyka (Concordance = 0.564). Podobnie
+jak w przypadku miR-210, w tym podtypie czynniki molekularne lub
+kliniczne inne niż badany miR-17 mogą mieć kluczowe znaczenie dla
+prognostyki.
 
 ## Model Sygnatury miRNA (LASSO Cox) – "Super-Biomarker"
 
@@ -2896,945 +3196,36 @@ print(summary(cox_sig))
 ```
 
 | miRNA       | Współczynnik (Coef) | HR (exp(Coef)) | 95% CI HR     |
-| ----------- | ------------------- | -------------- | ------------- |
+|-------------|---------------------|----------------|---------------|
 | hsa_mir_210 | -0.0584             | 0.943          | 0.890 – 0.998 |
 | hsa_mir_17  | 0.4410              | 1.555          | 1.002 – 2.416 |
 | hsa_mir_20a | -0.2353             | 0.791          | 0.602 – 1.038 |
 | hsa_mir_155 | -0.2179             | 0.804          | 0.613 – 1.056 |
 
-
-Analiza LASSO-Cox przeprowadzona w celu wyłonienia prognostycznej sygnatury miRNA pozwoliła zidentyfikować cztery miRNA o istotnym znaczeniu: **hsa_mir_210** (współczynnik = −0.0584), **hsa_mir_17** (0.4410), **hsa_mir_20a** (−0.2353) oraz **hsa_mir_155** (−0.2179). Wartości współczynników zostały użyte do obliczenia indywidualnego **Risk Score** dla każdego pacjenta. W badanej kohorcie (n = 782) Risk Score mieścił się w zakresie od −1.19 do 0.88, z medianą −0.115, co pozwoliło podzielić pacjentów na grupy **High Risk** i **Low Risk** względem mediany.
-
-Analiza przeżycia z użyciem modelu Cox wykazała istotną różnicę między grupami ryzyka: pacjenci w grupie Low Risk mieli znacząco niższe ryzyko zdarzenia w porównaniu do High Risk (**HR = 0.61, 95% CI: 0.41–0.92, p = 0.018**). Wynik ten sugeruje, że opracowana sygnatura miRNA jest niezależnym czynnikiem prognostycznym. C-statystyka modelu wyniosła 0.557, co wskazuje na umiarkowaną zdolność dyskryminacyjną sygnatury.
-
-Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_17**) jak i ujemnych (np. **hsa_mir_210, hsa_mir_20a, hsa_mir_155**) sugeruje, że sygnatura odzwierciedla złożoną regulację molekularną istotną dla przeżycia pacjentów. Sygnatura ta może stanowić podstawę do dalszych badań funkcjonalnych oraz potencjalnie pomóc w identyfikacji pacjentów, którzy mogliby korzystać z bardziej intensywnej terapii lub monitoringu.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Analiza LASSO-Cox przeprowadzona w celu wyłonienia prognostycznej
+sygnatury miRNA pozwoliła zidentyfikować cztery miRNA o istotnym
+znaczeniu: **hsa_mir_210** (współczynnik = −0.0584), **hsa_mir_17**
+(0.4410), **hsa_mir_20a** (−0.2353) oraz **hsa_mir_155** (−0.2179).
+Wartości współczynników zostały użyte do obliczenia indywidualnego
+**Risk Score** dla każdego pacjenta. W badanej kohorcie (n = 782) Risk
+Score mieścił się w zakresie od −1.19 do 0.88, z medianą −0.115, co
+pozwoliło podzielić pacjentów na grupy **High Risk** i **Low Risk**
+względem mediany.
+
+Analiza przeżycia z użyciem modelu Cox wykazała istotną różnicę między
+grupami ryzyka: pacjenci w grupie Low Risk mieli znacząco niższe ryzyko
+zdarzenia w porównaniu do High Risk (**HR = 0.61, 95% CI: 0.41–0.92, p =
+0.018**). Wynik ten sugeruje, że opracowana sygnatura miRNA jest
+niezależnym czynnikiem prognostycznym. C-statystyka modelu wyniosła
+0.557, co wskazuje na umiarkowaną zdolność dyskryminacyjną sygnatury.
+
+Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np.
+**hsa_mir_17**) jak i ujemnych (np. **hsa_mir_210, hsa_mir_20a,
+hsa_mir_155**) sugeruje, że sygnatura odzwierciedla złożoną regulację
+molekularną istotną dla przeżycia pacjentów. Sygnatura ta może stanowić
+podstawę do dalszych badań funkcjonalnych oraz potencjalnie pomóc w
+identyfikacji pacjentów, którzy mogliby korzystać z bardziej intensywnej
+terapii lub monitoringu.
 
 # TESTY SPRAWDZAJĄCE POPRAWNOSC DANYCH
 
@@ -3854,7 +3245,6 @@ Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_
 #   labs(title = "TEST 2: Czy ERBB2 (Gen) pasuje do podtypów?", subtitle = "Oczekiwanie: HER2-enriched najwyżej") +
 #   theme_minimal()
 ```
-
 
 ```{r}
 # TEST 4: Czy stadium zaawansowania (Stage) działa zgodnie z medycyną?
@@ -3886,7 +3276,6 @@ Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_
 # )
 ```
 
-
 ```{r}
 # TEST 5: Czy wiek zgadza się z biologią?
 # library(ggplot2)
@@ -3899,14 +3288,381 @@ Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_
 #   theme_minimal()
 ```
 
+```{r}
+############# Etap 4 Piotr
+```
 
+# Analiza Przeżycia (Survival Analysis)
 
+## Metodologia
 
+W celu oceny wartości prognostycznej wybranych markerów molekularnych
+przeprowadzono analizę przeżycia całkowitego (Overall Survival, OS).
+Czas przeżycia (`time_to_event`) zdefiniowano jako okres od diagnozy do
+zgonu lub ostatniej obserwacji (cenzurowanie).
 
+Analizę podzielono na dwa etapy:
 
+1.  **Analiza jednoczynnikowa (Kaplan-Meier):** Zmienne ciągłe (poziomy
+    ekspresji genów/białek) zdychotomizowano w oparciu o medianę,
+    wyodrębniając grupy "High" oraz "Low". Różnice w krzywych przeżycia
+    weryfikowano testem log-rank.
 
+2.  **Analiza wieloczynnikowa (Regresja Coxa):** Zbudowano modele
+    proporcjonalnego hazardu Coxa, aby ocenić niezależny wpływ markerów
+    po skorygowaniu o czynniki kliniczne (wiek, stadium zaawansowania)
+    oraz podtyp molekularny.
 
+Analizie poddano trzy kluczowe markery o potencjalnym znaczeniu
+klinicznym:
 
+-   **MKI67** (Marker proliferacji) – w całej kohorcie.
 
+-   **ESR1** (Receptor estrogenowy) – wewnątrz podtypu Luminal B
+    (weryfikacja efektu ochronnego).
 
+-   **EGFR** (Receptor naskórkowego czynnika wzrostu) – wewnątrz podtypu
+    Basal-like (marker agresji).
 
+```{r}
+# Przygotowanie zmiennych (Dychotomizacja względem mediany)
+
+# Funkcja pomocnicza do kategoryzacji (High/Low)
+categorize_marker <- function(x) {
+  ifelse(x > median(x, na.rm = TRUE), "High", "Low")
+}
+
+# Tworzenie grup dla kluczowych markerów
+
+final_data <- final_data %>%
+  mutate(
+    MKI67_Group = factor(categorize_marker(mki67), levels = c("Low", "High")),
+    ESR1_Group  = factor(categorize_marker(esr1), levels = c("Low", "High")),
+    EGFR_Group  = factor(categorize_marker(egfr_rna), levels = c("Low", "High"))
+  )
+
+# Sprawdzenie liczebności grup (dla pewności, że podział jest równy)
+# table(final_data$MKI67_Group)
+
+```
+
+## Wizualizacja krzywych przeżycia (Kaplan-Meier)
+
+### Wpływ proliferacji (MKI67) na rokowanie ogólne
+
+Marker Ki-67 (gen *MKI67*) jest uznanym wskaźnikiem proliferacji
+komórkowej. Zweryfikowano hipotezę, że wysoka ekspresja tego genu
+koreluje ze skróconym czasem przeżycia w całej badanej populacji.
+
+```{r}
+fit_mki67 <- survfit(Surv(time_to_event, event) ~ MKI67_Group, data = final_data)
+
+ggsurvplot(
+  fit_mki67, 
+  data = final_data,
+  pval = TRUE, 
+  risk.table = TRUE,
+  conf.int = TRUE,
+  palette = c("#2E9FDF", "#E7B800"), # Niebieski (Low), Żółty (High)
+  title = "Przeżycie całkowite wg poziomu MKI67",
+  xlab = "Czas (Dni)", 
+  ylab = "Prawdopodobieństwo przeżycia",
+  legend.title = "Ekspresja MKI67",
+  legend.labs = c("Low", "High"),
+  ggtheme = theme_minimal()
+)
+```
+
+### Analiza wewnątrzpodtypowa
+
+**1. Rola ESR1 w podtypie Luminal B** Podtyp Luminal B charakteryzuje
+się gorszym rokowaniem niż Luminal A, mimo ekspresji receptorów
+hormonalnych. Zbadano, czy wyższa ekspresja genu *ESR1* wewnątrz tej
+grupy nadal pełni funkcję ochronną.
+
+```{r}
+# Filtrowanie danych tylko dla Luminal B
+data_lumb <- final_data %>% filter(brca_subtype_pam50 == "LumB")
+
+fit_esr1 <- survfit(Surv(time_to_event, event) ~ ESR1_Group, data = data_lumb)
+
+ggsurvplot(
+  fit_esr1, 
+  data = data_lumb, 
+  pval = TRUE, 
+  risk.table = TRUE,
+  palette = c("grey", "red"),
+  title = "Podtyp Luminal B: ESR1 High vs Low",
+  xlab = "Czas (Dni)",
+  legend.title = "Ekspresja ESR1"
+)
+```
+
+**2. Rola EGFR w podtypie Basal-like** Podtyp podstawny
+(Basal-like/TNBC) często wykazuje nadekspresję *EGFR*. Sprawdzono, czy
+poziom tego markera różnicuje pacjentki pod kątem przeżycia wewnątrz tej
+agresywnej grupy.
+
+```{r}
+# Filtrowanie danych tylko dla Basal
+data_basal <- final_data %>% filter(brca_subtype_pam50 == "Basal")
+
+fit_egfr <- survfit(Surv(time_to_event, event) ~ EGFR_Group, data = data_basal)
+
+ggsurvplot(
+  fit_egfr, 
+  data = data_basal, 
+  pval = TRUE, 
+  risk.table = TRUE,
+  palette = c("grey", "purple"),
+  title = "Podtyp Basal-like: EGFR High vs Low",
+  xlab = "Czas (Dni)",
+  legend.title = "Ekspresja EGFR"
+)
+```
+
+## Wieloczynnikowa analiza ryzyka (Modele Coxa)
+
+W celu potwierdzenia niezależnej wartości prognostycznej badanych
+markerów, zbudowano serię modeli Coxa.
+
+-   **Model Bazowy (Kliniczny):** Uwzględnia wiek, stadium nowotworu
+    (Stage) oraz podtyp PAM50.
+
+-   **Modele Testowe (B1, B2, B3):** Rozszerzone o badane markery
+    genetyczne.
+
+Wyniki przedstawiono w postaci współczynników hazardu (Hazard Ratio,
+HR). Wartość HR \> 1 oznacza wzrost ryzyka zgonu, natomiast HR \< 1
+świadczy o działaniu ochronnym.
+
+```{r}
+# Przygotowanie danych do Coxa (usuwamy braki w zmiennych klinicznych)
+cox_data <- final_data %>%
+  filter(!is.na(pathologic_stage), !is.na(age_mean_years)) %>%
+  mutate(pathologic_stage = as.factor(pathologic_stage))
+
+# 1. Model Bazowy
+cox_base <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50, 
+                  data = cox_data)
+
+# 2. Model B1: Baza + MKI67 (Czy proliferacja jest niezależna od podtypu?)
+cox_mki67_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + mki67, 
+                   data = cox_data)
+
+# 3. Model B2: Baza + ESR1 (Czy receptor chroni niezależnie?)
+cox_esr1_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + esr1, 
+                  data = cox_data)
+
+# 4. Model B3: Baza + EGFR
+cox_egfr_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + egfr_rna, 
+                  data = cox_data)
+
+# Funkcja do formatowania wyników (Tabela Elsevier-style)
+format_cox_results <- function(model, model_name) {
+  model %>%
+    broom::tidy(exponentiate = TRUE, conf.int = TRUE) %>%
+    dplyr::select(term, estimate, p.value, conf.low, conf.high) %>%
+    mutate(
+      term = str_replace_all(term, "brca_subtype_pam50", "Subtype: "),
+      term = str_replace_all(term, "pathologic_stage", "Stage: "),
+      term = str_replace_all(term, "age_mean_years", "Age"),
+      p.value = format.pval(p.value, eps = 0.001, digits = 3),
+      estimate = round(estimate, 3),
+      conf.low = round(conf.low, 3),
+      conf.high = round(conf.high, 3)
+    ) %>%
+    kable(caption = paste("Wyniki modelu:", model_name), 
+          col.names = c("Zmienna", "HR", "P-value", "CI 95% Low", "CI 95% High")) %>%
+    kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+}
+```
+
+### Wyniki modelowania statystycznego
+
+Tabela 4.1 przedstawia wyniki dla modelu bazowego, który stanowi punkt
+odniesienia dla dalszych analiz. Stadium zaawansowania (Stage) oraz wiek
+pacjentki są silnymi predyktorami przeżycia.
+
+```{r}
+format_cox_results(cox_base, "Model Kliniczny (Bazowy)")
+```
+
+### Interpretacja wyników Modelu Bazowego (Analiza wieloczynnikowa)
+
+Model referencyjny potwierdza, że w badanej kohorcie klasyczne zmienne
+kliniczno-patologiczne stanowią najsilniejsze determinanty czasu
+przeżycia całkowitego (OS), dominując nad stratyfikacją molekularną.
+
+1.  **Zmienne demograficzne (Wiek):** Zaobserwowano wysoce istotną
+    statystycznie korelację wieku z ryzykiem zgonu (**HR = 1.050**, p \<
+    0.001). Każdy rok życia zwiększa ryzyko względne o 5%, co
+    odzwierciedla naturalną biologię starzenia oraz potencjalne
+    obciążenia chorobami współistniejącymi, typowe dla populacji
+    onkologicznej.
+
+2.  **Stadium zaawansowania (Stage):** Wyniki potwierdzają hierarchiczną
+    strukturę ryzyka zgodną z klasyfikacją TNM. W porównaniu do grupy
+    referencyjnej (Stadium I):
+
+    -   **Stadium II** podwaja ryzyko zgonu (**HR = 2.02**, p = 0.034).
+
+    -   **Stadium III** zwiększa to ryzyko niemal czterokrotnie (**HR =
+        3.96**, p \< 0.001). Zachowanie efektu "dawka-odpowiedź" (wzrost
+        HR wraz ze stopniem zaawansowania) stanowi wewnętrzną walidację
+        poprawności danych klinicznych w zbiorze.
+
+3.  **Podtypy molekularne (PAM50):** W modelu skorygowanym o wiek i
+    stadium, status molekularny guza nie wykazał niezależnej istotności
+    statystycznej (p \> 0.05 dla wszystkich podtypów względem
+    referencji, którą stanowił podtyp Basal-like).
+
+    -   Mimo braku istotności, **trend dla podtypu Luminal A (HR =
+        0.721)** wskazuje na jego biologicznie łagodniejszy charakter
+        (redukcja ryzyka o \~28% względem agresywnego podtypu
+        bazalnego), co jest zgodne z kanonem literaturowym (*Perou et
+        al.*).
+
+    -   Brak statystycznej znamienności sugeruje, że w analizowanej
+        kohorcie silny wpływ zaawansowania choroby (Stage III) "maskuje"
+        subtelniejsze różnice wynikające z biologii molekularnej guza.
+
+Tabela 4.2 weryfikuje, czy marker proliferacji *MKI67* wnosi istotną
+informację prognostyczną po uwzględnieniu podtypu molekularnego.
+
+```{r}
+format_cox_results(cox_mki67_model, "Model B1 (+ MKI67)")
+```
+
+### Interpretacja wyników wieloczynnikowej analizy Coxa (Model B1)
+
+Analiza wykazała, że w badanym modelu dominującą rolę prognostyczną
+odgrywają zmienne kliniczne, podczas gdy wpływ markerów molekularnych
+jest modyfikowany przez interakcje międzyzmienne.
+
+1.  **Zmienne kliniczne (Wiek i Stadium):** Potwierdzono, że **wiek**
+    (HR=1.049, p\<0.001) oraz **stadium zaawansowania** są silnymi,
+    niezależnymi czynnikami negatywnego rokowan. Wzrost ryzyka zgonu
+    wraz z zaawansowaniem choroby (HR=2.04 dla Stadium II i HR=3.99 dla
+    Stadium III) jest zgodny z systemem klasyfikacji TNM i odzwierciedla
+    większą masę guza oraz potencjał przerzutowy w wyższych stadiach.
+
+2.  **Podtypy molekularne (Subtype):** Po uwzględnieniu w modelu
+    zmiennej *MKI67*, status podtypu utracił niezależną istotność
+    statystyczną (p\>0.05). Trend dla podtypu **Luminal A** (HR=0.576)
+    wskazuje na jego ochronny charakter względem grupy referencyjnej, co
+    jest zgodne z literaturą definiującą ten podtyp jako biologicznie
+    najmniej agresywny (*Perou et al.*), jednak brak istotności
+    sugeruje, że część informacji prognostycznej została przejęta przez
+    inne zmienne w modelu.
+
+3.  **Marker proliferacji (MKI67):** Brak istotności statystycznej genu
+    *MKI67* (p=0.249) oraz trend w kierunku HR \< 1 (0.896) w modelu
+    wieloczynnikowym można wytłumaczyć dwoma zjawiskami biologicznymi:
+
+    -   **Współliniowość (Multicollinearity):** Gen *MKI67* jest
+        składową sygnatury definiującej podtypy PAM50 (szczególnie
+        różnicując LumA od LumB). Wprowadzenie obu zmiennych do jednego
+        modelu powoduje zniesienie ich indywidualnej wagi
+        prognostycznej.
+
+    -   **Paradoks chemiowrażliwości:** W literaturze (*Fasching et
+        al.*) opisuje się zjawisko, w którym guzy o wysokiej
+        proliferacji (wysokie Ki-67) lepiej odpowiadają na chemioterapię
+        adiuwantową niż guzy wolnorosnące. W efekcie leczenie może
+        niwelować naturalnie gorsze rokowanie biologiczne tych
+        nowotworów, co w analizie przeżycia całkowitego (OS) objawia się
+        brakiem istotnego wzrostu ryzyka.
+
+Tabela 4.3 oraz 4.4 przedstawiają wyniki dla receptorów *ESR1* oraz
+*EGFR*.
+
+```{r}
+format_cox_results(cox_esr1_model, "Model B2 (+ ESR1)")
+format_cox_results(cox_egfr_model, "Model B3 (+ EGFR)")
+```
+
+### Interpretacja wyników Modelu B2 (+ ESR1)
+
+Włączenie ekspresji genu *ESR1* do modelu wieloczynnikowego nie wykazało
+jego niezależnej wartości prognostycznej, potwierdzając dominującą rolę
+czynników klinicznych oraz strukturę definicyjną podtypów molekularnych.
+
+1.  **Stabilność zmiennych klinicznych:** Wiek (**HR = 1.050**, p \<
+    0.001) oraz stadium zaawansowania (szczególnie Stage III: **HR =
+    3.94**, p \< 0.001) pozostają stabilnymi, najsilniejszymi
+    predyktorami ryzyka zgonu, niezależnie od dodania zmiennej *ESR1*.
+
+2.  **Marker *ESR1* i redundancja biologiczna:** Ekspresja *ESR1* nie
+    osiągnęła istotności statystycznej (**p = 0.692**), a jej
+    współczynnik hazardu (**HR = 0.969**) sugeruje jedynie nieznaczny
+    trend ochronny. Brak istotności wynika ze zjawiska współliniowości:
+    wysoka ekspresja *ESR1* jest cechą definicyjną podtypów Luminal A
+    i B. Informacja o statusie receptorowym jest zatem duplikowana przez
+    zmienną "Subtype", co znosi statystyczną wagę samego markera w
+    modelu wieloczynnikowym.
+
+### Interpretacja wyników Modelu B3 (+ EGFR)
+
+Analiza modelu z uwzględnieniem *EGFR* wskazuje na ograniczoną
+użyteczność tego markera jako niezależnego czynnika prognostycznego w
+obecności zmiennych definiujących podtyp molekularny.
+
+1.  **Dominacja czynników klinicznych:** Podobnie jak w poprzednich
+    modelach, zaawansowanie choroby (Stage III: **HR = 3.95**, p \<
+    0.001) oraz wiek pacjentki (**HR = 1.051**, p \< 0.001) stanowią
+    główne determinanty przeżycia całkowitego.
+
+2.  **Marker *EGFR*:** Gen *EGFR* nie wykazał istotnego wpływu na
+    rokowanie (**p = 0.421**). Zaobserwowany kierunek zmiany (**HR =
+    1.061**) wskazuje na trend w stronę zwiększonego ryzyka, co jest
+    zgodne z biologiczną rolą EGFR jako promotora agresywności i
+    proliferacji (szczególnie w podtypie Basal-like). Brak niezależnej
+    istotności statystycznej sugeruje jednak, że negatywny wpływ
+    nadekspresji EGFR jest już wystarczająco reprezentowany w modelu
+    przez przynależność do podtypu molekularnego (głównie Basal/TNBC)
+    oraz wysokie stadium zaawansowania.
+
+## Podsumowanie wyników analizy przeżycia
+
+Na podstawie przeprowadzonych analiz (testów Log-Rank oraz
+wieloczynnikowej regresji Coxa) sformułowano następujące wnioski:
+
+1.  **Dominacja czynników klinicznych nad molekularnymi:** We wszystkich
+    zbudowanych modelach (Bazowym, B1, B2, B3) najsilniejszymi i
+    najbardziej stabilnymi predyktorami przeżycia całkowitego (OS)
+    okazały się **wiek pacjentki** oraz **stadium zaawansowania
+    nowotworu** (Stage). Ryzyko zgonu wzrastało niemal czterokrotnie dla
+    Stadium III (HR ≈ 4.0, p \< 0.001), co potwierdza, że w badanej
+    kohorcie masa guza i obecność przerzutów mają większe znaczenie
+    prognostyczne niż profil ekspresji pojedynczych genów.
+
+2.  **Marker proliferacji (MKI67) i współliniowość:** W modelu
+    wieloczynnikowym (Tabela 4.2) gen *MKI67* utracił niezależną
+    istotność statystyczną (p = 0.249), wykazując trend w kierunku HR \<
+    1 (0.896). Sugeruje to, że informacja o agresywności guza wynikająca
+    z wysokiej proliferacji jest już zawarta w zmiennej definiującej
+    podtyp molekularny (szczególnie w podtypach Luminal B i Basal-like).
+    Brak negatywnego wpływu wysokiego *MKI67* na przeżycie w modelu
+    skorygowanym może również odzwierciedlać wyższą wrażliwość guzów
+    szybko dzielących się na leczenie systemowe (zjawisko
+    chemiowrażliwości).
+
+3.  **Brak niezależnej wartości markerów ESR1 i EGFR:** Włączenie do
+    modelu genów *ESR1* (Tabela 4.3) oraz *EGFR* (Tabela 4.4) nie
+    poprawiło jego zdolności predykcyjnej. Oba markery nie wykazały
+    istotności statystycznej jako niezależne czynniki ryzyka. Wynika to
+    z faktu, że ich poziomy ekspresji są cechami definicyjnymi samych
+    podtypów PAM50 (wysoki *ESR1* definiuje nowotwory luminalne, wysoki
+    *EGFR* jest charakterystyczny dla Basal-like). W konsekwencji, w
+    modelu uwzględniającym podział na podtypy, dodanie tych markerów
+    prowadzi do redundancji informacyjnej.
+
+4.  **Wnioski końcowe:** Analiza potwierdza, że stratyfikacja
+    molekularna PAM50 skutecznie grupuje pacjentki o odmiennej biologii,
+    jednak w kontekście prognozowania przeżycia całkowitego (OS), to
+    klasyczne parametry kliniczno-patologiczne (wiek, stadium TNM)
+    pozostają nadrzędnymi determinantami rokowania. Pojedyncze markery
+    (*MKI67, ESR1, EGFR*) nie stanowią w tym układzie niezależnych
+    czynników ryzyka, lecz są biologicznie sprzężone z przypisanym
+    podtypem nowotworu.
