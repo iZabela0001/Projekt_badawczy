@@ -3480,7 +3480,7 @@ format_cox_results <- function(model, model_name) {
 
 ### Wyniki modelowania statystycznego
 
-Tabela 4.1 przedstawia wyniki dla modelu bazowego, który stanowi punkt
+Tabela przedstawia wyniki dla modelu bazowego, który stanowi punkt
 odniesienia dla dalszych analiz. Stadium zaawansowania (Stage) oraz wiek
 pacjentki są silnymi predyktorami przeżycia.
 
@@ -3527,7 +3527,7 @@ przeżycia całkowitego (OS), dominując nad stratyfikacją molekularną.
         kohorcie silny wpływ zaawansowania choroby (Stage III) "maskuje"
         subtelniejsze różnice wynikające z biologii molekularnej guza.
 
-Tabela 4.2 weryfikuje, czy marker proliferacji *MKI67* wnosi istotną
+Tabela weryfikuje, czy marker proliferacji *MKI67* wnosi istotną
 informację prognostyczną po uwzględnieniu podtypu molekularnego.
 
 ```{r}
@@ -3574,7 +3574,7 @@ jest modyfikowany przez interakcje międzyzmienne.
         nowotworów, co w analizie przeżycia całkowitego (OS) objawia się
         brakiem istotnego wzrostu ryzyka.
 
-Tabela 4.3 oraz 4.4 przedstawiają wyniki dla receptorów *ESR1* oraz
+Tabela oraz przedstawiają wyniki dla receptorów *ESR1* oraz
 *EGFR*.
 
 ```{r}
