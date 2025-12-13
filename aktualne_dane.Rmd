@@ -2538,6 +2538,19 @@ generate_volcano <- function(fit_obj, contrast_name, title_text) {
   
   print(p)
 }
+
+# ------------------------------------------------------------------------------
+# KROK 6: Uruchomienie analizy (Zaktualizowane Tytuły na Angielski)
+# ------------------------------------------------------------------------------
+
+# Zmieniłem polskie opisy w tytułach na angielskie odpowiedniki,
+# aby wykres był gotowy do wklejenia do manuskryptu.
+
+generate_volcano(fit2, "Basal_vs_LumA", "Aggressiveness (Basal vs LumA)")
+
+generate_volcano(fit2, "Her2_vs_LumA", "HER2 Specificity (Her2 vs LumA)")
+
+generate_volcano(fit2, "LumB_vs_LumA", "Proliferation (LumB vs LumA)")
 ```
 
 ### LumB vs LumA
