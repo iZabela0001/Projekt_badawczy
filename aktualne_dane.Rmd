@@ -2639,8 +2639,6 @@ print(plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2"))
 
 ## Modele
 
-### Ogólne
-
 ```{r}
 # 1. MODEL BAZOWY (Kliniczny)
 # Punkt odniesienia: Wiek + Stadium + Podtyp
@@ -2653,8 +2651,9 @@ print(summary(cox_base))
 
 # 2. MODEL TESTOWY C1 (Hipoksja)
 # Baza + hsa-mir-210
-cox_mir210 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50+hsa_mir_210_z, 
-                    data = final_data)
+cox_mir210 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage +
+                            brca_subtype_pam50 * hsa_mir_210_z, 
+                            data = final_data)
 
 cat("\n--- MODEL C1: miR-210 ---\n")
 print(summary(cox_mir210))
@@ -2662,119 +2661,94 @@ print(summary(cox_mir210))
 
 # 3. MODEL TESTOWY C2 (Proliferacja)
 # Baza + hsa-mir-17
-cox_mir17 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + hsa_mir_17_z, 
-                   data = final_data)
+cox_mir17 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage +
+                            brca_subtype_pam50 * hsa_mir_17_z, 
+                            data = final_data)
 
 cat("\n--- MODEL C2: miR-17 ---\n")
 print(summary(cox_mir17))
 ```
 
-W **modelu bazowym**, uwzględniającym wiek pacjenta, stadium choroby oraz podtyp PAM50, najważniejszymi predyktorami przeżycia okazują się **wiek oraz stadium nowotworu**. Każdy dodatkowy rok życia zwiększa ryzyko zgonu o około 5%, a pacjenci ze stadium II i III mają odpowiednio około 2- i 4-krotnie wyższe ryzyko w porównaniu ze stadium I. Podtyp molekularny PAM50 w tym modelu nie jest istotnym prognostycznie czynnikiem, choć w biologicznej interpretacji pozostaje istotny dla charakterystyki guza. Model bazowy dobrze rozróżnia pacjentów o różnych poziomach ryzyka, co potwierdza wartość współczynnika zgodności (Concordance = 0.743).
 
-Włączenie **miR-210** do modelu (model C1) nie zmienia istotnie wyników w całej kohorcie. Współczynnik hazardu dla miR-210 sugeruje pewien efekt ochronny – wyższa ekspresja może wiązać się z niższym ryzykiem – jednak efekt ten nie jest statystycznie istotny (p = 0.29). Pozostałe zmienne kliniczne zachowują swoje znaczenie, a zdolność predykcyjna modelu nie ulega praktycznej poprawie (Concordance = 0.744).
-
-Podobnie, w modelu C2 z **miR-17**, kierunek efektu wskazuje, że wyższa ekspresja może zwiększać ryzyko zgonu, ale efekt również nie jest istotny statystycznie (HR ≈ 1.12, p = 0.40). Zdolność predykcyjna modelu pozostaje zbliżona do modelu bazowego (Concordance = 0.742).
-
-Podsumowując, w analizie całej kohorty najbardziej prognostycznymi zmiennymi pozostają **wiek i stadium choroby**, natomiast pojedyncze miRNA (miR-210 i miR-17) oraz podtypy PAM50 nie dodają istotnej informacji prognostycznej. Wyniki te uzasadniają zastosowanie podejścia LASSO Cox w celu zbudowania **sygnatury miRNA**, w której łączny efekt kilku markerów może ujawnić silniejsze predykcyjne właściwości, niewidoczne przy analizie pojedynczych miRNA.
-
-
-
-### Z podziałem na podtypy
-
-#### HSA_MIR_210_Z
 
 ```{r}
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_A
 
-cat("\n--- WYNIK DLA LUMINAL A (miR-210) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
-                      data = lumA_data)))
+# ------------------------------------------------------------------------------
+# 2. WIZUALIZACJA - FOREST PLOT
+# ------------------------------------------------------------------------------
+# Forest plot pokazuje HR (kropka) i przedział ufności (pozioma linia) dla każdej grupy.
 
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_B
-
-cat("\n--- WYNIK DLA LUMINAL B (miR-210) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
-                      data = lumB_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------HER2
-
-cat("\n--- WYNIK DLA HER2 (miR-210) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
-                      data = HER2_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------BASAL
-
-cat("\n--- WYNIK DLA BASAL (miR-210) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_210_z, 
-                      data = basal_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------
-
+# Funkcja pomocnicza do rysowania Forest Plot dla podtypów
+# draw_forest_for_subtypes <- function(data, mirna_col, title) {
+#   
+#   # Budujemy model, w którym podtyp jest warstwą (strata) lub interakcją, 
+#   # ale do ggforest najwygodniej podać model ogólny i pozwolić mu podzielić dane.
+#   # UWAGA: ggforest w survminer działa najlepiej na ogólnym modelu, 
+#   # ale my chcemy pokazać osobne HR dla podtypów.
+#   
+#   # Alternatywne podejście do wizualizacji w 'survminer' to podanie danych zgrupowanych:
+#   fit_subtypes <- coxph(as.formula(paste("Surv(time_to_event, event) ~", mirna_col, "+ strata(brca_subtype_pam50)")), 
+#                         data = data)
+#   
+#   # To jednak pokaże średni efekt. 
+#   # Żeby zrobić ładny plot podgrup, użyjmy 'ggforest' na modelu z interakcją LUB
+#   # zróbmy to sprytnym trikiem z pakietu forestmodel (jeśli masz) lub ręcznie.
+#   
+#   # Prostsza wersja (dla survminer):
+#   # Generujemy osobne modele tylko do wykresu
+#   res <- list()
+#   subtypes <- unique(data$brca_subtype_pam50)
+#   
+#   # Pętla po podtypach
+#   for(st in subtypes) {
+#     sub_data <- subset(data, brca_subtype_pam50 == st)
+#     # Prosty model dla podtypu (skorygowany o wiek)
+#     m <- coxph(as.formula(paste("Surv(time_to_event, event) ~ age_mean_years +", mirna_col)), data = sub_data)
+#     
+#     # Wyciągamy HR i CI
+#     summ <- summary(m)
+#     res[[st]] <- data.frame(
+#       Subtype = st,
+#       HR = summ$conf.int[2,1],      # HR dla miRNA (2. wiersz, bo 1. to wiek)
+#       Lower = summ$conf.int[2,3],
+#       Upper = summ$conf.int[2,4],
+#       P_val = summ$coefficients[2,5]
+#     )
+#   }
+#   
+#   res_df <- do.call(rbind, res)
+#   
+#   # Rysujemy
+#   p <- ggplot(res_df, aes(x = HR, y = Subtype, xmin = Lower, xmax = Upper)) +
+#     geom_point(shape = 15, size = 3, color = "darkblue") +
+#     geom_errorbarh(height = 0.2) +
+#     geom_vline(xintercept = 1, linetype = "dashed", color = "red") +
+#     labs(title = title, x = "Hazard Ratio (95% CI)", y = "") +
+#     theme_minimal() +
+#     geom_text(aes(label = paste0("HR=", round(HR, 2), ", p=", round(P_val, 3))), 
+#               vjust = -1.5, size = 3.5)
+#   
+#   return(p)
+# }
+# 
+# # Rysujemy wykresy
+# p1 <- draw_forest_for_subtypes(final_data, "hsa_mir_17_z", "Wpływ miR-17 na przeżycie w podtypach")
+# p2 <- draw_forest_for_subtypes(final_data, "hsa_mir_210_z", "Wpływ miR-210 na przeżycie w podtypach")
+# 
+# print(p1)
+# print(p2)
 ```
 
 
-W **podtypie Luminal A**, wiek pozostaje istotnym czynnikiem prognostycznym – każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,5% (HR = 1.055, p < 0.001). Natomiast ekspresja **miR-210** nie wykazuje istotnego wpływu na przeżycie (HR = 0.93, p = 0.66). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.788), co sugeruje, że w tym podtypie głównym determinantem jest wiek pacjenta, a miR-210 nie wnosi dodatkowej informacji prognostycznej.
 
-W **podtypie Luminal B**, zarówno wiek (HR = 1.027, p = 0.12), jak i miR-210 (HR = 0.76, p = 0.26) nie osiągają istotności statystycznej. Model w tym przypadku ma słabszą zdolność rozróżniania pacjentów (Concordance = 0.606), co może wynikać z mniejszej liczebności kohorty i ograniczonej liczby zdarzeń. Ekspresja miR-210 kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
-
-W **podtypie HER2**, wiek ponownie wykazuje znaczenie prognostyczne (HR = 1.072, p = 0.008), natomiast wpływ miR-210 jest nieistotny (HR = 0.71, p = 0.38). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.726), co wskazuje, że w tym podtypie również głównymi determinantami pozostają czynniki kliniczne, a miR-210 nie dodaje znaczącej informacji.
-
-W **podtypie Basal-like**, ani wiek (HR = 1.018, p = 0.33), ani miR-210 (HR = 1.045, p = 0.90) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia dobrze pacjentów pod względem ryzyka (Concordance = 0.564). Wyniki te sugerują, że w podtypie Basal-like inne czynniki molekularne lub kliniczne mogą odgrywać kluczową rolę w predykcji przeżycia, a miR-210 nie jest użytecznym markerem prognostycznym.
-
-
-
-
-#### HSA_MIR_17_Z
-
-```{r}
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_A
-
-cat("\n--- WYNIK DLA LUMINAL A (miR-17) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
-                      data = lumA_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------LUM_B
-
-cat("\n--- WYNIK DLA LUMINAL B (miR-17) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
-                      data = lumB_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------HER2
-
-cat("\n--- WYNIK DLA HER2 (miR-17) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
-                      data = HER2_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------BASAL
-
-cat("\n--- WYNIK DLA BASAL (miR-17) ---\n")
-print(summary(coxph(Surv(time_to_event, event) ~ age_mean_years  + hsa_mir_17_z, 
-                      data = basal_data)))
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------
-
-```
-
-W **podtypie Luminal A**, zarówno wiek, jak i ekspresja **miR-17** mają znaczenie prognostyczne. Każdy dodatkowy rok zwiększa ryzyko zgonu o około 5,9% (HR = 1.059, p < 0.001). Ekspresja miR-17 istotnie zwiększa ryzyko – pacjenci z wyższą ekspresją mają o około 66% większe ryzyko zgonu (HR = 1.665, p = 0.048). Model dobrze rozróżnia pacjentów pod względem ryzyka (Concordance = 0.772), co sugeruje, że miR-17 może być wartościowym markerem prognostycznym w tym podtypie.
-
-W **podtypie Luminal B**, ani wiek (HR = 1.028, p = 0.12), ani miR-17 (HR = 0.78, p = 0.39) nie wykazują istotności statystycznej. Model ma słabszą zdolność predykcyjną (Concordance = 0.589), co może wynikać z mniejszej liczby pacjentów i ograniczonej liczby zdarzeń. Ekspresja miR-17 w tym podtypie kierunkowo sugeruje efekt ochronny, ale brak istotności uniemożliwia wnioski kliniczne.
-
-W **podtypie HER2**, wiek pozostaje istotnym predyktorem przeżycia (HR = 1.079, p = 0.003), natomiast wpływ miR-17 jest nieistotny (HR = 0.76, p = 0.56). Model ma umiarkowaną zdolność predykcyjną (Concordance = 0.731). Wyniki sugerują, że w podtypie HER2 główną rolę w prognostyce odgrywają czynniki kliniczne, a miR-17 nie dostarcza dodatkowej informacji.
-
-W **podtypie Basal-like**, ani wiek (HR = 1.020, p = 0.30), ani miR-17 (HR = 1.18, p = 0.52) nie są istotnymi predyktorami przeżycia. Model nie rozróżnia pacjentów pod względem ryzyka (Concordance = 0.564). Podobnie jak w przypadku miR-210, w tym podtypie czynniki molekularne lub kliniczne inne niż badany miR-17 mogą mieć kluczowe znaczenie dla prognostyki.
-
-
-
-
-## Model Sygnatury miRNA (LASSO Cox) – "Super-Biomarker"
+## Model Sygnatury miRNA (LASSO Cox) 
 
 ```{r}
 # ==============================================================================
-# ETAP 4 (EXPERT): MODEL SYGNATURY miRNA (LASSO COX)
-
+# ETAP 4: MODEL SYGNATURY miRNA (LASSO COX) Z WALIDACJĄ
 # ==============================================================================
 
-# 1. Instalacja pakietu glmnet (do LASSO)
+
 if (!require("glmnet", quietly = TRUE)) install.packages("glmnet")
 library(glmnet)
 library(survival)
@@ -2782,66 +2756,63 @@ library(survminer)
 library(dplyr)
 
 # ------------------------------------------------------------------------------
-# KROK 1: Przygotowanie Danych
+# KROK 1: Przygotowanie Danych i Automatyczna Selekcja Zmiennych
 # ------------------------------------------------------------------------------
-
 
 # Formatowanie czasu
 final_data$time_to_event <- as.numeric(final_data$time_to_event)
 final_data$event <- as.numeric(final_data$event)
+valid_mirna <- mirna_markers
 
-# Lista Twoich miRNA (Kandydaci do sygnatury)
-# Wrzucamy całą pulę 24 markerów - niech algorytm wybierze najlepsze!
-mirna_candidates <- c("hsa_mir_210","hsa_mir_17","hsa_mir_20a","hsa_mir_155","hsa_mir_203a")
-
-# Filtrujemy tylko dostępne kolumny
-valid_mirna <- mirna_candidates[mirna_candidates %in% colnames(final_data)]
-
-# Wybieramy dane do modelu (Tylko kompletne wiersze!)
-# glmnet nie lubi NA
 data_model <- final_data %>%
   dplyr::select(time_to_event, event, all_of(valid_mirna)) %>%
   filter(!is.na(time_to_event) & time_to_event > 0 & !is.na(event)) %>%
   na.omit()
 
-cat("Liczba pacjentów do budowy sygnatury:", nrow(data_model), "\n")
+cat("Całkowita liczba pacjentów (przed podziałem):", nrow(data_model), "\n")
 
 # ------------------------------------------------------------------------------
-# KROK 2: Przygotowanie Macierzy (Wymóg glmnet)
+# KROK 2: Podział na Zbiór Treningowy i Testowy (Train/Test Split)
 # ------------------------------------------------------------------------------
-# X = Macierz predyktorów (miRNA)
-x <- as.matrix(data_model[, valid_mirna])
+set.seed(123) 
 
-# Y = Obiekt przeżycia (Czas + Status)
-y <- Surv(data_model$time_to_event, data_model$event)
+
+train_index <- sample(1:nrow(data_model), size = 0.7 * nrow(data_model))
+
+
+data_train <- data_model[train_index, ] 
+data_test  <- data_model[-train_index, ] 
+
+cat("Liczba pacjentów w zbiorze TRENINGOWYM:", nrow(data_train), "\n")
+cat("Liczba pacjentów w zbiorze TESTOWYM:", nrow(data_test), "\n")
 
 # ------------------------------------------------------------------------------
-# KROK 3: Uruchomienie LASSO (Cross-Validation)
+# KROK 3: Trening Modelu LASSO (Tylko na zbiorze TRENINGOWYM)
 # ------------------------------------------------------------------------------
-set.seed(123) # Dla powtarzalności wyników
+# X_train = Macierz markerów dla treningu
+x_train <- as.matrix(data_train[, valid_mirna])
+# Y_train = Survival object dla treningu
+y_train <- Surv(data_train$time_to_event, data_train$event)
 
-cat("\n>>> Trenowanie modelu LASSO (szukanie optymalnego lambda)... \n")
-# alpha = 1 oznacza LASSO (0 to Ridge)
-cv_fit <- cv.glmnet(x, y, family = "cox", alpha = 1)
 
-# Wykres błędu (pokazuje jak zmienia się błąd wraz z liczbą zmiennych)
+cv_fit <- cv.glmnet(x_train, y_train, family = "cox", alpha = 1)
+
+# Wykres błędu
 plot(cv_fit)
-title("Wybór liczby markerów (LASSO Cross-Validation)", line = 3)
+title("LASSO Cross-Validation (Zbiór Treningowy)", line = 3)
 
-# Najlepsza lambda (parametr kary)
+# Najlepsza lambda
 best_lambda <- cv_fit$lambda.min
 cat("Optymalna lambda:", best_lambda, "\n")
 
 # ------------------------------------------------------------------------------
-# KROK 4: Ekstrakcja Sygnatury ("Iza Score")
+# KROK 4: Ekstrakcja Sygnatury (Wagi zmiennych)
 # ------------------------------------------------------------------------------
-# Wyciągamy współczynniki dla optymalnej lambdy
 coefs <- coef(cv_fit, s = "lambda.min")
 active_index <- which(coefs != 0)
 active_coefficients <- coefs[active_index]
 active_names <- rownames(coefs)[active_index]
 
-# Tworzymy ładną tabelkę z wzorem
 signature_table <- data.frame(
   miRNA = active_names,
   Waga_Coef = round(active_coefficients, 4)
@@ -2850,64 +2821,75 @@ signature_table <- data.frame(
 cat("\n>>> TWOJA SYGNATURA (Wybrane miRNA i ich wagi): <<<\n")
 print(signature_table)
 
-# Jeśli tabela jest pusta, spróbuj 'lambda.1se' (bardziej restrykcyjna) lub sprawdź dane.
-if(nrow(signature_table) == 0) warning("LASSO wyzerowało wszystkie zmienne! Spróbuj poluzować kryteria.")
+if(nrow(signature_table) == 0) warning("LASSO wyzerowało wszystkie zmienne! Spróbuj lambda.1se lub sprawdź dane.")
 
 # ------------------------------------------------------------------------------
-# KROK 5: Obliczenie Risk Score dla każdego pacjenta
+# KROK 5: Walidacja na zbiorze TESTOWYM (Egzamin modelu)
 # ------------------------------------------------------------------------------
-# Wzór: Score = Coef1 * miRNA1 + Coef2 * miRNA2 ...
-risk_scores <- predict(cv_fit, newx = x, s = "lambda.min", type = "link")
-data_model$RiskScore <- as.vector(risk_scores)
+# Uwaga: Tutaj używamy "data_test"! Model nigdy wcześniej nie widział tych danych.
 
-# Podział na grupy RYZYKA (High vs Low Risk) wg mediany Score
-mediana_score <- median(data_model$RiskScore)
-data_model$RiskGroup <- ifelse(data_model$RiskScore > mediana_score, "High Risk", "Low Risk")
+# Przygotowanie macierzy testowej
+x_test <- as.matrix(data_test[, valid_mirna])
 
-cat("\nMediana Risk Score:", round(mediana_score, 3), "\n")
-summary(data_model$RiskScore)
+# Obliczenie Risk Score dla pacjentów testowych używając modelu z treningu
+risk_scores_test <- predict(cv_fit, newx = x_test, s = "lambda.min", type = "link")
+data_test$RiskScore <- as.vector(risk_scores_test)
+
+# Definiujemy punkt odcięcia (Cutoff) na podstawie MEDIANY ZBIORU TRENINGOWEGO
+# (To najbardziej rygorystyczne podejście - zasady ustalamy w treningu)
+train_risk_scores <- predict(cv_fit, newx = x_train, s = "lambda.min", type = "link")
+cutoff_value <- median(train_risk_scores)
+
+# Klasyfikacja pacjentów testowych
+data_test$RiskGroup <- ifelse(data_test$RiskScore > cutoff_value, "High Risk", "Low Risk")
+
+cat("\n--- Statystyki Walidacji (Zbiór Testowy) ---\n")
+cat("Punkt odcięcia (z treningu):", round(cutoff_value, 3), "\n")
+table(data_test$RiskGroup)
+
 # ------------------------------------------------------------------------------
-# KROK 6: Walidacja Sygnatury (Kaplan-Meier)
+# KROK 6: Wykres Kaplana-Meiera (Na zbiorze TESTOWYM)
 # ------------------------------------------------------------------------------
-fit_km <- survfit(Surv(time_to_event, event) ~ RiskGroup, data = data_model)
+# Ten wykres pokazuje prawdziwą zdolność predykcyjną modelu
 
-p <- ggsurvplot(
-  fit_km,
-  data = data_model,
+fit_km_test <- survfit(Surv(time_to_event, event) ~ RiskGroup, data = data_test)
+
+p_val_plot <- ggsurvplot(
+  fit_km_test,
+  data = data_test,
   pval = TRUE,
   risk.table = TRUE,
-  palette = c("red", "blue"), # Red=High Risk, Blue=Low Risk
-  title = "Skuteczność Sygnatury miRNA ",
-  xlab = "Czas (Dni)",
+  palette = c("red", "blue"),
+  title = "Walidacja Sygnatury miRNA (Zbiór Testowy)",
+  subtitle = paste("N =", nrow(data_test), "| Split 70/30"),
+  xlab = "Time (Days)",
   legend.labs = c("High Risk", "Low Risk"),
   ggtheme = theme_minimal()
 )
 
-print(p)
-#ggsave("KM_Signature_LASSO.png", print(p), width = 8, height = 6)
+print(p_val_plot)
+# ggsave("KM_Validation_TestSet.png", print(p_val_plot), width = 8, height = 6)
 
 # ------------------------------------------------------------------------------
-# KROK 7: Ile razy lepsza jest sygnatura? (Cox)
+# KROK 7: Cox Proportional Hazards dla Ryzyka (Zbiór Testowy)
 # ------------------------------------------------------------------------------
-cox_sig <- coxph(Surv(time_to_event, event) ~ RiskGroup, data = data_model)
-cat("\n--- Wynik Coxa dla Grupy Ryzyka ---\n")
-print(summary(cox_sig))
+cox_test <- coxph(Surv(time_to_event, event) ~ RiskGroup, data = data_test)
+cat("\n--- Wynik Coxa dla Grupy Ryzyka (Walidacja) ---\n")
+print(summary(cox_test))
 
+# Opcjonalnie: C-index na zbiorze testowym
+c_index <- summary(cox_test)$concordance
+cat("\nC-index na zbiorze testowym:", round(c_index[1], 3), "\n")
 ```
 
-| miRNA       | Współczynnik (Coef) | HR (exp(Coef)) | 95% CI HR     |
-| ----------- | ------------------- | -------------- | ------------- |
-| hsa_mir_210 | -0.0584             | 0.943          | 0.890 – 0.998 |
-| hsa_mir_17  | 0.4410              | 1.555          | 1.002 – 2.416 |
-| hsa_mir_20a | -0.2353             | 0.791          | 0.602 – 1.038 |
-| hsa_mir_155 | -0.2179             | 0.804          | 0.613 – 1.056 |
 
+W celu weryfikacji zdolności generalizacji modelu, kohortę podzielono losowo na zbiór treningowy (70%) i testowy (30%). Algorytm LASSO Cox na zbiorze treningowym wyłonił sygnaturę złożoną z 15 cząsteczek miRNA (Tabela X).
 
-Analiza LASSO-Cox przeprowadzona w celu wyłonienia prognostycznej sygnatury miRNA pozwoliła zidentyfikować cztery miRNA o istotnym znaczeniu: **hsa_mir_210** (współczynnik = −0.0584), **hsa_mir_17** (0.4410), **hsa_mir_20a** (−0.2353) oraz **hsa_mir_155** (−0.2179). Wartości współczynników zostały użyte do obliczenia indywidualnego **Risk Score** dla każdego pacjenta. W badanej kohorcie (n = 782) Risk Score mieścił się w zakresie od −1.19 do 0.88, z medianą −0.115, co pozwoliło podzielić pacjentów na grupy **High Risk** i **Low Risk** względem mediany.
+Walidacja na niezależnym zbiorze testowym (n = 235) wykazała umiarkowaną zdolność dyskryminacyjną modelu, osiągając **C-index na poziomie 0.607**. Analiza przeżycia wykazała, że pacjenci z grupy wysokiego ryzyka (High Risk) mieli o 45% wyższe ryzyko zgonu w porównaniu do grupy niskiego ryzyka (**HR = 1.46**, 95% CI: 0.30–1.59). Różnica ta nie osiągnęła jednak poziomu istotności statystycznej (**p = 0.38**, Log-rank test), co należy interpretować w kontekście niskiej liczby zdarzeń w zbiorze testowym (22 zgony, 9.3% kohorty).
 
-Analiza przeżycia z użyciem modelu Cox wykazała istotną różnicę między grupami ryzyka: pacjenci w grupie Low Risk mieli znacząco niższe ryzyko zdarzenia w porównaniu do High Risk (**HR = 0.61, 95% CI: 0.41–0.92, p = 0.018**). Wynik ten sugeruje, że opracowana sygnatura miRNA jest niezależnym czynnikiem prognostycznym. C-statystyka modelu wyniosła 0.557, co wskazuje na umiarkowaną zdolność dyskryminacyjną sygnatury.
+Brak istotności statystycznej w walidacji zewnętrznej (p=0.38) najprawdopodobniej wynika z ograniczonej mocy statystycznej spowodowanej niską liczbą punktów końcowych (events). W zbiorze walidacyjnym odnotowano jedynie 22 zgony na 235 pacjentów. Przy tak niskim odsetku zdarzeń, wykrycie istotnych różnic wymagałoby bardzo silnego efektu biologicznego lub znacznie liczniejszej grupy badawczej.
 
-Ponadto, obecność zarówno miRNA o współczynnikach dodatnich (np. **hsa_mir_17**) jak i ujemnych (np. **hsa_mir_210, hsa_mir_20a, hsa_mir_155**) sugeruje, że sygnatura odzwierciedla złożoną regulację molekularną istotną dla przeżycia pacjentów. Sygnatura ta może stanowić podstawę do dalszych badań funkcjonalnych oraz potencjalnie pomóc w identyfikacji pacjentów, którzy mogliby korzystać z bardziej intensywnej terapii lub monitoringu.
+Mimo braku istotności p-value, parametr C-index (0.607) w walidacji wskazuje, że sygnatura zachowuje potencjał prognostyczny na nieznanych danych. Jest to wynik spójny z wieloma innymi sygnaturami wielogenowymi w raku piersi, gdzie wartości C-index w zewnętrznych walidacjach często oscylują w granicach 0.60–0.65.
 
 
 
