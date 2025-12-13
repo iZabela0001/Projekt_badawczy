@@ -2893,6 +2893,385 @@ Mimo braku istotności p-value, parametr C-index (0.607) w walidacji wskazuje, �
 
 
 
+```{r}
+############# Etap 4 Piotr
+```
+
+# Analiza Przeżycia (Survival Analysis)
+
+## Metodologia
+
+W celu oceny wartości prognostycznej wybranych markerów molekularnych
+przeprowadzono analizę przeżycia całkowitego (Overall Survival, OS).
+Czas przeżycia (`time_to_event`) zdefiniowano jako okres od diagnozy do
+zgonu lub ostatniej obserwacji (cenzurowanie).
+
+Analizę podzielono na dwa etapy:
+
+1.  **Analiza jednoczynnikowa (Kaplan-Meier):** Zmienne ciągłe (poziomy
+    ekspresji genów/białek) zdychotomizowano w oparciu o medianę,
+    wyodrębniając grupy "High" oraz "Low". Różnice w krzywych przeżycia
+    weryfikowano testem log-rank.
+
+2.  **Analiza wieloczynnikowa (Regresja Coxa):** Zbudowano modele
+    proporcjonalnego hazardu Coxa, aby ocenić niezależny wpływ markerów
+    po skorygowaniu o czynniki kliniczne (wiek, stadium zaawansowania)
+    oraz podtyp molekularny.
+
+Analizie poddano trzy kluczowe markery o potencjalnym znaczeniu
+klinicznym:
+
+-   **MKI67** (Marker proliferacji) – w całej kohorcie.
+
+-   **ESR1** (Receptor estrogenowy) – wewnątrz podtypu Luminal B
+    (weryfikacja efektu ochronnego).
+
+-   **EGFR** (Receptor naskórkowego czynnika wzrostu) – wewnątrz podtypu
+    Basal-like (marker agresji).
+
+```{r}
+# Przygotowanie zmiennych (Dychotomizacja względem mediany)
+
+# Funkcja pomocnicza do kategoryzacji (High/Low)
+categorize_marker <- function(x) {
+  ifelse(x > median(x, na.rm = TRUE), "High", "Low")
+}
+
+# Tworzenie grup dla kluczowych markerów
+
+final_data <- final_data %>%
+  mutate(
+    MKI67_Group = factor(categorize_marker(mki67), levels = c("Low", "High")),
+    ESR1_Group  = factor(categorize_marker(esr1), levels = c("Low", "High")),
+    EGFR_Group  = factor(categorize_marker(egfr_rna), levels = c("Low", "High"))
+  )
+
+# Sprawdzenie liczebności grup (dla pewności, że podział jest równy)
+# table(final_data$MKI67_Group)
+
+```
+
+## Wizualizacja krzywych przeżycia (Kaplan-Meier)
+
+### Wpływ proliferacji (MKI67) na rokowanie ogólne
+
+Marker Ki-67 (gen *MKI67*) jest uznanym wskaźnikiem proliferacji
+komórkowej. Zweryfikowano hipotezę, że wysoka ekspresja tego genu
+koreluje ze skróconym czasem przeżycia w całej badanej populacji.
+
+```{r}
+fit_mki67 <- survfit(Surv(time_to_event, event) ~ MKI67_Group, data = final_data)
+
+ggsurvplot(
+  fit_mki67, 
+  data = final_data,
+  pval = TRUE, 
+  risk.table = TRUE,
+  conf.int = TRUE,
+  palette = c("#2E9FDF", "#E7B800"), # Niebieski (Low), Żółty (High)
+  title = "Przeżycie całkowite wg poziomu MKI67",
+  xlab = "Czas (Dni)", 
+  ylab = "Prawdopodobieństwo przeżycia",
+  legend.title = "Ekspresja MKI67",
+  legend.labs = c("Low", "High"),
+  ggtheme = theme_minimal()
+)
+```
+
+### Analiza wewnątrzpodtypowa
+
+**1. Rola ESR1 w podtypie Luminal B** Podtyp Luminal B charakteryzuje
+się gorszym rokowaniem niż Luminal A, mimo ekspresji receptorów
+hormonalnych. Zbadano, czy wyższa ekspresja genu *ESR1* wewnątrz tej
+grupy nadal pełni funkcję ochronną.
+
+```{r}
+# Filtrowanie danych tylko dla Luminal B
+data_lumb <- final_data %>% filter(brca_subtype_pam50 == "LumB")
+
+fit_esr1 <- survfit(Surv(time_to_event, event) ~ ESR1_Group, data = data_lumb)
+
+ggsurvplot(
+  fit_esr1, 
+  data = data_lumb, 
+  pval = TRUE, 
+  risk.table = TRUE,
+  palette = c("grey", "red"),
+  title = "Podtyp Luminal B: ESR1 High vs Low",
+  xlab = "Czas (Dni)",
+  legend.title = "Ekspresja ESR1"
+)
+```
+
+**2. Rola EGFR w podtypie Basal-like** Podtyp podstawny
+(Basal-like/TNBC) często wykazuje nadekspresję *EGFR*. Sprawdzono, czy
+poziom tego markera różnicuje pacjentki pod kątem przeżycia wewnątrz tej
+agresywnej grupy.
+
+```{r}
+# Filtrowanie danych tylko dla Basal
+data_basal <- final_data %>% filter(brca_subtype_pam50 == "Basal")
+
+fit_egfr <- survfit(Surv(time_to_event, event) ~ EGFR_Group, data = data_basal)
+
+ggsurvplot(
+  fit_egfr, 
+  data = data_basal, 
+  pval = TRUE, 
+  risk.table = TRUE,
+  palette = c("grey", "purple"),
+  title = "Podtyp Basal-like: EGFR High vs Low",
+  xlab = "Czas (Dni)",
+  legend.title = "Ekspresja EGFR"
+)
+```
+
+## Wieloczynnikowa analiza ryzyka (Modele Coxa)
+
+W celu potwierdzenia niezależnej wartości prognostycznej badanych
+markerów, zbudowano serię modeli Coxa.
+
+-   **Model Bazowy (Kliniczny):** Uwzględnia wiek, stadium nowotworu
+    (Stage) oraz podtyp PAM50.
+
+-   **Modele Testowe (B1, B2, B3):** Rozszerzone o badane markery
+    genetyczne.
+
+Wyniki przedstawiono w postaci współczynników hazardu (Hazard Ratio,
+HR). Wartość HR \> 1 oznacza wzrost ryzyka zgonu, natomiast HR \< 1
+świadczy o działaniu ochronnym.
+
+```{r}
+# Przygotowanie danych do Coxa (usuwamy braki w zmiennych klinicznych)
+cox_data <- final_data %>%
+  filter(!is.na(pathologic_stage), !is.na(age_mean_years)) %>%
+  mutate(pathologic_stage = as.factor(pathologic_stage))
+
+# 1. Model Bazowy
+cox_base <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50, 
+                  data = cox_data)
+
+# 2. Model B1: Baza + MKI67 (Czy proliferacja jest niezależna od podtypu?)
+cox_mki67_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + mki67, 
+                   data = cox_data)
+
+# 3. Model B2: Baza + ESR1 (Czy receptor chroni niezależnie?)
+cox_esr1_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + esr1, 
+                  data = cox_data)
+
+# 4. Model B3: Baza + EGFR
+cox_egfr_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + egfr_rna, 
+                  data = cox_data)
+
+# Funkcja do formatowania wyników (Tabela Elsevier-style)
+format_cox_results <- function(model, model_name) {
+  model %>%
+    broom::tidy(exponentiate = TRUE, conf.int = TRUE) %>%
+    dplyr::select(term, estimate, p.value, conf.low, conf.high) %>%
+    mutate(
+      term = str_replace_all(term, "brca_subtype_pam50", "Subtype: "),
+      term = str_replace_all(term, "pathologic_stage", "Stage: "),
+      term = str_replace_all(term, "age_mean_years", "Age"),
+      p.value = format.pval(p.value, eps = 0.001, digits = 3),
+      estimate = round(estimate, 3),
+      conf.low = round(conf.low, 3),
+      conf.high = round(conf.high, 3)
+    ) %>%
+    kable(caption = paste("Wyniki modelu:", model_name), 
+          col.names = c("Zmienna", "HR", "P-value", "CI 95% Low", "CI 95% High")) %>%
+    kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+}
+```
+
+### Wyniki modelowania statystycznego
+
+Tabela przedstawia wyniki dla modelu bazowego, który stanowi punkt
+odniesienia dla dalszych analiz. Stadium zaawansowania (Stage) oraz wiek
+pacjentki są silnymi predyktorami przeżycia.
+
+```{r}
+format_cox_results(cox_base, "Model Kliniczny (Bazowy)")
+```
+
+### Interpretacja wyników Modelu Bazowego (Analiza wieloczynnikowa)
+
+Model referencyjny potwierdza, że w badanej kohorcie klasyczne zmienne
+kliniczno-patologiczne stanowią najsilniejsze determinanty czasu
+przeżycia całkowitego (OS), dominując nad stratyfikacją molekularną.
+
+1.  **Zmienne demograficzne (Wiek):** Zaobserwowano wysoce istotną
+    statystycznie korelację wieku z ryzykiem zgonu (**HR = 1.050**, p \<
+    0.001). Każdy rok życia zwiększa ryzyko względne o 5%, co
+    odzwierciedla naturalną biologię starzenia oraz potencjalne
+    obciążenia chorobami współistniejącymi, typowe dla populacji
+    onkologicznej.
+
+2.  **Stadium zaawansowania (Stage):** Wyniki potwierdzają hierarchiczną
+    strukturę ryzyka zgodną z klasyfikacją TNM. W porównaniu do grupy
+    referencyjnej (Stadium I):
+
+    -   **Stadium II** podwaja ryzyko zgonu (**HR = 2.02**, p = 0.034).
+
+    -   **Stadium III** zwiększa to ryzyko niemal czterokrotnie (**HR =
+        3.96**, p \< 0.001). Zachowanie efektu "dawka-odpowiedź" (wzrost
+        HR wraz ze stopniem zaawansowania) stanowi wewnętrzną walidację
+        poprawności danych klinicznych w zbiorze.
+
+3.  **Podtypy molekularne (PAM50):** W modelu skorygowanym o wiek i
+    stadium, status molekularny guza nie wykazał niezależnej istotności
+    statystycznej (p \> 0.05 dla wszystkich podtypów względem
+    referencji, którą stanowił podtyp Basal-like).
+
+    -   Mimo braku istotności, **trend dla podtypu Luminal A (HR =
+        0.721)** wskazuje na jego biologicznie łagodniejszy charakter
+        (redukcja ryzyka o \~28% względem agresywnego podtypu
+        bazalnego), co jest zgodne z kanonem literaturowym (*Perou et
+        al.*).
+
+    -   Brak statystycznej znamienności sugeruje, że w analizowanej
+        kohorcie silny wpływ zaawansowania choroby (Stage III) "maskuje"
+        subtelniejsze różnice wynikające z biologii molekularnej guza.
+
+Tabela weryfikuje, czy marker proliferacji *MKI67* wnosi istotną
+informację prognostyczną po uwzględnieniu podtypu molekularnego.
+
+```{r}
+format_cox_results(cox_mki67_model, "Model B1 (+ MKI67)")
+```
+
+### Interpretacja wyników wieloczynnikowej analizy Coxa (Model B1)
+
+Analiza wykazała, że w badanym modelu dominującą rolę prognostyczną
+odgrywają zmienne kliniczne, podczas gdy wpływ markerów molekularnych
+jest modyfikowany przez interakcje międzyzmienne.
+
+1.  **Zmienne kliniczne (Wiek i Stadium):** Potwierdzono, że **wiek**
+    (HR=1.049, p\<0.001) oraz **stadium zaawansowania** są silnymi,
+    niezależnymi czynnikami negatywnego rokowan. Wzrost ryzyka zgonu
+    wraz z zaawansowaniem choroby (HR=2.04 dla Stadium II i HR=3.99 dla
+    Stadium III) jest zgodny z systemem klasyfikacji TNM i odzwierciedla
+    większą masę guza oraz potencjał przerzutowy w wyższych stadiach.
+
+2.  **Podtypy molekularne (Subtype):** Po uwzględnieniu w modelu
+    zmiennej *MKI67*, status podtypu utracił niezależną istotność
+    statystyczną (p\>0.05). Trend dla podtypu **Luminal A** (HR=0.576)
+    wskazuje na jego ochronny charakter względem grupy referencyjnej, co
+    jest zgodne z literaturą definiującą ten podtyp jako biologicznie
+    najmniej agresywny (*Perou et al.*), jednak brak istotności
+    sugeruje, że część informacji prognostycznej została przejęta przez
+    inne zmienne w modelu.
+
+3.  **Marker proliferacji (MKI67):** Brak istotności statystycznej genu
+    *MKI67* (p=0.249) oraz trend w kierunku HR \< 1 (0.896) w modelu
+    wieloczynnikowym można wytłumaczyć dwoma zjawiskami biologicznymi:
+
+    -   **Współliniowość (Multicollinearity):** Gen *MKI67* jest
+        składową sygnatury definiującej podtypy PAM50 (szczególnie
+        różnicując LumA od LumB). Wprowadzenie obu zmiennych do jednego
+        modelu powoduje zniesienie ich indywidualnej wagi
+        prognostycznej.
+
+    -   **Paradoks chemiowrażliwości:** W literaturze (*Fasching et
+        al.*) opisuje się zjawisko, w którym guzy o wysokiej
+        proliferacji (wysokie Ki-67) lepiej odpowiadają na chemioterapię
+        adiuwantową niż guzy wolnorosnące. W efekcie leczenie może
+        niwelować naturalnie gorsze rokowanie biologiczne tych
+        nowotworów, co w analizie przeżycia całkowitego (OS) objawia się
+        brakiem istotnego wzrostu ryzyka.
+
+Tabela oraz przedstawiają wyniki dla receptorów *ESR1* oraz
+*EGFR*.
+
+```{r}
+format_cox_results(cox_esr1_model, "Model B2 (+ ESR1)")
+format_cox_results(cox_egfr_model, "Model B3 (+ EGFR)")
+```
+
+### Interpretacja wyników Modelu B2 (+ ESR1)
+
+Włączenie ekspresji genu *ESR1* do modelu wieloczynnikowego nie wykazało
+jego niezależnej wartości prognostycznej, potwierdzając dominującą rolę
+czynników klinicznych oraz strukturę definicyjną podtypów molekularnych.
+
+1.  **Stabilność zmiennych klinicznych:** Wiek (**HR = 1.050**, p \<
+    0.001) oraz stadium zaawansowania (szczególnie Stage III: **HR =
+    3.94**, p \< 0.001) pozostają stabilnymi, najsilniejszymi
+    predyktorami ryzyka zgonu, niezależnie od dodania zmiennej *ESR1*.
+
+2.  **Marker *ESR1* i redundancja biologiczna:** Ekspresja *ESR1* nie
+    osiągnęła istotności statystycznej (**p = 0.692**), a jej
+    współczynnik hazardu (**HR = 0.969**) sugeruje jedynie nieznaczny
+    trend ochronny. Brak istotności wynika ze zjawiska współliniowości:
+    wysoka ekspresja *ESR1* jest cechą definicyjną podtypów Luminal A
+    i B. Informacja o statusie receptorowym jest zatem duplikowana przez
+    zmienną "Subtype", co znosi statystyczną wagę samego markera w
+    modelu wieloczynnikowym.
+
+### Interpretacja wyników Modelu B3 (+ EGFR)
+
+Analiza modelu z uwzględnieniem *EGFR* wskazuje na ograniczoną
+użyteczność tego markera jako niezależnego czynnika prognostycznego w
+obecności zmiennych definiujących podtyp molekularny.
+
+1.  **Dominacja czynników klinicznych:** Podobnie jak w poprzednich
+    modelach, zaawansowanie choroby (Stage III: **HR = 3.95**, p \<
+    0.001) oraz wiek pacjentki (**HR = 1.051**, p \< 0.001) stanowią
+    główne determinanty przeżycia całkowitego.
+
+2.  **Marker *EGFR*:** Gen *EGFR* nie wykazał istotnego wpływu na
+    rokowanie (**p = 0.421**). Zaobserwowany kierunek zmiany (**HR =
+    1.061**) wskazuje na trend w stronę zwiększonego ryzyka, co jest
+    zgodne z biologiczną rolą EGFR jako promotora agresywności i
+    proliferacji (szczególnie w podtypie Basal-like). Brak niezależnej
+    istotności statystycznej sugeruje jednak, że negatywny wpływ
+    nadekspresji EGFR jest już wystarczająco reprezentowany w modelu
+    przez przynależność do podtypu molekularnego (głównie Basal/TNBC)
+    oraz wysokie stadium zaawansowania.
+
+## Podsumowanie wyników analizy przeżycia
+
+Na podstawie przeprowadzonych analiz (testów Log-Rank oraz
+wieloczynnikowej regresji Coxa) sformułowano następujące wnioski:
+
+1.  **Dominacja czynników klinicznych nad molekularnymi:** We wszystkich
+    zbudowanych modelach (Bazowym, B1, B2, B3) najsilniejszymi i
+    najbardziej stabilnymi predyktorami przeżycia całkowitego (OS)
+    okazały się **wiek pacjentki** oraz **stadium zaawansowania
+    nowotworu** (Stage). Ryzyko zgonu wzrastało niemal czterokrotnie dla
+    Stadium III (HR ≈ 4.0, p \< 0.001), co potwierdza, że w badanej
+    kohorcie masa guza i obecność przerzutów mają większe znaczenie
+    prognostyczne niż profil ekspresji pojedynczych genów.
+
+2.  **Marker proliferacji (MKI67) i współliniowość:** W modelu
+    wieloczynnikowym (Tabela 4.2) gen *MKI67* utracił niezależną
+    istotność statystyczną (p = 0.249), wykazując trend w kierunku HR \<
+    1 (0.896). Sugeruje to, że informacja o agresywności guza wynikająca
+    z wysokiej proliferacji jest już zawarta w zmiennej definiującej
+    podtyp molekularny (szczególnie w podtypach Luminal B i Basal-like).
+    Brak negatywnego wpływu wysokiego *MKI67* na przeżycie w modelu
+    skorygowanym może również odzwierciedlać wyższą wrażliwość guzów
+    szybko dzielących się na leczenie systemowe (zjawisko
+    chemiowrażliwości).
+
+3.  **Brak niezależnej wartości markerów ESR1 i EGFR:** Włączenie do
+    modelu genów *ESR1* (Tabela 4.3) oraz *EGFR* (Tabela 4.4) nie
+    poprawiło jego zdolności predykcyjnej. Oba markery nie wykazały
+    istotności statystycznej jako niezależne czynniki ryzyka. Wynika to
+    z faktu, że ich poziomy ekspresji są cechami definicyjnymi samych
+    podtypów PAM50 (wysoki *ESR1* definiuje nowotwory luminalne, wysoki
+    *EGFR* jest charakterystyczny dla Basal-like). W konsekwencji, w
+    modelu uwzględniającym podział na podtypy, dodanie tych markerów
+    prowadzi do redundancji informacyjnej.
+
+4.  **Wnioski końcowe:** Analiza potwierdza, że stratyfikacja
+    molekularna PAM50 skutecznie grupuje pacjentki o odmiennej biologii,
+    jednak w kontekście prognozowania przeżycia całkowitego (OS), to
+    klasyczne parametry kliniczno-patologiczne (wiek, stadium TNM)
+    pozostają nadrzędnymi determinantami rokowania. Pojedyncze markery
+    (*MKI67, ESR1, EGFR*) nie stanowią w tym układzie niezależnych
+    czynników ryzyka, lecz są biologicznie sprzężone z przypisanym
+    podtypem nowotworu.
+
 
 
 
