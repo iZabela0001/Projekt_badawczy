@@ -196,17 +196,50 @@ merged_data_cleaned <- read.csv("merged_data_cleaned.csv",
                         stringsAsFactors = FALSE)
 
  
-# Sprawdzenie rozkładu danych czasowych
-hist(merged_data_cleaned$days_to_death, main = "Dni do zgonu", col = "red")
-hist(merged_data_cleaned$days_to_last_followup, main = "Dni do ostatniego kontaktu", col = "blue")
- 
+# --- Konfiguracja parametrów graficznych dla standardu Elsevier ---
+# Ustawienie: 1 wiersz, 2 kolumny, czcionka bezszeryfowa (np. Arial), marginesy
+original_par <- par(no.readonly = TRUE) # Zapisanie starych ustawień
+par(mfrow = c(1, 2),        # Układ paneli (A obok B)
+    family = "sans",        # Standardowa czcionka (Arial/Helvetica)
+    mar = c(5, 5, 3, 1),    # Marginesy (dół, lewo, góra, prawo)
+    cex.lab = 1.1,          # Wielkość etykiet osi
+    cex.axis = 0.9,         # Wielkość liczb na osiach
+    cex.main = 1.2)         # Wielkość tytułu
+
+# --- Panel A: Rozkład dni do zgonu ---
+hist(merged_data_cleaned$days_to_death, 
+     main = "",              # Tytuł usuwamy z góry (dodamy etykietę A)
+     col = "gray30",         # Ciemnoszary (czytelny w druku b&w)
+     border = "white",       # Białe obramowanie słupków dla czystości
+     xlab = "Dni do zgonu",  # Jasny opis osi X
+     ylab = "Liczebność",    # Jasny opis osi Y
+     las = 1,                # Liczby na osi Y poziomo
+     breaks = 20)            # Większa liczba słupków dla dokładności
+mtext("A", side = 3, line = 1, adj = -0.15, cex = 1.2, font = 2) # Oznaczenie figury "A"
+
+# --- Panel B: Rozkład dni do ostatniego kontaktu ---
+hist(merged_data_cleaned$days_to_last_followup, 
+     main = "", 
+     col = "gray70",         # Jaśniejszy szary dla odróżnienia
+     border = "white",
+     xlab = "Dni do ost. kontaktu", 
+     ylab = "Liczebność",
+     las = 1,
+     breaks = 20)
+mtext("B", side = 3, line = 1, adj = -0.15, cex = 1.2, font = 2) # Oznaczenie figury "B"
+
+# Przywrócenie ustawień graficznych (opcjonalne)
+par(original_par)
+
+# --- Logika przetwarzania danych (BEZ ZMIAN) ---
+
 # Sprawdzenie braków danych
 #sum(is.na(merged_data_cleaned$days_to_death))
 #sum(is.na(merged_data_cleaned$days_to_last_followup))
 
 # Ujednolicenie zapisu statusu życia
 merged_data_cleaned$vital_status <- toupper(merged_data_cleaned$vital_status)
- 
+
 # Utworzenie zmiennej event: 1 = DEAD, 0 = ALIVE
 merged_data_cleaned$event <- ifelse(merged_data_cleaned$vital_status == "DEAD", 1, 0)
 
@@ -216,7 +249,7 @@ merged_data_cleaned$time_to_event <- ifelse(merged_data_cleaned$event == 1,
                                             merged_data_cleaned$days_to_last_followup)
 
 # Sprawdzenie wyników
-# table(merged_data_cleaned$vital_status, merged_data_cleaned$event)  # DEAD → 1, ALIVE → 0
+# table(merged_data_cleaned$vital_status, merged_data_cleaned$event)  # DEAD -> 1, ALIVE -> 0
 # head(merged_data_cleaned)
 
 ```
@@ -258,8 +291,8 @@ prowadzić do błędów obliczeniowych (NaN) w przypadku danych z
 wartościami poniżej zera.
 
 ```{r}
-
-plot_density_chunks <- function(vars, data, fill_color = "lightblue", ncol = 2, chunk_size = 6) {
+plot_density_chunks <- function(vars, data, fill_color = "gray70", ncol = 2, chunk_size = 6) {
+  # Logika podziału na kawałki (bez zmian)
   chunks <- split(vars, ceiling(seq_along(vars) / chunk_size))
   
   for (chunk in chunks) {
@@ -267,18 +300,35 @@ plot_density_chunks <- function(vars, data, fill_color = "lightblue", ncol = 2, 
       df <- data[!is.na(data[[var]]), ]
       
       ggplot(df, aes_string(x = var)) +
-        geom_density(fill = fill_color, alpha = 0.6) +
-        labs(title = var, x = "Z-score", y = "Gęstość") +
-        theme_minimal(base_size = 12)
+        # Zmiana: Dodano czarny kontur i ustawiono styl "print-friendly"
+        geom_density(fill = fill_color, color = "black", size = 0.6, alpha = 0.8) +
+        
+        # Zmiana: Usunięcie pustej przestrzeni pod wykresem (styl Elsevier)
+        scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+        
+        # Etykiety (JĘZYK ANGIELSKI)
+        labs(title = var, x = "Z-score", y = "Density") +
+        
+        # Zmiana: Temat graficzny zgodny z publikacjami (czyste tło, czarne osie)
+        theme_bw(base_size = 11, base_family = "sans") + 
+        theme(
+          panel.grid.major = element_blank(),   # Usunięcie siatki głównej
+          panel.grid.minor = element_blank(),   # Usunięcie siatki pomocniczej
+          panel.border = element_blank(),       # Usunięcie ramki dookoła
+          axis.line = element_line(color = "black", size = 0.5), # Wyraźne osie X i Y
+          axis.text = element_text(color = "black"), # Tekst osi czarny
+          axis.title = element_text(color = "black", face = "plain"),
+          plot.title = element_text(face = "bold", size = 10, hjust = 0) # Tytuł do lewej
+        )
     })
     
+    # Wyświetlanie (bez zmian logiki)
     print(wrap_plots(plots, ncol = ncol))
   }
 }
 
-plot_density_chunks(bialka_z, merged_data_cleaned, fill_color = "lightblue", ncol = 2)
-
-
+# Wywołanie funkcji
+plot_density_chunks(bialka_z, merged_data_cleaned, fill_color = "gray70", ncol = 2)
 ```
 
 **Standaryzacja miRNA**
@@ -339,25 +389,42 @@ prowadzić do błędów obliczeniowych (NaN) w przypadku danych z
 wartościami poniżej zera.
 
 ```{r}
-
 plot_mirna_density <- function(vars, data, ncol = 2) {
   plots <- lapply(vars, function(var) {
     df <- data[!is.na(data[[var]]), ]
     
     ggplot(df, aes_string(x = var)) +
-      geom_density(fill = "plum", alpha = 0.6) +
-      labs(title = var, x = "Z-score", y = "Gęstość") +
-      theme_minimal(base_size = 12)
+      # Zmiana: Styl "print-friendly" (szary + czarny kontur) zamiast "plum"
+      geom_density(fill = "gray70", color = "black", alpha = 0.8, size = 0.6) +
+      
+      # Zmiana: Usunięcie lewitującej przestrzeni pod wykresem
+      scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+      
+      # Zmiana: Etykiety w języku angielskim
+      labs(title = var, x = "Z-score", y = "Density") +
+      
+      # Zmiana: Temat graficzny Elsevier (brak siatki, czarne osie)
+      theme_bw(base_size = 11, base_family = "sans") + 
+      theme(
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),       # Usunięcie ramki pudełkowej
+        axis.line = element_line(color = "black", size = 0.5), # Tylko osie L
+        axis.text = element_text(color = "black"),
+        axis.title = element_text(color = "black", face = "plain"),
+        plot.title = element_text(face = "bold", size = 10, hjust = 0)
+      )
   })
   
   wrap_plots(plots, ncol = ncol)
 }
 
+# --- Logika pętli (BEZ ZMIAN) ---
+
 mirna_z_chunks <- split(mirna_z, ceiling(seq_along(mirna_z) / 6))
 for (chunk in mirna_z_chunks) {
   print(plot_mirna_density(chunk, merged_data_cleaned, ncol = 2))
 }
-
 ```
 
 Zmienna `pathologic_stage` opisująca stadium zaawansowania nowotworu
@@ -737,22 +804,41 @@ annotation_df_sorted <- adn_mirna[posortowane_id, , drop = FALSE]
 ```
 
 ```{r generowanie_MIRNA_etap2_heatmapa}
+library(pheatmap)
+library(RColorBrewer)
+
+# Zdefiniowanie mapy kolorów (zachowujemy Twoją logikę: Blue -> Yellow -> Red)
+# Jest to standard dla danych ekspresyjnych (Z-score)
+color_palette <- colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100)
+
 pheatmap(
   heatmap_matrix_sorted,
-  #scale = "row",
+  # scale = "row",        # Logika bez zmian (zakomentowane jak u Ciebie)
   cluster_cols = FALSE,
   cluster_rows = TRUE,
   annotation_col = annotation_df_sorted,
   show_colnames = FALSE,
   show_rownames = TRUE,
-  main = "Heatmapa miRNA vs PAM50 (Posortowana wg Podtypu)",
-  color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
-  breaks = seq(-2, 2, length.out = 100),  
-  #filename = "Iza_Heatmapa_miRNA_kontrastowa.png",
+  
+  # --- JĘZYK ANGIELSKI ---
+  main = "miRNA Expression by PAM50 Subtype",
+  
+  # --- KOLORYSTYKA ---
+  color = color_palette,
+  breaks = seq(-2, 2, length.out = 100),
+  
+  # --- FORMATOWANIE ELSEVIER ---
+  border_color = NA,      # Ważne: usuwa siatkę wokół komórek (czytelniejsze przy dużej ilości danych)
+  fontfamily = "sans",    # Standardowa czcionka (Arial/Helvetica)
+  fontsize = 10,          # Bazowa wielkość czcionki
+  fontsize_row = 8,       # Wielkość nazw wierszy (dostosuj jeśli wierszy jest bardzo dużo)
+  legend = TRUE,          # Legenda skali kolorów
+  
+  # --- WYMIARY (pozostawione Twoje, ale dostosowane do zapisu) ---
   width = 10,
-  height = 13
+  height = 13,
+  filename = "Figure_Heatmap.pdf" # Sugeruję zapis do PDF (wektorowy) dla najwyższej jakości
 )
-
 
 #print(heatmapa_miRNA_etap2)
 ```
@@ -1055,29 +1141,49 @@ pca_plot_data_mirna <- data.frame(
   Batch = final_data$Batch_ID
 )
 
+# --- Definicja wspólnego stylu graficznego (Elsevier Standard) ---
+elsevier_theme <- theme_bw(base_size = 12, base_family = "sans") +
+  theme(
+    panel.grid.major = element_blank(),   # Usunięcie siatki głównej
+    panel.grid.minor = element_blank(),   # Usunięcie siatki pomocniczej
+    panel.border = element_rect(color = "black", fill = NA, size = 0.8), # Wyraźna ramka
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black", face = "plain"),
+    plot.title = element_text(face = "bold", size = 11, hjust = 0), # Tytuł do lewej, pogrubiony
+    legend.position = "right",             # Legenda z prawej
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 10)
+  )
+
+# --- Wykres 1: Weryfikacja Biologiczna (PAM50) ---
 plot_bio <- ggplot(pca_plot_data_mirna, aes(x = PC1, y = PC2, color = PAM50)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA miRNA: Weryfikacja Biologiczna (wg PAM50)",
-    subtitle = "Czy kropki grupują się kolorami podtypów?",
+    title = "A. Biological Variation (PAM50)", # Tytuł naukowy, bez "Weryfikacja"
+    # subtitle usunięty - interpretacja należy do tekstu manuskryptu
     x = paste0("PC1 (", variance_explained_miRNA[1], "%)"),
-    y = paste0("PC2 (", variance_explained_miRNA[2], "%)")
+    y = paste0("PC2 (", variance_explained_miRNA[2], "%)"),
+    color = "Subtype" # Profesjonalny nagłówek legendy
   ) +
-  theme_minimal() +
+  elsevier_theme +
   scale_color_brewer(palette = "Set1") 
 
 print(plot_bio)
 
-
+# --- Wykres 2: Kontrola Batch Effect ---
 plot_batch <- ggplot(pca_plot_data_mirna, aes(x = PC1, y = PC2, color = Batch)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA miRNA: Kontrola Batch Effect (wg Centrum)",
-    subtitle = "CZYSTO = Wymieszane kolory | BŁĄD = Odseparowane klastry",
+    title = "B. Batch Effect Control", # Tytuł naukowy
+    # subtitle usunięty - interpretacja "CZYSTO/BŁĄD" nie może być na wykresie
     x = paste0("PC1 (", variance_explained_miRNA[1], "%)"),
-    y = paste0("PC2 (", variance_explained_miRNA[2], "%)")
+    y = paste0("PC2 (", variance_explained_miRNA[2], "%)"),
+    color = "Batch ID" # Nagłówek legendy
   ) +
-  theme_minimal()
+  elsevier_theme
+# Domyślna paleta kolorów jest OK, ale jeśli masz dużo batchy, 
+# warto rozważyć scale_color_viridis_d() lub inną paletę dyskretną.
+
 print(plot_batch)
 ```
 
@@ -1173,14 +1279,33 @@ molekularnego (PAM50).
 ```{r heatmapa_bialka, fig.height=8, fig.width=10, include=FALSE}
 pheatmap(
   heatmap_matrix_protein_sorted,
-  cluster_cols = FALSE,       # Nie klastrujemy kolumn, (posortowane wg PAM50)
-  cluster_rows = TRUE,        # Klastrujemy białka, żeby zobaczyć podobne grupy markerów
+  
+  # --- LOGIKA PRZETWARZANIA (BEZ ZMIAN) ---
+  cluster_cols = FALSE,       # Nie klastrujemy kolumn (posortowane wg PAM50)
+  cluster_rows = TRUE,        # Klastrujemy białka
   annotation_col = annotation_protein_sorted,
-  show_colnames = FALSE,      # Ukrywamy ID pacjentów (zbyt gęste)
+  show_colnames = FALSE,      # Ukrywamy ID pacjentów
   show_rownames = TRUE,       # Pokazujemy nazwy białek
-  main = "Profil białkowy podtypów PAM50",
+  
+  # --- FORMATOWANIE WIZUALNE (STANDARD ELSEVIER) ---
+  
+  # 1. Język angielski
+  main = "Protein Expression Profile by PAM50 Subtype",
+  
+  # 2. Kolorystyka (Zachowana Twoja paleta RdYlBu - standard w onkologii)
   color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
-  breaks = seq(-2, 2, length.out = 100) # Skala ucięta na -2/+2 dla lepszego kontrastu
+  breaks = seq(-2, 2, length.out = 100),
+  
+  # 3. Stylistyka do druku
+  border_color = NA,          # Usunięcie siatki wokół komórek (kluczowe dla czytelności!)
+  fontfamily = "sans",        # Arial/Helvetica
+  fontsize = 10,              # Bazowa wielkość czcionki
+  fontsize_row = 8,           # Zmniejszona czcionka wierszy (białek), żeby się mieściły
+  
+  # 4. Ustawienia legendy
+  legend = TRUE,
+  annotation_legend = TRUE,
+  filename = "Figure2protein_Heatmap.pdf" # Sugeruję zapis do PDF (wektorowy) dla najwyższej jakości
 )
 ```
 
@@ -1281,17 +1406,20 @@ czynnikiem różnicującym próbki jest biologia (PAM50), czy pochodzenie
 tkanki z różnych ośrodków (Tissue Source Site - TSS).
 
 ```{r pca_bialka_batch, fig.height=6, fig.width=14, include=FALSE}
-# 1. Wyciągnięcie Batch ID z identyfikatora pacjenta (drugi człon ID, np. TCGA-A2-...)
+library(ggplot2)
+library(gridExtra) # Przydatne do ułożenia wykresów obok siebie
+
+# --- 1. Wyciągnięcie Batch ID (LOGIKA BEZ ZMIAN) ---
 # Kod TSS wskazuje na ośrodek pobierający materiał (np. 02 = MD Anderson)
 final_data$Batch_ID <- sapply(strsplit(as.character(final_data$id_1), "-"), function(x) x[2])
 
-# 2. Wykonanie PCA na macierzy białkowej
+# --- 2. Wykonanie PCA na macierzy białkowej (LOGIKA BEZ ZMIAN) ---
 pca_result_prot <- prcomp(matrix_protein_only, center = TRUE, scale. = FALSE) 
 
 # Obliczenie procentu wyjaśnianej wariancji dla osi
 var_explained_prot <- round(summary(pca_result_prot)$importance[2, 1:2] * 100, 1)
 
-# 3. Przygotowanie ramki danych do wykresu
+# --- 3. Przygotowanie ramki danych do wykresu (LOGIKA BEZ ZMIAN) ---
 pca_plot_data_prot <- data.frame(
   PC1 = pca_result_prot$x[, 1],
   PC2 = pca_result_prot$x[, 2],
@@ -1299,32 +1427,50 @@ pca_plot_data_prot <- data.frame(
   Batch = final_data$Batch_ID
 )
 
-# 4. Wykres A: Weryfikacja Biologiczna (Kolory wg PAM50)
+# --- DEFINICJA STYLU ELSEVIER ---
+elsevier_theme <- theme_bw(base_size = 11, base_family = "sans") +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.8),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black", face = "plain"),
+    plot.title = element_text(face = "bold", size = 11, hjust = 0),
+    legend.key = element_blank()
+  )
+
+# --- 4. Wykres A: Weryfikacja Biologiczna (PAM50) ---
 p1 <- ggplot(pca_plot_data_prot, aes(x = PC1, y = PC2, color = PAM50)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "Weryfikacja Biologiczna (PAM50)",
-    subtitle = "Oczekiwane grupowanie podtypów",
+    title = "A. Protein PCA: Biological Variation",  # Angielski tytuł
+    # subtitle usunięty (przenosimy interpretację do podpisu ryciny)
     x = paste0("PC1 (", var_explained_prot[1], "%)"),
-    y = paste0("PC2 (", var_explained_prot[2], "%)")
+    y = paste0("PC2 (", var_explained_prot[2], "%)"),
+    color = "Subtype"  # Angielski nagłówek legendy
   ) +
-  theme_minimal() +
   scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom")
+  elsevier_theme +
+  theme(legend.position = "right") # Legenda z prawej jest standardem, ale "bottom" też akceptowalne
 
-# 5. Wykres B: Kontrola Techniczna (Kolory wg Laboratorium)
+# --- 5. Wykres B: Kontrola Techniczna (TSS / Batch) ---
 p2 <- ggplot(pca_plot_data_prot, aes(x = PC1, y = PC2, color = Batch)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "Kontrola Batch Effect (TSS)",
-    subtitle = "Oczekiwane wymieszanie próbek (brak klastrów)",
+    title = "B. Protein PCA: Batch Effect Control",  # Angielski tytuł
     x = paste0("PC1 (", var_explained_prot[1], "%)"),
     y = paste0("PC2 (", var_explained_prot[2], "%)")
   ) +
-  theme_minimal() +
-  theme(legend.position = "none") # Ukrywamy legendę (zbyt wiele ośrodków)
+  elsevier_theme +
+  theme(legend.position = "none") # Ukrywamy legendę (zgodnie z Twoją decyzją)
 
-# Wyświetlenie wykresów obok siebie (wymaga biblioteki patchwork)
+# --- WYŚWIETLANIE ---
+# Opcja 1: Wyświetl osobno
+print(p1)
+print(p2)
+
+# Opcja 2 (Zalecana): Połącz w jedną rycinę
+# library(patchwork)
 p1 + p2
 ```
 
@@ -1471,23 +1617,38 @@ annotation_df_sorted_rna <- adn_rna[posortowane_id, , drop = FALSE]
 ```
 
 ```{r generowanie_RNA_etap2_heatmapa}
+library(pheatmap)
+library(RColorBrewer)
 
 rna_heatmapa <- pheatmap(
   heatmap_matrix_sorted_rna,
-  #scale = "row",
+  # scale = "row",        # Logika bez zmian (zakomentowane jak u Ciebie)
   cluster_cols = FALSE,
   cluster_rows = TRUE,
   annotation_col = annotation_df_sorted_rna,
   show_colnames = FALSE,
   show_rownames = TRUE,
-  main = "Heatmapa RNA vs PAM50 (Posortowana wg Podtypu)",
+  
+  # --- JĘZYK ANGIELSKI ---
+  main = "mRNA Expression Profile by PAM50 Subtype",
+  
+  # --- KOLORYSTYKA ---
+  # Zachowujemy Twoją paletę i zakres 0-10
   color = colorRampPalette(rev(brewer.pal(n = 11, name = "RdYlBu")))(100),
   breaks = seq(0, 10, length.out = 100),  
-  #filename = "Klaudia_Heatmapa_RNA_kontrastowa.png",
+  
+  # --- FORMATOWANIE ELSEVIER ---
+  border_color = NA,      # Usunięcie siatki dla czystości wydruku
+  fontfamily = "sans",    # Standardowa czcionka (Arial/Helvetica)
+  fontsize = 10,          # Bazowa wielkość tekstu
+  fontsize_row = 8,       # Mniejsza czcionka dla nazw genów (zwiększ czytelność)
+  legend = TRUE,          # Legenda skali
+  
+  # --- WYMIARY ---
   width = 10,
-  height = 13
+  height = 13,
+  filename = "Figure_RNA_Heatmap.pdf" # Sugerowany zapis do PDF
 )
-
 
 print(rna_heatmapa)
 ```
@@ -1561,6 +1722,9 @@ variance_explained_RNA <- round(summary(pca_result_RNA)$importance[2, 1:2] * 100
 ```
 
 ```{r}
+library(ggplot2)
+
+# --- 1. Przygotowanie danych (LOGIKA BEZ ZMIAN) ---
 pca_plot_data_rna <- data.frame(
   PC1 = pca_result_RNA$x[, 1],
   PC2 = pca_result_RNA$x[, 2],
@@ -1568,29 +1732,48 @@ pca_plot_data_rna <- data.frame(
   Batch = final_data$Batch_ID
 )
 
+# --- 2. Definicja stylu Elsevier (spójny z poprzednimi wykresami) ---
+elsevier_theme <- theme_bw(base_size = 11, base_family = "sans") +
+  theme(
+    panel.grid.major = element_blank(),   # Usunięcie siatki głównej
+    panel.grid.minor = element_blank(),   # Usunięcie siatki pomocniczej
+    panel.border = element_rect(color = "black", fill = NA, size = 0.8), # Wyraźna ramka
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black", face = "plain"),
+    plot.title = element_text(face = "bold", size = 11, hjust = 0), # Tytuł do lewej
+    legend.key = element_blank()
+  )
+
+# --- 3. Wykres A: Weryfikacja Biologiczna (PAM50) ---
 plot_bio_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = PAM50)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA RNA: Weryfikacja Biologiczna (wg PAM50)",
-    subtitle = "Czy kropki grupują się kolorami podtypów?",
+    title = "A. mRNA PCA: Biological Variation",  # Tytuł naukowy
+    # subtitle usunięty (interpretacja w tekście artykułu)
     x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
-    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)"),
+    color = "Subtype"  # Profesjonalny nagłówek legendy
   ) +
-  theme_minimal() +
+  elsevier_theme +
   scale_color_brewer(palette = "Set1") 
 
 print(plot_bio_rna)
 
 
+# --- 4. Wykres B: Kontrola Batch Effect ---
 plot_batch_rna <- ggplot(pca_plot_data_rna, aes(x = PC1, y = PC2, color = Batch)) +
   geom_point(alpha = 0.7, size = 2) +
   labs(
-    title = "PCA RNA: Kontrola Batch Effect (wg Centrum)",
-    subtitle = "CZYSTO = Wymieszane kolory | BŁĄD = Odseparowane klastry",
+    title = "B. mRNA PCA: Batch Effect Control",  # Tytuł naukowy
+    # subtitle usunięty
     x = paste0("PC1 (", variance_explained_RNA[1], "%)"),
-    y = paste0("PC2 (", variance_explained_RNA[2], "%)")
+    y = paste0("PC2 (", variance_explained_RNA[2], "%)"),
+    color = "Batch ID"
   ) +
-  theme_minimal()
+  elsevier_theme 
+  # Opcjonalnie: Jeśli legendy jest za dużo (zbyt wiele ośrodków), odkomentuj poniższą linię:
+  # + theme(legend.position = "none")
+
 print(plot_batch_rna)
 ```
 
@@ -1705,40 +1888,76 @@ fit_rna <- eBayes(fit_rna)
 ```
 
 ```{r}
+library(ggplot2)
+library(ggrepel)
+
 generate_volcano_rna <- function(fit_obj, contrast_name, title_text) {
+  # --- 1. Pobranie wyników (LOGIKA BEZ ZMIAN) ---
   results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
   results$RNA <- rownames(results)
   
-  # Klasyfikacja
+  # --- 2. Klasyfikacja (LOGIKA BEZ ZMIAN) ---
   results$Significance <- "Not Sig"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
 
-  # --- NOWOŚĆ: ZAPIS TABELI WYNIKÓW ---
+  # --- 3. Zapis tabeli wyników (BEZ ZMIAN) ---
+  # Zachowujemy Twoją nazwę pliku
   write.csv(results, paste0("Wyniki_RNA_Klaudia_", contrast_name, ".csv"), row.names = FALSE)
-  # ------------------------------------
 
-  # Wykres (bez zmian)
+  # --- 4. Wykres (FORMATOWANIE ELSEVIER) ---
   p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = RNA)) +
-    geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
-    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
-    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
-    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
-    geom_text_repel(data = subset(results, Significance != "Not Sig"), max.overlaps = 50, box.padding = 0.3, size = 3) +
-    labs(title = paste("Volcano Plot:", title_text), subtitle = paste("Kontrast:", contrast_name), x = "log2 Fold Change", y = "-log10(FDR)") +
-    theme_minimal()
+    
+    # Punkty: Zmniejszona przezroczystość dla nieistotnych, wyraźna dla istotnych
+    geom_point(aes(color = Significance), alpha = 0.6, size = 1.8) +
+    
+    # Kolory: Klasyczny kontrast (Niebieski/Czerwony) na czystym tle
+    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "gray85", "UP" = "red")) +
+    
+    # Linie odcięcia: Cieńsze i czarne
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black", size = 0.4) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", size = 0.4) +
+    
+    # Etykiety genów (ggrepel)
+    geom_text_repel(
+      data = subset(results, Significance != "Not Sig"), 
+      max.overlaps = 25,    # Ograniczenie liczby etykiet dla czytelności
+      box.padding = 0.4, 
+      size = 3,             # Wielkość czcionki etykiet
+      segment.size = 0.3    # Cieńsze linie łączące
+    ) +
+    
+    # Tytuły i Osie (Angielski + Notacja Matematyczna)
+    labs(
+      title = title_text,
+      subtitle = paste("Contrast:", contrast_name), # Angielski
+      x = expression(log[2]~"Fold Change"),         # Profesjonalny zapis z indeksem dolnym
+      y = expression(-log[10]~"(adj. P-value)"),    # Profesjonalny zapis
+      color = "Regulation"                          # Tytuł legendy
+    ) +
+    
+    # Temat Graficzny (Elsevier)
+    theme_bw(base_size = 11, base_family = "sans") +
+    theme(
+      panel.grid.major = element_blank(),   # Usunięcie siatki
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "black", fill = NA, size = 0.8),
+      axis.text = element_text(color = "black"),
+      axis.title = element_text(color = "black", face = "plain"),
+      plot.title = element_text(face = "bold", size = 11, hjust = 0),
+      legend.position = "top"               # Legenda na górze oszczędza miejsce na boki
+    )
 
-  ggsave(paste0("RNA_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
+  # --- 5. Zapis i wyświetlenie (BEZ ZMIAN) ---
+  ggsave(paste0("RNA_Volcano_", contrast_name, ".png"), p, width = 8, height = 6, dpi = 300)
   print(p)
 }
 
-```
-
-```{r}
-
-generate_volcano_rna(fit_rna, "Basal_vs_LumA", "RNA: Basal vs LumA")
-generate_volcano_rna(fit_rna, "Her2_vs_LumA",  "RNA: Her2 vs LumA")
-generate_volcano_rna(fit_rna, "LumB_vs_LumA",  "RNA: LumB vs LumA")
+# --- Wywołanie funkcji (BEZ ZMIAN DANYCH WEJŚCIOWYCH) ---
+# Zmieniłem tylko tytuły w wywołaniu na bardziej "oficjalne" (opcjonalnie)
+generate_volcano_rna(fit_rna, "Basal_vs_LumA", "Differential Expression: Basal vs LumA")
+generate_volcano_rna(fit_rna, "Her2_vs_LumA",  "Differential Expression: Her2 vs LumA")
+generate_volcano_rna(fit_rna, "LumB_vs_LumA",  "Differential Expression: LumB vs LumA")
 
 ```
 
@@ -1828,33 +2047,57 @@ Metodyka *limma* zakłada, że dane posiadają rozkład zbliżony do
 normalnego (skala logarytmiczna).
 
 ```{r protein_dist_check, message=FALSE, warning=FALSE, fig.height=4, fig.width=8}
+library(ggplot2)
+library(reshape2) # Potrzebne do funkcji melt
+library(dplyr)
 
-# Wybieram tylko kolumny numeryczne, usuwając metadane, miRNA i Z-score.
+# --- 1. Logika przetwarzania danych (BEZ ZMIAN) ---
 protein_data_raw <- df_clean %>%
   dplyr::select(where(is.numeric)) %>%
-  dplyr::select(-matches("_z$")) %>%                 # Usuń przetworzone Z-score
-  dplyr::select(-starts_with("hsa_")) %>%            # Usuń miRNA
+  dplyr::select(-matches("_z$")) %>%                  # Usuń przetworzone Z-score
+  dplyr::select(-starts_with("hsa_")) %>%             # Usuń miRNA
   dplyr::select(-matches("id|age|days|year|stage|included|index|node|metastasis|grade")) # Usuń metadane
 
-# SPRAWDZENIE ROZKŁADU
-# Wizualizacja gęstości dla losowej próbki 6 białek
+# --- 2. SPRAWDZENIE ROZKŁADU (BEZ ZMIAN LOGIKI) ---
 set.seed(2025) # Powtarzalność
 sample_proteins <- sample(names(protein_data_raw), 6)
 melted_prot <- melt(protein_data_raw %>% dplyr::select(all_of(sample_proteins)))
 
+# --- 3. Wizualizacja (STANDARD ELSEVIER) ---
 p_dist <- ggplot(melted_prot, aes(x = value, fill = variable)) +
-  geom_density(alpha = 0.4) +
-  theme_minimal() +
-  labs(title = "Ryc. 3.1: Rozkład gęstości wybranych białek (Dane RPPA)",
-       x = "Poziom ekspresji białka",
-       y = "Gęstość") +
-  theme(legend.position = "bottom")
+  # Styl: Dodano czarny kontur (color="black") dla lepszego odcięcia kształtów
+  geom_density(alpha = 0.5, color = "black", size = 0.4) +
+  
+  # Kolorystyka: Paleta "Set2" jest łagodna dla oka i czytelna w druku
+  scale_fill_brewer(palette = "Set2") +
+  
+  # Usunięcie lewitowania wykresu nad osią X
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  
+  # Język Angielski i profesjonalne etykiety
+  labs(title = "Protein Expression Distribution (Random Sample)", # Tytuł opisowy
+       x = "Protein Expression Level",
+       y = "Density",
+       fill = "Protein ID") + # Czytelny nagłówek legendy
+  
+  # Temat graficzny Elsevier
+  theme_bw(base_size = 11, base_family = "sans") +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.8),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black", face = "plain"),
+    plot.title = element_text(face = "bold", size = 11, hjust = 0),
+    legend.position = "bottom",          # Legenda na dole
+    legend.text = element_text(size = 9)
+  )
 
 print(p_dist)
 
-# Sprawdzenie zakresu globalnego
-cat("Globalne Minimum:", min(protein_data_raw, na.rm=TRUE), "\n")
-cat("Globalne Maksimum:", max(protein_data_raw, na.rm=TRUE), "\n")
+# --- 4. Sprawdzenie zakresu (BEZ ZMIAN) ---
+cat("Global Minimum:", min(protein_data_raw, na.rm=TRUE), "\n") # Przetłumaczone komunikaty w konsoli
+cat("Global Maximum:", max(protein_data_raw, na.rm=TRUE), "\n")
 ```
 
 Analiza wygenerowanego wykresu gęstości jednoznacznie potwierdza
@@ -1882,28 +2125,33 @@ kontrasty badawcze:
     grupy luminalnej.
 
 ```{r limma_execution, message=FALSE}
+library(dplyr)
+library(limma)
+library(kableExtra)
+
+# --- 1. PRZYGOTOWANIE DANYCH (LOGIKA BEZ ZMIAN) ---
+
 # Tworzymy obiekt roboczy, wybierając konkretne kolumny z df_clean
-# Używamy `all_of` lub nazw w cudzysłowach, żeby R poradził sobie ze znakami specjalnymi
 limma_data <- df_clean %>%
   dplyr::select(
     Subtype = `BRCA_Subtype_PAM50`,               # Nazwa kolumny z podtypem
     Age = `age_at_initial_pathologic_diagnosis`,  # Nazwa kolumny z wiekiem
     everything()
   ) %>%
-  filter(Subtype != "Normal") # Usunięcie tkanki normalnej, skupiamy się na raku
+  filter(Subtype != "Normal") # Usunięcie tkanki normalnej
 
 # SELEKCJA BIAŁEK
-# Wybieramy tylko numeryczne, wyrzucamy metadane i miRNA
 protein_data_final <- limma_data %>%
   dplyr::select(where(is.numeric)) %>%
-  # Usuwamy kolumny kliniczne/techniczne (po słowach kluczowych)
+  # Usuwamy kolumny kliniczne/techniczne
   dplyr::select(-matches("ID|Age|days|year|stage|vital|status|index|included|patient|tumor|cohort")) %>%
-  # Usuwamy miRNA (zaczynają się od hsa-)
+  # Usuwamy miRNA
   dplyr::select(-starts_with("hsa")) %>%
-  # Usuwamy ewentualne Z-score (jeśli są)
+  # Usuwamy Z-score
   dplyr::select(-matches("_z$|_Z$"))
 
-# MODELOWANIE (LIMMA)
+# --- 2. MODELOWANIE LIMMA (LOGIKA BEZ ZMIAN) ---
+
 # Transpozycja: Wiersze=Białka, Kolumny=Pacjenci
 exprs_matrix <- t(as.matrix(protein_data_final))
 
@@ -1912,18 +2160,17 @@ clinical_meta <- limma_data %>%
   dplyr::select(Subtype, Age) %>%
   mutate(Subtype = factor(Subtype, levels = c("LumA", "LumB", "Her2", "Basal")))
 
-# Sprawdzenie wymiarów (Musi być TRUE)
+# Sprawdzenie wymiarów
 if(ncol(exprs_matrix) != nrow(clinical_meta)) stop("Błąd wymiarów macierzy!")
 
 # Macierz projektu
 design <- model.matrix(~ 0 + Subtype + Age, data = clinical_meta)
-colnames(design) <- gsub("Subtype", "", colnames(design)) # Czyszczenie nazw
+colnames(design) <- gsub("Subtype", "", colnames(design))
 
 # Dopasowanie modelu
 fit <- lmFit(exprs_matrix, design)
 
 # KONTRASTY
-# Definiujemy porównania
 contrasts_matrix <- makeContrasts(
   Basal_vs_LumA = Basal - LumA,
   Her2_vs_LumA  = Her2 - LumA,
@@ -1935,32 +2182,44 @@ contrasts_matrix <- makeContrasts(
 fit2 <- contrasts.fit(fit, contrasts_matrix)
 fit2 <- eBayes(fit2)
 
-# Funkcja zapisu dla białek
+# Funkcja zapisu
 zapisz_bialka <- function(fit_obj, kontrast) {
   res <- topTable(fit_obj, coef = kontrast, number = Inf, adjust.method = "BH")
   res$Protein <- rownames(res)
   write.csv(res, paste0("Wyniki_Bialka_Piotr_", kontrast, ".csv"), row.names = FALSE)
 }
+
 zapisz_bialka(fit2, "Basal_vs_LumA")
 zapisz_bialka(fit2, "Her2_vs_LumA")
 zapisz_bialka(fit2, "LumB_vs_LumA")
 
-results_summary <- decideTests(fit2, method = "global", adjust.method = "BH", p.value = 0.05)
+# --- 3. WYNIKI ZBIORCZE I TABELA (ELSEVIER STYLE) ---
 
+results_summary <- decideTests(fit2, method = "global", adjust.method = "BH", p.value = 0.05)
 summary_matrix <- t(summary(results_summary))
 
-# Konwersja do ramki danych dla kable
+# Konwersja do ramki danych
 summary_table_wide <- as.data.frame(summary_matrix)
 
-# Wyświetlenie tabeli
-kbl(summary_table_wide, caption = "Tabela 3.1. Liczba białek różnicujących w badanych kontrastach (FDR < 0.05).") %>%
-  kable_classic(full_width = F, html_font = "Cambria") %>%
-  # Dodajemy pogrubienie dla kolumn z istotnymi zmianami (Down i Up)
-  column_spec(1, color = "blue", bold = TRUE) %>%   # Kolumna Down
-  column_spec(3, color = "red", bold = TRUE) %>%    # Kolumna Up
-  # Szary kolor dla braku zmian (NotSig - kolumna 2)
-  column_spec(2, color = "grey") %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#2c3e50")
+# Wizualizacja tabeli zgodnie ze standardem
+kbl(summary_table_wide, 
+    # Tytuł tabeli w języku angielskim
+    caption = "Table 1. Number of Differentially Expressed Proteins (FDR < 0.05).", 
+    booktabs = TRUE) %>% # Styl booktabs (standard naukowy: grubsze linie góra/dół, cieńsze w środku)
+  
+  # Formatowanie stylu Elsevier (czysty, bezszeryfowy)
+  kable_classic(full_width = F, html_font = "Arial", font_size = 11) %>%
+  
+  # Kolorowanie wartości (zachowane dla czytelności, ale na białym tle)
+  column_spec(1, color = "blue", bold = TRUE) %>%    # Down (Niebieski)
+  column_spec(3, color = "red", bold = TRUE) %>%     # Up (Czerwony)
+  column_spec(2, color = "gray50") %>%               # NotSig (Szary)
+  
+  # Formatowanie nagłówka (czarny tekst, pogrubiony, białe tło - standard druku)
+  row_spec(0, bold = TRUE, color = "black", background = "white", extra_css = "border-bottom: 2px solid black;") %>%
+  
+  # Wyrównanie tabeli do lewej (częsty wymóg)
+  kable_styling(position = "left")
 
 ```
 
@@ -1998,15 +2257,20 @@ reprezentuje siłę zmiany (log2 Fold Change), natomiast oś Y istotność
 statystyczną (-log10 FDR).
 
 ```{r volcano_plots, fig.height=14, fig.width=10, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(tibble)
+library(patchwork) # Biblioteka do układania paneli (operator /)
+
 # Funkcja pomocnicza do rysowania wykresów
 draw_volcano <- function(fit_obj, coef_name, title_text) {
   
-  # Pobranie wyników z modelu limma
+  # --- 1. PRZETWARZANIE DANYCH (LOGIKA BEZ ZMIAN) ---
   res <- topTable(fit_obj, coef = coef_name, number = Inf) %>%
     rownames_to_column("Protein")
   
-  # Kategoryzacja: Up / Down / Not Sig
-  # Używamy progów: FDR < 0.05 oraz |logFC| > 0.5
+  # Kategoryzacja
   res <- res %>%
     mutate(Category = case_when(
       adj.P.Val < 0.05 & logFC > 0.5 ~ "Up",
@@ -2014,54 +2278,72 @@ draw_volcano <- function(fit_obj, coef_name, title_text) {
       TRUE ~ "Not Sig"
     ))
   
-  # Wybór etykiet do podpisania na wykresie
-  # Wybieramy Top 12 najbardziej istotnych (najmniejsze p-value) z grup Up/Down
+  # Wybór etykiet (Top 12)
   top_labels <- res %>%
     filter(Category != "Not Sig") %>%
     arrange(adj.P.Val) %>%
     head(12) 
   
-  # Generowanie wykresu
+  # Liczniki do podtytułu
+  n_up <- sum(res$Category == "Up")
+  n_down <- sum(res$Category == "Down")
+  
+  # --- 2. GENEROWANIE WYKRESU (STANDARD ELSEVIER) ---
   p <- ggplot(res, aes(x = logFC, y = -log10(adj.P.Val), color = Category)) +
+    
+    # Punkty
     geom_point(alpha = 0.6, size = 1.5) +
     
-    # Kolory: Niebieski (Spadek), Szary (Brak zmian), Czerwony (Wzrost)
-    scale_color_manual(values = c("Down" = "#377EB8", "Not Sig" = "grey90", "Up" = "#E41A1C")) +
+    # Kolory: "Not Sig" zmieniony na grey80 (ciemniejszy) dla widoczności w druku
+    scale_color_manual(values = c("Down" = "#377EB8", "Not Sig" = "grey80", "Up" = "#E41A1C")) +
     
-    # Linie progowe
-    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black", alpha=0.3) +
-    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", alpha=0.3) +
+    # Linie progowe (subtelne, czarne)
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black", alpha = 0.5, size = 0.4) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", alpha = 0.5, size = 0.4) +
     
-    # Inteligentne podpisy (ggrepel)
+    # Inteligentne podpisy
     geom_text_repel(data = top_labels, aes(label = Protein), 
-                    size = 3.5, 
-                    max.overlaps = 20, 
-                    box.padding = 0.5, 
-                    force = 5,     # Siła odpychania etykiet
+                    size = 3,           # Rozmiar czcionki etykiet (standard: 3-3.5)
+                    max.overlaps = 25, 
+                    box.padding = 0.4, 
+                    min.segment.length = 0, # Zawsze rysuj linie łączące
                     color = "black", 
-                    fontface = "bold") +
+                    fontface = "plain") + # W publikacjach rzadko stosuje się pogrubienie wewnątrz wykresu
     
-    # Opisy osi i tytuł
+    # Etykiety i Tytuły (Angielski + Notacja Matematyczna)
     labs(title = title_text,
-         subtitle = paste("Significant: Up =", sum(res$Category=="Up"), "| Down =", sum(res$Category=="Down")),
-         x = "log2 Fold Change",
-         y = "-log10 Adjusted P-value") +
+         # Profesjonalny format licznika w podtytule
+         subtitle = paste0("Count: Up = ", n_up, " | Down = ", n_down),
+         x = expression(log[2]~"Fold Change"),          # Indeks dolny 2
+         y = expression(-log[10]~"(adj. P-value)")) +   # Indeks dolny 10
     
-    theme_minimal() +
-    theme(legend.position = "none", 
-          plot.title = element_text(face="bold", size=12),
-          axis.title = element_text(size=10))
+    # Temat Graficzny Elsevier (Clean & Crisp)
+    theme_bw(base_size = 11, base_family = "sans") +
+    theme(
+      panel.grid.major = element_blank(),   # Usunięcie siatki
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "black", fill = NA, size = 0.8), # Wyraźna ramka
+      legend.position = "none",             # Legenda ukryta (kolory są oczywiste: czerwony=góra, niebieski=dół)
+      plot.title = element_text(face = "bold", size = 11, hjust = 0),
+      plot.subtitle = element_text(size = 9, face = "italic", color = "grey30"),
+      axis.title = element_text(color = "black", size = 10),
+      axis.text = element_text(color = "black")
+    )
   
   return(p)
 }
 
-# Generowanie wykresów dla trzech kontrastów
+# --- 3. GENEROWANIE I ŁĄCZENIE WYKRESÓW ---
+
 p1 <- draw_volcano(fit2, "Basal_vs_LumA", "A. Basal-like vs. Luminal A")
 p2 <- draw_volcano(fit2, "Her2_vs_LumA",  "B. HER2-enriched vs. Luminal A")
 p3 <- draw_volcano(fit2, "LumB_vs_LumA",  "C. Luminal B vs. Luminal A")
 
-# Złożenie wykresów w jeden panel
-p1 / p2 / p3
+# Złożenie wykresów w jeden panel wertykalny (wymaga biblioteki patchwork)
+final_plot <- p1 / p2 / p3
+
+# Wyświetlenie
+print(final_plot)
 ```
 
 ## Opis wyników proteomicznych
@@ -2185,10 +2467,16 @@ fit2 <- eBayes(fit2)
 
 
 ```{r}
+library(ggplot2)
+library(ggrepel)
+library(limma)
+
 # ------------------------------------------------------------------------------
-# KROK 5: Funkcja do generowania volcano plotów
+# KROK 5: Funkcja do generowania volcano plotów (Standard Elsevier)
 # ------------------------------------------------------------------------------
 generate_volcano <- function(fit_obj, contrast_name, title_text) {
+  
+  # --- 1. PRZETWARZANIE DANYCH (LOGIKA BEZ ZMIAN) ---
   results <- topTable(fit_obj, coef = contrast_name, number = Inf, adjust.method = "BH")
   results$miRNA <- rownames(results)
   
@@ -2196,35 +2484,73 @@ generate_volcano <- function(fit_obj, contrast_name, title_text) {
   results$Significance[results$adj.P.Val < 0.05 & results$logFC > 0.5] <- "UP"
   results$Significance[results$adj.P.Val < 0.05 & results$logFC < -0.5] <- "DOWN"
 
-  # --- NOWOŚĆ: ZAPIS TABELI WYNIKÓW ---
+  # --- 2. ZAPIS TABELI WYNIKÓW (LOGIKA BEZ ZMIAN) ---
   write.csv(results, paste0("Iza_Wyniki_", contrast_name, ".csv"), row.names = FALSE)
   # ------------------------------------
 
+  # --- 3. GENEROWANIE WYKRESU (FORMATOWANIE ELSEVIER) ---
   p <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), label = miRNA)) +
-    geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
-    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "grey", "UP" = "red")) +
-    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black") +
-    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
-    geom_text_repel(data = subset(results, Significance != "Not Sig"), max.overlaps = 50, box.padding = 0.3, size = 3) +
-    labs(title = paste("Volcano Plot:", title_text), subtitle = paste("Kontrast:", contrast_name), x = "log2 Fold Change", y = "-log10(FDR)") +
-    theme_minimal()
+    
+    # Punkty: Zmniejszono nieco rozmiar dla precyzji, kolory wysokiego kontrastu
+    geom_point(aes(color = Significance), alpha = 0.6, size = 1.8) +
+    
+    # Kolory: Not Sig jako jasnoszary (gray85), Down/Up klasyczne
+    scale_color_manual(values = c("DOWN" = "blue", "Not Sig" = "gray85", "UP" = "red")) +
+    
+    # Linie progowe: Cienkie, czarne, przerywane
+    geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "black", size = 0.4) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", size = 0.4) +
+    
+    # Etykiety (ggrepel): Zwiększona czytelność
+    geom_text_repel(
+      data = subset(results, Significance != "Not Sig"), 
+      max.overlaps = 50, 
+      box.padding = 0.4, 
+      size = 3,            # Rozmiar czcionki (standard ok. 3)
+      segment.size = 0.3,  # Cieńsze linie łączące
+      color = "black"
+    ) +
+    
+    # Tytuły i Osie: Język angielski + Notacja matematyczna
+    labs(
+      title = title_text,
+      subtitle = paste("Contrast:", contrast_name),   # Zmiana "Kontrast" na "Contrast"
+      x = expression(log[2]~"Fold Change"),           # Indeks dolny 2
+      y = expression(-log[10]~"(FDR)"),               # Indeks dolny 10
+      color = "Regulation"                            # Tytuł legendy
+    ) +
+    
+    # Temat graficzny: Czysty, bez siatki, czarne osie
+    theme_bw(base_size = 11, base_family = "sans") +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "black", fill = NA, size = 0.8),
+      axis.text = element_text(color = "black"),
+      axis.title = element_text(color = "black", face = "plain"),
+      plot.title = element_text(face = "bold", size = 11, hjust = 0),
+      legend.position = "top" # Legenda na górze (częsty wybór w ciasnych layoutach)
+    )
 
-  ggsave(paste0("Iza_Volcano_", contrast_name, ".png"), p, width = 8, height = 6)
+  # --- 4. ZAPIS PLIKU (DODANO DPI) ---
+  # Dodano dpi = 300 dla jakości drukarskiej
+  ggsave(paste0("Iza_Volcano_", contrast_name, ".png"), p, width = 8, height = 6, dpi = 300)
+  
   print(p)
 }
-```
 
-
-```{r}
 # ------------------------------------------------------------------------------
-# KROK 6: Uruchomienie analizy dla każdego kontrastu
+# KROK 6: Uruchomienie analizy (Zaktualizowane Tytuły na Angielski)
 # ------------------------------------------------------------------------------
 
-generate_volcano(fit2, "Basal_vs_LumA", "Agresywność (Basal vs LumA)")
+# Zmieniłem polskie opisy w tytułach na angielskie odpowiedniki,
+# aby wykres był gotowy do wklejenia do manuskryptu.
 
-generate_volcano(fit2, "Her2_vs_LumA", "Specyfika HER2 (Her2 vs LumA)")
+generate_volcano(fit2, "Basal_vs_LumA", "Aggressiveness (Basal vs LumA)")
 
-generate_volcano(fit2, "LumB_vs_LumA", "Proliferacja (LumB vs LumA)")
+generate_volcano(fit2, "Her2_vs_LumA", "HER2 Specificity (Her2 vs LumA)")
+
+generate_volcano(fit2, "LumB_vs_LumA", "Proliferation (LumB vs LumA)")
 ```
 
 ### LumB vs LumA
@@ -2257,44 +2583,47 @@ Analiza wykazała wysoce odrębny i agresywny profil molekularny podtypu Basal/T
 ## INTEGRACJA
 
 ```{r}
+library(dplyr)
+library(kableExtra)
+
 # ==============================================================================
-# integracja
+# INTEGRATION STEP: mRNA - Protein - miRNA
 # ==============================================================================
 
-# 1. SŁOWNIK MAPOWANIA (Gen <-> Białko)
-
+# 1. MAPPING DICTIONARY (Gene <-> Protein)
+# (Zachowana Twoja mapa)
 mapa_gen_bialko <- data.frame(
   Gene = c("esr1", "pgr", "erbb2", "egfr_rna", "bcl2_rna", "mki67", "cdh1", "cd24", "cd44", "tp53", "ccnd1", "mys", "foxa1"),
   Protein = c("eralpha", "pr", "her2", "egfr", "bcl2", "mki67", "ecadherin", "cd24", "cd44", "p53", "cyclind1", "cmyc", "foxa1"),
   stringsAsFactors = FALSE
 )
 
-# 2. GŁÓWNA FUNKCJA INTEGRUJĄCA
+# 2. MAIN INTEGRATION FUNCTION
 wykonaj_integracje <- function(kontrast) {
   
   message(paste("\n======================================================="))
-  message(paste(">>> INTEGRACJA DLA KONTRASTU:", kontrast, "<<<"))
+  message(paste(">>> INTEGRATION FOR CONTRAST:", kontrast, "<<<"))
   message(paste("======================================================="))
   
-  # --- A. WCZYTANIE PLIKÓW CSV ---
+  # --- A. LOAD CSV FILES ---
   tryCatch({
     rna <- read.csv(paste0("Wyniki_RNA_Klaudia_", kontrast, ".csv"))
     prot <- read.csv(paste0("Wyniki_Bialka_Piotr_", kontrast, ".csv"))
     mirna <- read.csv(paste0("Iza_Wyniki_", kontrast, ".csv"))
   }, error = function(e) {
-    stop("Nie znaleziono plików CSV! Upewnij się, że uruchomiłeś/aś wcześniejsze etapy kodu, które zapisują wyniki.")
+    stop("Error: CSV files not found. Please run previous analysis steps first.")
   })
 
-  # --- B. PRZYGOTOWANIE DANYCH (Filtrowanie) ---
-  # Wybieramy tylko istotne statystycznie i zmieniamy nazwy kolumn, żeby się nie myliły przy łączeniu
+  # --- B. DATA PREPARATION (Filtering) ---
+  # Selecting statistically significant features only
   
   # RNA: FDR < 0.05, |logFC| > 0.5
   rna_sig <- rna %>% 
     filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
     dplyr::select(Name = RNA, logFC_RNA = logFC, FDR_RNA = adj.P.Val) %>%
-    mutate(JoinKey = tolower(Name)) # Klucz do łączenia (małe litery)
+    mutate(JoinKey = tolower(Name)) 
 
-  # BIAŁKA: FDR < 0.05
+  # PROTEIN: FDR < 0.05
   prot_sig <- prot %>% 
     filter(adj.P.Val < 0.05) %>% 
     dplyr::select(Name = Protein, logFC_Prot = logFC, FDR_Prot = adj.P.Val) %>%
@@ -2305,84 +2634,157 @@ wykonaj_integracje <- function(kontrast) {
     filter(adj.P.Val < 0.05 & abs(logFC) > 0.5) %>% 
     dplyr::select(miRNA, logFC_miRNA = logFC, FDR_miRNA = adj.P.Val)
 
-  # --- C. INTEGRACJA 1: ZGODNOŚĆ EKSPRESJI (RNA + BIAŁKO) ---
-  # Sprawdzamy, czy zmiana genu (mRNA) przekłada się na zmianę białka w TYM SAMYM kierunku.
+  # --- C. INTEGRATION 1: CONCORDANCE (RNA + PROTEIN) ---
+  # Checking if mRNA change correlates with Protein change (Same Direction)
   
-  # Najpierw mapujemy nazwy białek na nazwy genów używając słownika
+  # Map protein names to gene names
   prot_mapped <- prot_sig %>%
     left_join(mapa_gen_bialko, by = c("JoinKey" = "Protein")) %>%
-    mutate(JoinKey = ifelse(!is.na(Gene), Gene, JoinKey)) # Jeśli znaleziono w mapie, użyj nazwy genu, wpp. zostaw starą
+    mutate(JoinKey = ifelse(!is.na(Gene), Gene, JoinKey)) 
   
-  # Łączymy tabele
+  # Join tables
   zgodnosc <- rna_sig %>%
     inner_join(prot_mapped, by = "JoinKey") %>%
-    # KLUCZOWY WARUNEK: Znak logFC musi być taki sam (obie w górę lub obie w dół)
+    # KEY CONDITION: Same sign of logFC
     filter(sign(logFC_RNA) == sign(logFC_Prot)) %>%
-    dplyr::select(Gen = Name.x, Bialko = Name.y, logFC_RNA, logFC_Prot) %>%
+    dplyr::select(Gen = Name.x, Protein = Name.y, logFC_RNA, logFC_Prot) %>%
     arrange(desc(abs(logFC_RNA) + abs(logFC_Prot)))
 
   if(nrow(zgodnosc) > 0) {
-    cat("\n[SUKCES] Znaleziono biologicznie spójne pary (Gen -> Białko):\n")
-    print(zgodnosc)
+    cat("\n[SUCCESS] Biologically consistent pairs found (Gene -> Protein):\n")
+    # print(zgodnosc) # (Wyciszone, bo użyjemy tabeli Elsevier poniżej)
     write.csv(zgodnosc, paste0("Integracja_GenBialko_", kontrast, ".csv"), row.names = FALSE)
   } else {
-    cat("\n[INFO] Brak par Gen-Białko o zgodnym kierunku zmian dla tego kontrastu.\n")
+    cat("\n[INFO] No consistent Gene-Protein pairs for this contrast.\n")
   }
 
-  # --- D. INTEGRACJA 2: REGULACJA PRZEZ miRNA (miRNA -> Gen/Białko) ---
-  # Szukamy korelacji ODWROTNEJ: miRNA w górę -> Gen/Białko w dół (mechanizm wyciszania)
+  # --- D. INTEGRATION 2: miRNA REGULATION (miRNA -> Gene/Protein) ---
+  # Searching for INVERSE correlation: miRNA Up -> Target Down
   
-  # Tworzymy listę wszystkich celów (targetów) - genów i białek
+  
+  # Create list of all targets
   targety <- bind_rows(
     rna_sig %>% dplyr::select(Target = Name, logFC_Target = logFC_RNA, Type = JoinKey) %>% mutate(Source="RNA"),
     prot_sig %>% dplyr::select(Target = Name, logFC_Target = logFC_Prot, Type = JoinKey) %>% mutate(Source="Protein")
   )
   
   if(nrow(mirna_sig) > 0 && nrow(targety) > 0) {
-    # Każde miRNA z każdym Targetem (uproszczone podejście "brute-force" do szukania korelacji)
-    # W pełnej analizie bioinformatycznej użylibyśmy bazy danych targetów (np. TargetScan), 
-    # tutaj szukamy statystycznej korelacji negatywnej.
-    
+    # Brute-force correlation search
     regulacja <- expand.grid(miRNA = mirna_sig$miRNA, Target = targety$Target) %>%
       inner_join(mirna_sig, by = "miRNA") %>%
       inner_join(targety, by = "Target") %>%
-      # WARUNEK: Przeciwne znaki (miRNA Up -> Target Down lub odwrotnie)
+      # CONDITION: Opposite signs
       filter(sign(logFC_miRNA) != sign(logFC_Target)) %>%
       arrange(desc(abs(logFC_miRNA) + abs(logFC_Target))) %>%
-      head(15) # Pokaż tylko TOP 15 najsilniejszych par
+      head(15) 
     
-    cat("\n[SUKCES] Potencjalna regulacja miRNA (TOP 15 par o odwrotnej korelacji):\n")
-    print(regulacja[, c("miRNA", "Target", "Source", "logFC_miRNA", "logFC_Target")])
+    cat("\n[SUCCESS] Potential miRNA regulation (TOP 15 inverse pairs):\n")
+    # print(regulacja) # (Wyciszone dla tabeli Elsevier)
     write.csv(regulacja, paste0("Integracja_Regulatory_", kontrast, ".csv"), row.names = FALSE)
   } else {
-    cat("\n[INFO] Brak silnych korelacji miRNA-Target.\n")
+    cat("\n[INFO] No strong miRNA-Target correlations.\n")
   }
 }
 
-# --- URUCHOMIENIE ---
+# --- URUCHOMIENIE (BEZ ZMIAN) ---
 wykonaj_integracje("Basal_vs_LumA")
 wykonaj_integracje("Her2_vs_LumA")
 wykonaj_integracje("LumB_vs_LumA")
 
+# --- FUNKCJE FORMATUJĄCE TABELE ---
+
+format_concordance_table <- function(file_path, title) {
+  if(!file.exists(file_path)) return(NULL)
+  
+  df <- read.csv(file_path)
+  
+  df %>%
+    mutate(across(where(is.numeric), \(x) round(x, 2))) %>% # Zaokrąglenie liczb
+    kbl(caption = title, booktabs = TRUE) %>%
+    kable_classic(full_width = F, html_font = "Arial", font_size = 11) %>%
+    column_spec(1, italic = TRUE) %>% # Geny kursywą
+    column_spec(3:4, bold = TRUE) %>% # Wartości logFC pogrubione
+    row_spec(0, bold = TRUE, color = "black", background = "white", extra_css = "border-bottom: 2px solid black;")
+}
+
+format_mirna_table <- function(file_path, title) {
+  if(!file.exists(file_path)) return(NULL)
+  
+  df <- read.csv(file_path) %>%
+    dplyr::select(miRNA, Target, Source, logFC_miRNA, logFC_Target) # Wybór kolumn
+  
+  df %>%
+    mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+    kbl(caption = title, booktabs = TRUE) %>%
+    kable_classic(full_width = F, html_font = "Arial", font_size = 11) %>%
+    column_spec(1, bold = TRUE) %>% # miRNA pogrubione
+    column_spec(4, color = "#E41A1C") %>% # logFC miRNA (często czerwone/niebieskie)
+    column_spec(5, color = "#377EB8") %>% # logFC Target
+    row_spec(0, bold = TRUE, color = "black", background = "white", extra_css = "border-bottom: 2px solid black;")
+}
 
 
-# --- 1. Dla kontrastu BASAL vs LUM A ---
-# Zgodność Gen-Białko
-basal_zgodnosc <- read.csv("Integracja_GenBialko_Basal_vs_LumA.csv")
+# --- GENEROWANIE TABEL DLA KONTRASTÓW ---
 
-# Regulacja miRNA
-basal_regulatory <- read.csv("Integracja_Regulatory_Basal_vs_LumA.csv")
+# 1. Basal vs Luminal A
+table_basal_concordance <- format_concordance_table(
+  "Integracja_GenBialko_Basal_vs_LumA.csv", 
+  "Table 2. Gene-Protein Expression Concordance (Basal vs LumA)"
+)
+table_basal_mirna <- format_mirna_table(
+  "Integracja_Regulatory_Basal_vs_LumA.csv", 
+  "Table 3. Top 15 Putative miRNA-Target Pairs (Inverse Correlation, Basal vs LumA)"
+)
 
-# --- 2. Dla kontrastu HER2 vs LUM A ---
-her2_zgodnosc <- read.csv("Integracja_GenBialko_Her2_vs_LumA.csv")
-her2_regulatory <- read.csv("Integracja_Regulatory_Her2_vs_LumA.csv")
+# Wyświetlenie wyników
+# W RStudio te zmienne pojawią się w panelu Viewer jako sformatowane tabele
+if(!is.null(table_basal_concordance)) print(table_basal_concordance)
+if(!is.null(table_basal_mirna)) print(table_basal_mirna)
 
-# --- 3. Dla kontrastu LUM B vs LUM A ---
-lumb_zgodnosc <- read.csv("Integracja_GenBialko_LumB_vs_LumA.csv")
-lumb_regulatory <- read.csv("Integracja_Regulatory_LumB_vs_LumA.csv")
+# (Analogicznie można wywołać dla Her2 i LumB)
 
 
-print(lumb_zgodnosc)
+# ==============================================================================
+# 2. KONTRAST: HER2-enriched vs Luminal A
+# ==============================================================================
+
+# Tabela zgodności Gen-Białko
+table_her2_concordance <- format_concordance_table(
+  "Integracja_GenBialko_Her2_vs_LumA.csv", 
+  "Table 4. Gene-Protein Expression Concordance (Her2 vs LumA)"
+)
+
+# Tabela regulacji miRNA
+table_her2_mirna <- format_mirna_table(
+  "Integracja_Regulatory_Her2_vs_LumA.csv", 
+  "Table 5. Top 15 Putative miRNA-Target Pairs (Inverse Correlation, Her2 vs LumA)"
+)
+
+# Wyświetlenie (jeśli wyniki istnieją)
+if(!is.null(table_her2_concordance)) print(table_her2_concordance) else message("Brak wyników zgodności dla Her2.")
+if(!is.null(table_her2_mirna)) print(table_her2_mirna) else message("Brak wyników miRNA dla Her2.")
+
+
+# ==============================================================================
+# 3. KONTRAST: Luminal B vs Luminal A
+# ==============================================================================
+
+# Tabela zgodności Gen-Białko
+table_lumb_concordance <- format_concordance_table(
+  "Integracja_GenBialko_LumB_vs_LumA.csv", 
+  "Table 6. Gene-Protein Expression Concordance (LumB vs LumA)"
+)
+
+# Tabela regulacji miRNA
+table_lumb_mirna <- format_mirna_table(
+  "Integracja_Regulatory_LumB_vs_LumA.csv", 
+  "Table 7. Top 15 Putative miRNA-Target Pairs (Inverse Correlation, LumB vs LumA)"
+)
+
+# Wyświetlenie
+if(!is.null(table_lumb_concordance)) print(table_lumb_concordance) else message("Brak wyników zgodności dla LumB.")
+if(!is.null(table_lumb_mirna)) print(table_lumb_mirna) else message("Brak wyników miRNA dla LumB.")
+
 ```
 
 
@@ -2571,66 +2973,99 @@ basal_data <- subset(final_data, brca_subtype_pam50 == "Basal")
 ```{r}
 
 # ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------
+library(survival)
+library(survminer)
+library(dplyr)
 
+# ------------------------------------------------------------------------------
+# 1. FUNKCJA GENERUJĄCA WYKRESY (STANDARD ELSEVIER)
+# ------------------------------------------------------------------------------
 plot_km_survival <- function(data, marker_col, title_suffix = "") {
+  
+  # --- LOGIKA OBLICZEŃ (BEZ ZMIAN) ---
   mediana <- median(data[[marker_col]], na.rm = TRUE)
+  
   data_km <- data %>%
-
     mutate(Expression_Group = ifelse(.data[[marker_col]] > mediana, "HIGH", "LOW"))
+  
   fit <- survfit(Surv(time_to_event, event) ~ Expression_Group, data = data_km)
 
+  # --- WIZUALIZACJA (STANDARD ELSEVIER) ---
   ggsurvplot(
     fit,
     data = data_km,
-    pval = TRUE,             # Pokaż p-value (Log-Rank)
-    conf.int = TRUE,         # Pokaż przedziały ufności
-    risk.table = TRUE,       # Tabela ryzyka pod wykresem
-    palette = c("red", "blue"),
-    title = paste("Kaplan-Meier:", marker_col, title_suffix),
-    xlab = "Czas (dni)",
-    ylab = "Prawdopodobieństwo przeżycia",
-    legend.title = "Ekspresja",
-    legend.labs = c("HIGH", "LOW")
-
+    
+    # Statystyka
+    pval = TRUE,             
+    pval.size = 5,
+    conf.int = TRUE,         
+    conf.int.alpha = 0.1,    
+    
+    # Tabela ryzyka
+    risk.table = TRUE,       
+    risk.table.col = "strata", 
+    risk.table.height = 0.25,
+    fontsize = 3.5,              # Mniejsza czcionka w tabeli dla czytelności w panelach
+    
+    # Stylistyka
+    palette = c("#E41A1C", "#377EB8"), # Profesjonalny Czerwony / Niebieski
+    
+    # Język Angielski
+    title = paste("Survival:", marker_col, title_suffix),
+    xlab = "Time (days)",
+    ylab = "Survival Probability",
+    legend.title = "Expression",
+    legend.labs = c("HIGH", "LOW"),
+    
+    # Temat graficzny (Czysty)
+    ggtheme = theme_bw() + theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank(),
+      axis.line = element_line(color = "black", size = 0.6),
+      plot.title = element_text(face = "bold", size = 10, hjust = 0), # Mniejszy tytuł, żeby zmieścił się w siatce
+      legend.text = element_text(size = 9),
+      legend.title = element_text(size = 10, face = "bold")
+    )
   )
-
 }
-# ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ ------------------------------------------------------------------------------ -------------------------------
 
-```
-
-
-
-```{r}
+# ------------------------------------------------------------------------------
+# 2. WYWOŁANIE ANALIZY
+# ------------------------------------------------------------------------------
 
 # --- 1. CAŁA KOHORTA ---
-print(plot_km_survival(final_data, "hsa_mir_210_z", "- Cała populacja"))
-print(plot_km_survival(final_data, "hsa_mir_17_z", "- Cała populacja"))
-
-# --- 2. WEWNĄTRZ PODTYPÓW  ---
-
-#-----------------------------------------------------------------------#-----------------------------------------------------------------------mir-210
+# title_suffix przetłumaczony na angielski
+print(plot_km_survival(final_data, "hsa_mir_210_z", "- Whole Cohort"))
+print(plot_km_survival(final_data, "hsa_mir_17_z",  "- Whole Cohort"))
 
 
-par(mfrow = c(2, 2))  # 2 wiersze, 2 kolumny
+# --- 2. WEWNĄTRZ PODTYPÓW (GRID 2x2) ---
 
-plot_km_survival(lumA_data, "hsa_mir_210_z", "- Luminal A")
-plot_km_survival(lumB_data, "hsa_mir_210_z", "- Luminal B")
-plot_km_survival(basal_data, "hsa_mir_210_z", "- Basal-like")
-plot_km_survival(HER2_data, "hsa_mir_210_z", "- HER2")
+# UWAGA: par(mfrow) nie działa z ggsurvplot. 
+# Zamiast tego tworzymy listę wykresów i używamy arrange_ggsurvplots.
 
-##----------------------------------------------------------------------#------------------------------------------------------------------------mir-17
+# === A. Analiza miR-210 ===
+plot_list_210 <- list()
+plot_list_210[[1]] <- plot_km_survival(lumA_data, "hsa_mir_210_z", "- Luminal A")
+plot_list_210[[2]] <- plot_km_survival(lumB_data, "hsa_mir_210_z", "- Luminal B")
+plot_list_210[[3]] <- plot_km_survival(basal_data, "hsa_mir_210_z", "- Basal-like")
+plot_list_210[[4]] <- plot_km_survival(HER2_data, "hsa_mir_210_z", "- HER2")
 
-print(plot_km_survival(lumA_data, "hsa_mir_17_z", "- Luminal A"))
+# Wyświetlenie siatki 2x2 (zastępuje par(mfrow))
+arrange_ggsurvplots(plot_list_210, print = TRUE, ncol = 2, nrow = 2, title = "miR-210 Survival by Subtype")
 
-# Analiza dla miR-17 wewnątrz podtypu "Luminal B"
-print(plot_km_survival(lumB_data, "hsa_mir_17_z", "- Luminal B"))
 
-# Analiza dla miR-17 wewnątrz "Basal-like"
-print(plot_km_survival(basal_data, "hsa_mir_17_z", "- Basal-like"))
+# === B. Analiza miR-17 ===
+plot_list_17 <- list()
+plot_list_17[[1]] <- plot_km_survival(lumA_data, "hsa_mir_17_z", "- Luminal A")
+plot_list_17[[2]] <- plot_km_survival(lumB_data, "hsa_mir_17_z", "- Luminal B")
+plot_list_17[[3]] <- plot_km_survival(basal_data, "hsa_mir_17_z", "- Basal-like")
+plot_list_17[[4]] <- plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2")
 
-# Analiza dla miR-170 wewnątrz "HER2-enriched"
-print(plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2"))
+# Wyświetlenie siatki 2x2
+arrange_ggsurvplots(plot_list_17, print = TRUE, ncol = 2, nrow = 2, title = "miR-17 Survival by Subtype")
+
 ```
 
 
@@ -2640,33 +3075,93 @@ print(plot_km_survival(HER2_data, "hsa_mir_17_z", "- HER2"))
 ## Modele
 
 ```{r}
-# 1. MODEL BAZOWY (Kliniczny)
-# Punkt odniesienia: Wiek + Stadium + Podtyp
+library(survival)
+library(survminer)
+library(broom)       # Do czyszczenia wyników modelu
+library(kableExtra)  # Do ładnych tabel
+library(dplyr)
+
+# ==============================================================================
+# 1. DEFINICJA MODELI (TWOJA LOGIKA - BEZ ZMIAN)
+# ==============================================================================
+
+# MODEL BAZOWY
 cox_base <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50, 
                   data = final_data)
 
-cat("\n--- MODEL BAZOWY ---\n")
-print(summary(cox_base))
+# MODEL C1 (Hipoksja: interakcja z miR-210)
+cox_mir210 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + 
+                      brca_subtype_pam50 * hsa_mir_210_z, 
+                    data = final_data)
+
+# MODEL C2 (Proliferacja: interakcja z miR-17)
+cox_mir17 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + 
+                     brca_subtype_pam50 * hsa_mir_17_z, 
+                   data = final_data)
+
+# ==============================================================================
+# 2. GENEROWANIE TABELI ZBIORCZEJ (STANDARD ELSEVIER)
+# ==============================================================================
+
+format_cox_model <- function(model, model_name) {
+  # Wyciągnięcie wyników (HR, CI, P-value)
+  tidy(model, exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(
+      # Formatowanie HR (95% CI) do jednej kolumny
+      `HR (95% CI)` = sprintf("%.2f (%.2f - %.2f)", estimate, conf.low, conf.high),
+      # Formatowanie P-value (<0.001 lub dokładna wartość)
+      `P-value` = ifelse(p.value < 0.001, "<0.001", sprintf("%.3f", p.value)),
+      Model = model_name
+    ) %>%
+    dplyr::select(Model, Term = term, `HR (95% CI)`, `P-value`)
+}
+
+# Łączenie wyników 3 modeli w jedną dużą tabelę
+results_base <- format_cox_model(cox_base, "Base Model (Clinical)")
+results_c1   <- format_cox_model(cox_mir210, "Model C1 (+ miR-210)")
+results_c2   <- format_cox_model(cox_mir17, "Model C2 (+ miR-17)")
+
+all_results <- bind_rows(results_base, results_c1, results_c2)
+
+# Poprawa nazw zmiennych (Term) na ładny Angielski
+# Uwaga: Nazwy muszą pasować do tego, co wypluwa Twój model (sprawdź levels)
+all_results$Term <- gsub("age_mean_years", "Age (years)", all_results$Term)
+all_results$Term <- gsub("pathologic_stage", "Pathologic Stage ", all_results$Term)
+all_results$Term <- gsub("brca_subtype_pam50", "Subtype: ", all_results$Term)
+all_results$Term <- gsub("hsa_mir_210_z", "miR-210 (Z-score)", all_results$Term)
+all_results$Term <- gsub("hsa_mir_17_z", "miR-17 (Z-score)", all_results$Term)
+all_results$Term <- gsub(":", " x ", all_results$Term) # Znak interakcji
+
+# Generowanie tabeli HTML/LaTeX
+kbl(all_results, caption = "Table 8. Multivariate Cox Proportional Hazards Regression Analysis.", booktabs = TRUE) %>%
+  kable_classic(full_width = F, html_font = "Arial", font_size = 11) %>%
+  collapse_rows(columns = 1, valign = "top") %>% # Grupowanie wg Modelu
+  row_spec(0, bold = TRUE, background = "white", extra_css = "border-bottom: 2px solid black;")
+
+# ==============================================================================
+# 3. WIZUALIZACJA: FOREST PLOT (DLA MODELU BAZOWEGO I C1)
+# ==============================================================================
+
+# Funkcja rysująca Forest Plot
+draw_forest <- function(model, title) {
+  ggforest(model, data = final_data, 
+           main = title, 
+           cpositions = c(0.02, 0.22, 0.4), # Pozycje kolumn tekstowych
+           fontsize = 0.8, 
+           refLabel = "Ref", 
+           noDigits = 2)
+}
+
+# Rysujemy Forest Plot dla Modelu C1 (najbardziej złożonego)
+# To jest często Fig. 5 w artykule
+p_forest <- draw_forest(cox_mir210, "Multivariate Cox Analysis: Model C1 (miR-210)")
+print(p_forest)
 
 
-# 2. MODEL TESTOWY C1 (Hipoksja)
-# Baza + hsa-mir-210
-cox_mir210 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage +
-                            brca_subtype_pam50 * hsa_mir_210_z, 
-                            data = final_data)
-
-cat("\n--- MODEL C1: miR-210 ---\n")
-print(summary(cox_mir210))
-
-
-# 3. MODEL TESTOWY C2 (Proliferacja)
-# Baza + hsa-mir-17
-cox_mir17 <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage +
-                            brca_subtype_pam50 * hsa_mir_17_z, 
-                            data = final_data)
-
-cat("\n--- MODEL C2: miR-17 ---\n")
-print(summary(cox_mir17))
+p_forest2 <- draw_forest(cox_mir17, "Multivariate Cox Analysis: Model C2 (miR-17)")
+print(p_forest2)
+# Jeśli chcesz zapisać wykres:
+# ggsave("Figure_Cox_Forest.pdf", p_forest, width = 8, height = 6)
 ```
 
 
@@ -2741,22 +3236,19 @@ print(summary(cox_mir17))
 
 
 
-## Model Sygnatury miRNA (LASSO Cox) 
+## Model Sygnatury miRNA (LASSO Cox) – "Super-Biomarker"
 
 ```{r}
-# ==============================================================================
-# ETAP 4: MODEL SYGNATURY miRNA (LASSO COX) Z WALIDACJĄ
-# ==============================================================================
-
-
 if (!require("glmnet", quietly = TRUE)) install.packages("glmnet")
 library(glmnet)
 library(survival)
 library(survminer)
 library(dplyr)
+library(kableExtra)
+library(broom)
 
 # ------------------------------------------------------------------------------
-# KROK 1: Przygotowanie Danych i Automatyczna Selekcja Zmiennych
+# KROK 1 & 2: Przygotowanie Danych i Split (LOGIKA BEZ ZMIAN)
 # ------------------------------------------------------------------------------
 
 # Formatowanie czasu
@@ -2769,117 +3261,141 @@ data_model <- final_data %>%
   filter(!is.na(time_to_event) & time_to_event > 0 & !is.na(event)) %>%
   na.omit()
 
-cat("Całkowita liczba pacjentów (przed podziałem):", nrow(data_model), "\n")
+cat("Total Patients:", nrow(data_model), "\n")
 
-# ------------------------------------------------------------------------------
-# KROK 2: Podział na Zbiór Treningowy i Testowy (Train/Test Split)
-# ------------------------------------------------------------------------------
+# Podział na Zbiór Treningowy i Testowy
 set.seed(123) 
-
-
 train_index <- sample(1:nrow(data_model), size = 0.7 * nrow(data_model))
-
 
 data_train <- data_model[train_index, ] 
 data_test  <- data_model[-train_index, ] 
 
-cat("Liczba pacjentów w zbiorze TRENINGOWYM:", nrow(data_train), "\n")
-cat("Liczba pacjentów w zbiorze TESTOWYM:", nrow(data_test), "\n")
+cat("Training Set:", nrow(data_train), "\n")
+cat("Test Set:", nrow(data_test), "\n")
 
 # ------------------------------------------------------------------------------
-# KROK 3: Trening Modelu LASSO (Tylko na zbiorze TRENINGOWYM)
+# KROK 3: Trening Modelu LASSO (Zbiór Treningowy)
 # ------------------------------------------------------------------------------
-# X_train = Macierz markerów dla treningu
 x_train <- as.matrix(data_train[, valid_mirna])
-# Y_train = Survival object dla treningu
 y_train <- Surv(data_train$time_to_event, data_train$event)
-
 
 cv_fit <- cv.glmnet(x_train, y_train, family = "cox", alpha = 1)
 
-# Wykres błędu
+# --- WYKRES 1: LASSO Cross-Validation (Elsevier Style) ---
+# Ustawienia dla Base R plot, żeby wyglądał profesjonalnie
+par(mfrow = c(1, 1), mar = c(4, 4, 3, 1), family = "sans", las = 1)
+
 plot(cv_fit)
-title("LASSO Cross-Validation (Zbiór Treningowy)", line = 3)
+title("LASSO Coefficient Profiles (Training Set)", line = 2.5, font.main = 1)
+mtext("Figure S2. Selection of optimal penalization parameter (Lambda).", side = 1, line = 4, cex = 0.8)
 
 # Najlepsza lambda
 best_lambda <- cv_fit$lambda.min
-cat("Optymalna lambda:", best_lambda, "\n")
+cat("Optimal Lambda:", best_lambda, "\n")
 
 # ------------------------------------------------------------------------------
-# KROK 4: Ekstrakcja Sygnatury (Wagi zmiennych)
+# KROK 4: Ekstrakcja Sygnatury (Formatowanie Tabeli)
 # ------------------------------------------------------------------------------
 coefs <- coef(cv_fit, s = "lambda.min")
 active_index <- which(coefs != 0)
 active_coefficients <- coefs[active_index]
 active_names <- rownames(coefs)[active_index]
 
+# Tworzenie ramki danych
 signature_table <- data.frame(
   miRNA = active_names,
-  Waga_Coef = round(active_coefficients, 4)
+  Coefficient = active_coefficients # Zmieniono nazwę na angielską
 )
 
-cat("\n>>> TWOJA SYGNATURA (Wybrane miRNA i ich wagi): <<<\n")
-print(signature_table)
-
-if(nrow(signature_table) == 0) warning("LASSO wyzerowało wszystkie zmienne! Spróbuj lambda.1se lub sprawdź dane.")
+# Wyświetlenie profesjonalnej tabeli
+if(nrow(signature_table) > 0) {
+  signature_table %>%
+    mutate(Coefficient = round(Coefficient, 4)) %>%
+    arrange(desc(abs(Coefficient))) %>% # Sortowanie wg siły wpływu
+    kbl(caption = "Table 9. Final miRNA Signature Derived from LASSO Cox Regression.", booktabs = TRUE) %>%
+    kable_classic(full_width = F, html_font = "Arial") %>%
+    row_spec(0, bold = TRUE, color = "black", background = "white", extra_css = "border-bottom: 2px solid black;") %>%
+    print()
+} else {
+  warning("LASSO reduced all coefficients to zero. Check lambda or data.")
+}
 
 # ------------------------------------------------------------------------------
-# KROK 5: Walidacja na zbiorze TESTOWYM (Egzamin modelu)
+# KROK 5: Walidacja na zbiorze TESTOWYM (LOGIKA BEZ ZMIAN)
 # ------------------------------------------------------------------------------
-# Uwaga: Tutaj używamy "data_test"! Model nigdy wcześniej nie widział tych danych.
-
-# Przygotowanie macierzy testowej
 x_test <- as.matrix(data_test[, valid_mirna])
 
-# Obliczenie Risk Score dla pacjentów testowych używając modelu z treningu
+# Risk Score
 risk_scores_test <- predict(cv_fit, newx = x_test, s = "lambda.min", type = "link")
 data_test$RiskScore <- as.vector(risk_scores_test)
 
-# Definiujemy punkt odcięcia (Cutoff) na podstawie MEDIANY ZBIORU TRENINGOWEGO
-# (To najbardziej rygorystyczne podejście - zasady ustalamy w treningu)
+# Cutoff (z treningu)
 train_risk_scores <- predict(cv_fit, newx = x_train, s = "lambda.min", type = "link")
 cutoff_value <- median(train_risk_scores)
 
-# Klasyfikacja pacjentów testowych
+# Klasyfikacja
 data_test$RiskGroup <- ifelse(data_test$RiskScore > cutoff_value, "High Risk", "Low Risk")
 
-cat("\n--- Statystyki Walidacji (Zbiór Testowy) ---\n")
-cat("Punkt odcięcia (z treningu):", round(cutoff_value, 3), "\n")
-table(data_test$RiskGroup)
-
 # ------------------------------------------------------------------------------
-# KROK 6: Wykres Kaplana-Meiera (Na zbiorze TESTOWYM)
+# KROK 6: Wykres Kaplana-Meiera (Elsevier Style)
 # ------------------------------------------------------------------------------
-# Ten wykres pokazuje prawdziwą zdolność predykcyjną modelu
-
 fit_km_test <- survfit(Surv(time_to_event, event) ~ RiskGroup, data = data_test)
 
 p_val_plot <- ggsurvplot(
   fit_km_test,
   data = data_test,
+  
+  # Statystyka
   pval = TRUE,
+  pval.method = TRUE,      # Dodaje informację "Log-rank"
+  conf.int = TRUE,
+  conf.int.alpha = 0.1,
+  
+  # Tabela ryzyka
   risk.table = TRUE,
-  palette = c("red", "blue"),
-  title = "Walidacja Sygnatury miRNA (Zbiór Testowy)",
-  subtitle = paste("N =", nrow(data_test), "| Split 70/30"),
-  xlab = "Time (Days)",
+  risk.table.col = "strata",
+  risk.table.height = 0.25,
+  fontsize = 4,
+  
+  # Kolory i Styl
+  palette = c("#E41A1C", "#377EB8"), # High Risk = Red, Low Risk = Blue
+  ggtheme = theme_bw() + theme(
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    plot.title = element_text(face = "bold", size = 12),
+    legend.title = element_text(face = "bold")
+  ),
+  
+  # Język Angielski
+  title = "Validation of miRNA Signature (Test Set)",
+  subtitle = paste0("N = ", nrow(data_test), " (30% Split)"),
+  xlab = "Time (days)",
+  ylab = "Survival Probability",
   legend.labs = c("High Risk", "Low Risk"),
-  ggtheme = theme_minimal()
+  legend.title = "Prediction"
 )
 
 print(p_val_plot)
-# ggsave("KM_Validation_TestSet.png", print(p_val_plot), width = 8, height = 6)
 
 # ------------------------------------------------------------------------------
-# KROK 7: Cox Proportional Hazards dla Ryzyka (Zbiór Testowy)
+# KROK 7: Wynik Coxa i C-index (Tabela)
 # ------------------------------------------------------------------------------
 cox_test <- coxph(Surv(time_to_event, event) ~ RiskGroup, data = data_test)
-cat("\n--- Wynik Coxa dla Grupy Ryzyka (Walidacja) ---\n")
-print(summary(cox_test))
+c_index <- summary(cox_test)$concordance["C"]
 
-# Opcjonalnie: C-index na zbiorze testowym
-c_index <- summary(cox_test)$concordance
-cat("\nC-index na zbiorze testowym:", round(c_index[1], 3), "\n")
+# Formatowanie wyniku Coxa do tabeli
+tidy(cox_test, exponentiate = TRUE, conf.int = TRUE) %>%
+  mutate(
+    `HR (95% CI)` = sprintf("%.2f (%.2f - %.2f)", estimate, conf.low, conf.high),
+    `P-value` = ifelse(p.value < 0.001, "<0.001", sprintf("%.3f", p.value)),
+    `C-index` = sprintf("%.3f", c_index) # Dodajemy C-index do tabeli
+  ) %>%
+  dplyr::select(Term = term, `HR (95% CI)`, `P-value`, `C-index`) %>%
+  mutate(Term = gsub("RiskGroupLow Risk", "Low Risk (vs High)", Term)) %>% # Poprawa nazwy
+  kbl(caption = "Table 10. Validation Statistics on Test Set.", booktabs = TRUE) %>%
+  kable_classic(full_width = F, html_font = "Arial") %>%
+  print()
 ```
 
 
@@ -2890,6 +3406,20 @@ Walidacja na niezależnym zbiorze testowym (n = 235) wykazała umiarkowaną zdol
 Brak istotności statystycznej w walidacji zewnętrznej (p=0.38) najprawdopodobniej wynika z ograniczonej mocy statystycznej spowodowanej niską liczbą punktów końcowych (events). W zbiorze walidacyjnym odnotowano jedynie 22 zgony na 235 pacjentów. Przy tak niskim odsetku zdarzeń, wykrycie istotnych różnic wymagałoby bardzo silnego efektu biologicznego lub znacznie liczniejszej grupy badawczej.
 
 Mimo braku istotności p-value, parametr C-index (0.607) w walidacji wskazuje, że sygnatura zachowuje potencjał prognostyczny na nieznanych danych. Jest to wynik spójny z wieloma innymi sygnaturami wielogenowymi w raku piersi, gdzie wartości C-index w zewnętrznych walidacjach często oscylują w granicach 0.60–0.65.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2960,21 +3490,52 @@ komórkowej. Zweryfikowano hipotezę, że wysoka ekspresja tego genu
 koreluje ze skróconym czasem przeżycia w całej badanej populacji.
 
 ```{r}
+library(survival)
+library(survminer)
+
+# --- 1. OBLICZENIA (LOGIKA BEZ ZMIAN) ---
 fit_mki67 <- survfit(Surv(time_to_event, event) ~ MKI67_Group, data = final_data)
 
+# --- 2. WIZUALIZACJA (STANDARD ELSEVIER) ---
 ggsurvplot(
   fit_mki67, 
   data = final_data,
-  pval = TRUE, 
-  risk.table = TRUE,
+  
+  # Statystyka
+  pval = TRUE,
+  pval.method = TRUE,      # Dodaje "Log-rank" przed wartością p
   conf.int = TRUE,
-  palette = c("#2E9FDF", "#E7B800"), # Niebieski (Low), Żółty (High)
-  title = "Przeżycie całkowite wg poziomu MKI67",
-  xlab = "Czas (Dni)", 
-  ylab = "Prawdopodobieństwo przeżycia",
-  legend.title = "Ekspresja MKI67",
-  legend.labs = c("Low", "High"),
-  ggtheme = theme_minimal()
+  conf.int.alpha = 0.1,    # Delikatne zacieniowanie
+  
+  # Tabela ryzyka
+  risk.table = TRUE,
+  risk.table.col = "strata",
+  risk.table.height = 0.25,
+  fontsize = 4,            # Wielkość czcionki w tabeli
+  
+  # Kolory i Styl
+  # Używamy spójnej palety z poprzednimi wykresami (Niebieski = Low, Czerwony = High)
+  # Uwaga: Sprawdź kolejność w legend.labs, zazwyczaj R sortuje alfabetycznie (High, Low)
+  # Jeśli Low jest pierwsze w danych, użyj: c("#377EB8", "#E41A1C")
+  palette = c("#377EB8", "#E41A1C"), 
+  
+  # Język Angielski i Etykiety
+  title = "Overall Survival by MKI67 Expression",
+  xlab = "Time (days)",
+  ylab = "Survival Probability",
+  legend.title = "MKI67 Status",
+  legend.labs = c("Low", "High"), # Upewnij się, że kolejność pasuje do poziomów czynnika
+  
+  # Temat Graficzny (Elsevier)
+  ggtheme = theme_bw() + theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),       # Usunięcie ramki dookoła
+    axis.line = element_line(color = "black", size = 0.6), # Tylko osie L
+    plot.title = element_text(face = "bold", size = 12, hjust = 0),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 11, face = "bold")
+  )
 )
 ```
 
@@ -2986,20 +3547,56 @@ hormonalnych. Zbadano, czy wyższa ekspresja genu *ESR1* wewnątrz tej
 grupy nadal pełni funkcję ochronną.
 
 ```{r}
-# Filtrowanie danych tylko dla Luminal B
-data_lumb <- final_data %>% filter(brca_subtype_pam50 == "LumB")
+library(survival)
+library(survminer)
+library(dplyr)
+
+# --- 1. PRZYGOTOWANIE DANYCH (LOGIKA BEZ ZMIAN) ---
+data_lumb <- final_data %>% 
+  filter(brca_subtype_pam50 == "LumB")
 
 fit_esr1 <- survfit(Surv(time_to_event, event) ~ ESR1_Group, data = data_lumb)
 
+# --- 2. WIZUALIZACJA (STANDARD ELSEVIER) ---
 ggsurvplot(
   fit_esr1, 
-  data = data_lumb, 
-  pval = TRUE, 
+  data = data_lumb,
+  
+  # Statystyka
+  pval = TRUE,
+  pval.method = TRUE,      # Dodaje informację "Log-rank"
+  conf.int = TRUE,         # Przedziały ufności (Standard naukowy)
+  conf.int.alpha = 0.1,    # Delikatne zacieniowanie
+  
+  # Tabela ryzyka
   risk.table = TRUE,
-  palette = c("grey", "red"),
-  title = "Podtyp Luminal B: ESR1 High vs Low",
-  xlab = "Czas (Dni)",
-  legend.title = "Ekspresja ESR1"
+  risk.table.col = "strata",
+  risk.table.height = 0.25,
+  fontsize = 4,
+  
+  # Kolory
+  # Używamy "gray40" (ciemnoszary) zamiast "grey", aby był widoczny w druku
+  # Uwaga: R sortuje grupy alfabetycznie: 1=HIGH, 2=LOW.
+  # Jeśli chcesz HIGH=Szary, LOW=Czerwony, kolejność jest OK.
+  palette = c("#377EB8", "#E41A1C"), 
+  
+  # Język Angielski
+  title = "Survival Analysis: Luminal B Subtype (ESR1 Status)",
+  xlab = "Time (days)",
+  ylab = "Survival Probability",
+  legend.title = "ESR1 Expression",
+  legend.labs = c("High", "Low"), # Upewnij się, że pasuje do Twoich danych
+  
+  # Temat Graficzny (Czysty, Elsevier)
+  ggtheme = theme_bw() + theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black", size = 0.6),
+    plot.title = element_text(face = "bold", size = 11, hjust = 0),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 11, face = "bold")
+  )
 )
 ```
 
@@ -3009,20 +3606,53 @@ poziom tego markera różnicuje pacjentki pod kątem przeżycia wewnątrz tej
 agresywnej grupy.
 
 ```{r}
-# Filtrowanie danych tylko dla Basal
-data_basal <- final_data %>% filter(brca_subtype_pam50 == "Basal")
+
+# --- 1. PRZYGOTOWANIE DANYCH (LOGIKA BEZ ZMIAN) ---
+data_basal <- final_data %>% 
+  filter(brca_subtype_pam50 == "Basal")
 
 fit_egfr <- survfit(Surv(time_to_event, event) ~ EGFR_Group, data = data_basal)
 
+# --- 2. WIZUALIZACJA (STANDARD ELSEVIER) ---
 ggsurvplot(
   fit_egfr, 
-  data = data_basal, 
-  pval = TRUE, 
+  data = data_basal,
+  
+  # Statystyka
+  pval = TRUE,
+  pval.method = TRUE,      # Dodaje "Log-rank" przed wartością p
+  conf.int = TRUE,         # Przedziały ufności (Standard Elsevier)
+  conf.int.alpha = 0.1,    # Delikatne cieniowanie
+  
+  # Tabela ryzyka
   risk.table = TRUE,
-  palette = c("grey", "purple"),
-  title = "Podtyp Basal-like: EGFR High vs Low",
-  xlab = "Czas (Dni)",
-  legend.title = "Ekspresja EGFR"
+  risk.table.col = "strata",
+  risk.table.height = 0.25,
+  fontsize = 4,
+  
+  # Kolory
+  # Zmieniono na profesjonalne odpowiedniki (High = Fiolet, Low = Szary - lub odwrotnie zależnie od sortowania)
+  # R domyślnie sortuje alfabetycznie: 1="High", 2="Low".
+  # Dlatego: High = Fioletowy (#984EA3), Low = Ciemnoszary (gray40)
+  palette = c("#377EB8", "#E41A1C"), 
+  
+  # Język Angielski
+  title = "Survival Analysis: Basal-like Subtype (EGFR Status)",
+  xlab = "Time (days)",
+  ylab = "Survival Probability",
+  legend.title = "EGFR Expression",
+  legend.labs = c("High", "Low"), # Upewnij się, że pasuje do Twoich danych
+  
+  # Temat Graficzny (Czysty)
+  ggtheme = theme_bw() + theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),       # Usunięcie ramki dookoła
+    axis.line = element_line(color = "black", size = 0.6), # Tylko osie L
+    plot.title = element_text(face = "bold", size = 11, hjust = 0),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 11, face = "bold")
+  )
 )
 ```
 
@@ -3042,45 +3672,98 @@ HR). Wartość HR \> 1 oznacza wzrost ryzyka zgonu, natomiast HR \< 1
 świadczy o działaniu ochronnym.
 
 ```{r}
-# Przygotowanie danych do Coxa (usuwamy braki w zmiennych klinicznych)
+
+# --- 1. PRZYGOTOWANIE DANYCH (LOGIKA BEZ ZMIAN) ---
 cox_data <- final_data %>%
   filter(!is.na(pathologic_stage), !is.na(age_mean_years)) %>%
   mutate(pathologic_stage = as.factor(pathologic_stage))
+
+# --- 2. DEFINICJA MODELI (LOGIKA BEZ ZMIAN) ---
 
 # 1. Model Bazowy
 cox_base <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50, 
                   data = cox_data)
 
-# 2. Model B1: Baza + MKI67 (Czy proliferacja jest niezależna od podtypu?)
+# 2. Model B1: Baza + MKI67
 cox_mki67_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + mki67, 
-                   data = cox_data)
+                         data = cox_data)
 
-# 3. Model B2: Baza + ESR1 (Czy receptor chroni niezależnie?)
+# 3. Model B2: Baza + ESR1
 cox_esr1_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + esr1, 
-                  data = cox_data)
+                        data = cox_data)
 
 # 4. Model B3: Baza + EGFR
 cox_egfr_model <- coxph(Surv(time_to_event, event) ~ age_mean_years + pathologic_stage + brca_subtype_pam50 + egfr_rna, 
-                  data = cox_data)
+                        data = cox_data)
 
-# Funkcja do formatowania wyników (Tabela Elsevier-style)
-format_cox_results <- function(model, model_name) {
-  model %>%
-    broom::tidy(exponentiate = TRUE, conf.int = TRUE) %>%
-    dplyr::select(term, estimate, p.value, conf.low, conf.high) %>%
+# ==============================================================================
+# 3. TABELA ZBIORCZA (STANDARD ELSEVIER)
+# ==============================================================================
+
+format_cox_model_elsevier <- function(model, model_name) {
+  tidy(model, exponentiate = TRUE, conf.int = TRUE) %>%
     mutate(
-      term = str_replace_all(term, "brca_subtype_pam50", "Subtype: "),
-      term = str_replace_all(term, "pathologic_stage", "Stage: "),
-      term = str_replace_all(term, "age_mean_years", "Age"),
-      p.value = format.pval(p.value, eps = 0.001, digits = 3),
-      estimate = round(estimate, 3),
-      conf.low = round(conf.low, 3),
-      conf.high = round(conf.high, 3)
+      # Formatowanie HR (95% CI) w jednej kolumnie
+      `HR (95% CI)` = sprintf("%.2f (%.2f - %.2f)", estimate, conf.low, conf.high),
+      # Formatowanie P-value
+      `P-value` = ifelse(p.value < 0.001, "<0.001", sprintf("%.3f", p.value)),
+      Model = model_name
     ) %>%
-    kable(caption = paste("Wyniki modelu:", model_name), 
-          col.names = c("Zmienna", "HR", "P-value", "CI 95% Low", "CI 95% High")) %>%
-    kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+    dplyr::select(Model, Term = term, `HR (95% CI)`, `P-value`)
 }
+
+# Łączenie wyników
+res_base  <- format_cox_model_elsevier(cox_base, "Base Model")
+res_mki67 <- format_cox_model_elsevier(cox_mki67_model, "Model B1 (+ MKI67)")
+res_esr1  <- format_cox_model_elsevier(cox_esr1_model,  "Model B2 (+ ESR1)")
+res_egfr  <- format_cox_model_elsevier(cox_egfr_model,  "Model B3 (+ EGFR)")
+
+all_results_clin <- bind_rows(res_base, res_mki67, res_esr1, res_egfr)
+
+# Czyszczenie nazw zmiennych na ładny angielski
+all_results_clin$Term <- all_results_clin$Term %>%
+  str_replace_all("age_mean_years", "Age (years)") %>%
+  str_replace_all("pathologic_stage", "Stage: ") %>%
+  str_replace_all("brca_subtype_pam50", "Subtype: ") %>%
+  str_replace_all("mki67", "MKI67 (Proliferation)") %>%
+  str_replace_all("esr1", "ESR1 (Estrogen Receptor)") %>%
+  str_replace_all("egfr_rna", "EGFR (mRNA)")
+
+# Generowanie tabeli
+kbl(all_results_clin, 
+    caption = "Table 11. Multivariate Cox Regression Analysis for Clinical Markers.", 
+    booktabs = TRUE) %>%
+  kable_classic(full_width = F, html_font = "Arial", font_size = 11) %>%
+  collapse_rows(columns = 1, valign = "top") %>% # Grupowanie wierszy wg modelu
+  row_spec(0, bold = TRUE, background = "white", extra_css = "border-bottom: 2px solid black;") %>%
+  print()
+
+
+# ==============================================================================
+# 4. WIZUALIZACJA: FOREST PLOTS
+# ==============================================================================
+
+# Funkcja rysująca (taka sama jak przy miRNA)
+draw_forest <- function(model, title) {
+  ggforest(model, data = cox_data, 
+           main = title, 
+           cpositions = c(0.02, 0.22, 0.4), 
+           fontsize = 0.8, 
+           refLabel = "Ref", 
+           noDigits = 2)
+}
+
+# Wykres dla modelu B1 (MKI67)
+p_forest_mki67 <- draw_forest(cox_mki67_model, "Multivariate Analysis: MKI67 Impact")
+print(p_forest_mki67)
+
+# Wykres dla modelu B2 (ESR1)
+p_forest_esr1 <- draw_forest(cox_esr1_model, "Multivariate Analysis: ESR1 Impact")
+print(p_forest_esr1)
+
+# Wykres dla modelu B3 (EGFR)
+p_forest_egfr <- draw_forest(cox_egfr_model, "Multivariate Analysis: EGFR Impact")
+print(p_forest_egfr)
 ```
 
 ### Wyniki modelowania statystycznego
@@ -3089,9 +3772,6 @@ Tabela przedstawia wyniki dla modelu bazowego, który stanowi punkt
 odniesienia dla dalszych analiz. Stadium zaawansowania (Stage) oraz wiek
 pacjentki są silnymi predyktorami przeżycia.
 
-```{r}
-format_cox_results(cox_base, "Model Kliniczny (Bazowy)")
-```
 
 ### Interpretacja wyników Modelu Bazowego (Analiza wieloczynnikowa)
 
@@ -3135,9 +3815,7 @@ przeżycia całkowitego (OS), dominując nad stratyfikacją molekularną.
 Tabela weryfikuje, czy marker proliferacji *MKI67* wnosi istotną
 informację prognostyczną po uwzględnieniu podtypu molekularnego.
 
-```{r}
-format_cox_results(cox_mki67_model, "Model B1 (+ MKI67)")
-```
+
 
 ### Interpretacja wyników wieloczynnikowej analizy Coxa (Model B1)
 
@@ -3182,10 +3860,7 @@ jest modyfikowany przez interakcje międzyzmienne.
 Tabela oraz przedstawiają wyniki dla receptorów *ESR1* oraz
 *EGFR*.
 
-```{r}
-format_cox_results(cox_esr1_model, "Model B2 (+ ESR1)")
-format_cox_results(cox_egfr_model, "Model B3 (+ EGFR)")
-```
+
 
 ### Interpretacja wyników Modelu B2 (+ ESR1)
 
@@ -3271,20 +3946,6 @@ wieloczynnikowej regresji Coxa) sformułowano następujące wnioski:
     (*MKI67, ESR1, EGFR*) nie stanowią w tym układzie niezależnych
     czynników ryzyka, lecz są biologicznie sprzężone z przypisanym
     podtypem nowotworu.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
